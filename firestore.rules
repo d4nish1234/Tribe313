@@ -1,0 +1,99 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && request.auth.token.admin == true;
+    }
+
+    function myUserDoc() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function isApproved() {
+      return isSignedIn() && myUserDoc().status == 'approved';
+    }
+
+    function sharesLocation(uid) {
+      return get(/databases/$(database)/documents/users/$(uid)).data.shareLocation == true;
+    }
+
+    // -------- USERS --------
+    match /users/{uid} {
+      // Read: self always; admins always; approved members can read public fields
+      // of other approved members. We can't easily field-filter in rules, so we
+      // allow the read but keep `address` as a private string (client redacts
+      // in UI when `shareLocation` is false). The redaction invariant is:
+      // - `address`: self + admin only (enforced in client code; if stricter
+      //   enforcement is needed, move `address` to a private subcollection).
+      // - `addressGeo`: others can read only if target.shareLocation == true.
+      allow read: if isSignedIn() && (
+        request.auth.uid == uid
+        || isAdmin()
+        || isApproved()
+      );
+
+      // Self-create during signup (callable onUserCreate also seeds server-side).
+      allow create: if isSignedIn() && request.auth.uid == uid
+        && request.resource.data.status == 'pending'
+        && request.resource.data.isAdmin == false;
+
+      // Self-update limited to profile + notification/share toggles.
+      allow update: if isSignedIn() && request.auth.uid == uid
+        && request.resource.data.status == resource.data.status
+        && request.resource.data.isAdmin == resource.data.isAdmin
+        && request.resource.data.badges == resource.data.badges
+        && request.resource.data.attendedEventIds == resource.data.attendedEventIds
+        && request.resource.data.missedEventCount == resource.data.missedEventCount
+        && request.resource.data.lastAttendedAt == resource.data.lastAttendedAt;
+
+      // Admins can update any user (approvals, eviction, admin promotion go
+      // through callables, but console-driven edits should also be possible).
+      allow update: if isAdmin();
+
+      // Deletes happen via `selfDeleteAccount` callable (admin SDK).
+      allow delete: if false;
+    }
+
+    // -------- EVENTS --------
+    match /events/{eventId} {
+      allow read: if isApproved();
+      allow create, update, delete: if isAdmin();
+
+      match /rsvps/{uid} {
+        allow read: if isApproved();
+        // A member RSVPs for themselves; the `attended` flag may only be set
+        // by admins. We enforce that by comparing to prior value.
+        allow create, update: if isApproved() && request.auth.uid == uid
+          && (request.resource.data.attended == (resource == null ? false : resource.data.attended) || isAdmin());
+        allow update, delete: if isAdmin();
+      }
+
+      match /rides/{rideId} {
+        allow read: if isApproved();
+
+        // Requester creates their own ride request.
+        allow create: if isApproved()
+          && request.resource.data.requesterUid == request.auth.uid
+          && request.resource.data.status == 'open';
+
+        // Update: driver claims the ride (open -> matched with their uid),
+        // or requester/admin cancels.
+        allow update: if isApproved() && (
+          (resource.data.status == 'open'
+            && request.resource.data.status == 'matched'
+            && request.resource.data.driverUid == request.auth.uid
+            && request.resource.data.requesterUid == resource.data.requesterUid)
+          || (request.resource.data.status == 'cancelled'
+            && (request.auth.uid == resource.data.requesterUid || isAdmin()))
+        );
+
+        allow delete: if isAdmin();
+      }
+    }
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx --yes create-expo-app@latest tribe313-scaffold --template default)",
+      "Bash(shopt -s dotglob)",
+      "Bash(mv tribe313-scaffold/* .)",
+      "Bash(shopt -u dotglob)",
+      "Bash(npx expo *)",
+      "Bash(npx tsc *)"
+    ]
+  }
+}
