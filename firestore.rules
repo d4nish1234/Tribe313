@@ -44,12 +44,9 @@ service cloud.firestore {
 
       // Self-update limited to profile + notification/share toggles.
       allow update: if isSignedIn() && request.auth.uid == uid
-        && request.resource.data.status == resource.data.status
-        && request.resource.data.isAdmin == resource.data.isAdmin
-        && request.resource.data.badges == resource.data.badges
-        && request.resource.data.attendedEventIds == resource.data.attendedEventIds
-        && request.resource.data.missedEventCount == resource.data.missedEventCount
-        && request.resource.data.lastAttendedAt == resource.data.lastAttendedAt;
+        && request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['firstName', 'lastName', 'phone', 'address', 'addressGeo',
+                       'notificationsEnabled', 'shareLocation', 'updatedAt']);
 
       // Admins can update any user (approvals, eviction, admin promotion go
       // through callables, but console-driven edits should also be possible).

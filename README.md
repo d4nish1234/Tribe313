@@ -65,7 +65,7 @@ eas login
 eas init
 ```
 
-Put the returned project ID in `app.json` → `expo.extra.eas.projectId`.
+Put the returned project ID in `.env` → `EAS_PROJECT_ID`.
 
 ## Daily development
 
@@ -105,10 +105,9 @@ firestore.rules       access control
 firestore.indexes.json
 firebase.json
 eas.json
-app.json
+app.config.js        dynamic Expo config (reads from .env)
+.env.template        copy to .env and fill in secrets
 ```
-
-See [`/Users/danishmahboob/.claude/plans/plan-help-me-build-functional-globe.md`](/Users/danishmahboob/.claude/plans/plan-help-me-build-functional-globe.md) for the implementation plan and data model.
 
 ## Notes
 

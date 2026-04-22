@@ -83,6 +83,9 @@ export default function Settings() {
 
       await updateDoc(ref, patch as any);
       setSnack('Saved');
+    } catch (e: any) {
+      console.error('[settings] save failed:', e?.code, e?.message);
+      setSnack(`Save failed: ${e?.message ?? e}`);
     } finally {
       setSaving(false);
     }
