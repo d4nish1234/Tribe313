@@ -15,7 +15,7 @@ export default function Approvals() {
 
   if (!isAdmin) return <Redirect href="/" />;
 
-  const pending = members.filter((m) => m.status === 'pending');
+  const pending = members.filter((m) => m.status === 'pending' && m.emailVerified === true);
   const dismissed = members.filter((m) => m.status === 'dismissed');
 
   async function approve(uid: string) {

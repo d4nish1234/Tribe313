@@ -10,7 +10,9 @@ export function usePendingCount(): number {
   useEffect(() => {
     if (!isAdmin) return;
     const q = query(collection(db, 'users'), where('status', '==', 'pending'));
-    return onSnapshot(q, (snap) => setCount(snap.size));
+    return onSnapshot(q, (snap) =>
+      setCount(snap.docs.filter((d) => d.data().emailVerified === true).length),
+    );
   }, [isAdmin]);
 
   return count;

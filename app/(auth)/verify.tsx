@@ -3,7 +3,8 @@ import { ScrollView, View } from 'react-native';
 import { Button, HelperText, Text } from 'react-native-paper';
 import { router } from 'expo-router';
 import { reload, sendEmailVerification, signOut } from 'firebase/auth';
-import { auth } from '@/src/firebase/config';
+import { doc, updateDoc } from 'firebase/firestore';
+import { auth, db } from '@/src/firebase/config';
 
 export default function Verify() {
   const [msg, setMsg] = useState<string | null>(null);
@@ -33,6 +34,7 @@ export default function Verify() {
     try {
       await reload(auth.currentUser);
       if (auth.currentUser.emailVerified) {
+        await updateDoc(doc(db, 'users', auth.currentUser.uid), { emailVerified: true });
         router.replace('/');
       } else {
         setErr('Email not verified yet. Check your inbox (and spam).');

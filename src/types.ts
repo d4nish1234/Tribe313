@@ -13,6 +13,7 @@ export type AppUser = {
   carpoolAddress?: string;
   carpoolAddressGeo?: { lat: number; lng: number };
   shareLocation: boolean;
+  emailVerified?: boolean;
   status: UserStatus;
   isAdmin: boolean;
   expoPushToken?: string;

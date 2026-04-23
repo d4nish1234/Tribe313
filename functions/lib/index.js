@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getDirections = exports.geocodeAddress = exports.onRsvpWrite = exports.onRideAccept = exports.onRideRequest = exports.onEventCreate = exports.selfDeleteAccount = exports.deactivateUser = exports.onUserStatusChange = exports.onUserPending = exports.approveUser = exports.promoteAdmin = exports.onUserCreate = void 0;
+exports.getDirections = exports.geocodeAddress = exports.onRsvpWrite = exports.onRideAccept = exports.onRideRequest = exports.onEventCreate = exports.selfDeleteAccount = exports.reinstateUser = exports.deactivateUser = exports.onUserStatusChange = exports.onUserPending = exports.approveUser = exports.promoteAdmin = exports.onUserCreate = void 0;
 const v2_1 = require("firebase-functions/v2");
 (0, v2_1.setGlobalOptions)({ region: 'us-central1', maxInstances: 10 });
 var onUserCreate_1 = require("./auth/onUserCreate");
@@ -14,6 +14,8 @@ Object.defineProperty(exports, "onUserPending", { enumerable: true, get: functio
 Object.defineProperty(exports, "onUserStatusChange", { enumerable: true, get: function () { return onPendingUser_1.onUserStatusChange; } });
 var deactivate_1 = require("./users/deactivate");
 Object.defineProperty(exports, "deactivateUser", { enumerable: true, get: function () { return deactivate_1.deactivateUser; } });
+var reinstate_1 = require("./users/reinstate");
+Object.defineProperty(exports, "reinstateUser", { enumerable: true, get: function () { return reinstate_1.reinstateUser; } });
 var selfDelete_1 = require("./users/selfDelete");
 Object.defineProperty(exports, "selfDeleteAccount", { enumerable: true, get: function () { return selfDelete_1.selfDeleteAccount; } });
 var onEventCreate_1 = require("./events/onEventCreate");

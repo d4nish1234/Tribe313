@@ -7,6 +7,7 @@ export const call = <Req = unknown, Res = unknown>(name: string) =>
 export const approveUser = call<{ uid: string }, { ok: true }>('approveUser');
 export const promoteAdmin = call<{ uid: string }, { ok: true }>('promoteAdmin');
 export const deactivateUser = call<{ uid: string }, { ok: true }>('deactivateUser');
+export const reinstateUser = call<{ uid: string }, { ok: true }>('reinstateUser');
 export const selfDeleteAccount = call<void, { ok: true }>('selfDeleteAccount');
 export const geocodeAddress = call<
   { address: string },
