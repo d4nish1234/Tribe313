@@ -31,16 +31,21 @@ import { useEvent } from '@/src/hooks/useEvents';
 import { useRsvps } from '@/src/hooks/useRsvps';
 import { useRides } from '@/src/hooks/useRides';
 import { useMembers } from '@/src/hooks/useMembers';
+import { useCarpoolLocations } from '@/src/hooks/useCarpoolLocations';
 import { RsvpPicker } from '@/src/components/RsvpPicker';
 import { RideCard } from '@/src/components/RideCard';
 import { EventMap } from '@/src/components/EventMap';
 import type { RsvpStatus } from '@/src/types';
 
-type PickupMode = 'home' | 'carpool' | 'custom';
-
-function resolveMode(address: string, home?: string, carpool?: string): PickupMode {
-  if (home && address === home) return 'home';
-  if (carpool && address === carpool) return 'carpool';
+// pickupMode is 'home', 'custom', or a carpoolLocation ID
+function resolveMode(
+  pickupAddress: string,
+  home: string | undefined,
+  carpoolLocations: { id: string; address: string }[],
+): string {
+  if (home && pickupAddress === home) return 'home';
+  const match = carpoolLocations.find((l) => l.address === pickupAddress);
+  if (match) return match.id;
   return 'custom';
 }
 
@@ -51,10 +56,11 @@ export default function EventDetail() {
   const { rsvps } = useRsvps(id);
   const { rides } = useRides(id);
   const { members } = useMembers();
+  const { locations: carpoolLocations } = useCarpoolLocations();
 
   const [rideDialog, setRideDialog] = useState(false);
   const [editingRideId, setEditingRideId] = useState<string | null>(null);
-  const [pickupMode, setPickupMode] = useState<PickupMode>('home');
+  const [pickupMode, setPickupMode] = useState('home');
   const [customPickup, setCustomPickup] = useState('');
   const [rideBusy, setRideBusy] = useState(false);
   const [snack, setSnack] = useState<string | null>(null);
@@ -62,6 +68,10 @@ export default function EventDetail() {
   const myRsvp = useMemo(() => rsvps.find((r) => r.uid === firebaseUser?.uid), [rsvps, firebaseUser?.uid]);
   const myActiveRide = useMemo(
     () => rides.find((r) => r.requesterUid === firebaseUser?.uid && r.status !== 'cancelled'),
+    [rides, firebaseUser?.uid],
+  );
+  const myCancelledRide = useMemo(
+    () => rides.find((r) => r.requesterUid === firebaseUser?.uid && r.status === 'cancelled'),
     [rides, firebaseUser?.uid],
   );
 
@@ -92,13 +102,12 @@ export default function EventDetail() {
     if (rideId) {
       const ride = rides.find((r) => r.id === rideId);
       const currentAddress = ride?.pickup?.address ?? '';
-      const mode = resolveMode(currentAddress, appUser?.address ?? undefined, appUser?.carpoolAddress ?? undefined);
+      const mode = resolveMode(currentAddress, appUser?.address ?? undefined, carpoolLocations);
       setPickupMode(mode);
       setCustomPickup(mode === 'custom' ? currentAddress : '');
       setEditingRideId(rideId);
     } else {
-      const defaultMode: PickupMode = appUser?.address ? 'home' : appUser?.carpoolAddress ? 'carpool' : 'custom';
-      setPickupMode(defaultMode);
+      setPickupMode(appUser?.address ? 'home' : carpoolLocations[0]?.id ?? 'custom');
       setCustomPickup('');
       setEditingRideId(null);
     }
@@ -109,10 +118,14 @@ export default function EventDetail() {
     if (pickupMode === 'home') {
       return { address: appUser?.address ?? '', geo: appUser?.addressGeo ?? null };
     }
-    if (pickupMode === 'carpool') {
-      return { address: appUser?.carpoolAddress ?? '', geo: appUser?.carpoolAddressGeo ?? null };
+    if (pickupMode === 'custom') {
+      return { address: customPickup.trim(), geo: null };
     }
-    return { address: customPickup.trim(), geo: null };
+    // carpool location ID
+    const loc = carpoolLocations.find((l) => l.id === pickupMode);
+    return loc
+      ? { address: loc.address, geo: { lat: loc.lat, lng: loc.lng } }
+      : { address: '', geo: null };
   }
 
   async function submitRide() {
@@ -136,8 +149,12 @@ export default function EventDetail() {
       const pickup = { label: src, address: src, lat: geo?.lat ?? 0, lng: geo?.lng ?? 0 };
 
       if (editingRideId) {
-        await updateDoc(doc(db, 'events', event.id, 'rides', editingRideId), { pickup });
-        setSnack('Pickup updated');
+        const isCancelled = rides.find((r) => r.id === editingRideId)?.status === 'cancelled';
+        await updateDoc(doc(db, 'events', event.id, 'rides', editingRideId), {
+          pickup,
+          ...(isCancelled ? { status: 'open' } : {}),
+        });
+        setSnack(isCancelled ? 'Ride requested' : 'Pickup updated');
       } else {
         await addDoc(collection(db, 'events', event.id, 'rides'), {
           requesterUid: firebaseUser.uid,
@@ -164,17 +181,25 @@ export default function EventDetail() {
 
   async function offerRide(rideId: string) {
     if (!firebaseUser || !event) return;
-    await updateDoc(doc(db, 'events', event.id, 'rides', rideId), {
-      status: 'matched',
-      driverUid: firebaseUser.uid,
-      matchedAt: serverTimestamp(),
-    });
-    setSnack('Ride offered');
+    try {
+      await updateDoc(doc(db, 'events', event.id, 'rides', rideId), {
+        status: 'matched',
+        driverUid: firebaseUser.uid,
+        matchedAt: serverTimestamp(),
+      });
+      setSnack('Ride offered');
+    } catch (e: any) {
+      setSnack(e?.message ?? 'Failed to offer ride');
+    }
   }
 
   async function cancelRide(rideId: string) {
     if (!event) return;
-    await updateDoc(doc(db, 'events', event.id, 'rides', rideId), { status: 'cancelled' });
+    try {
+      await updateDoc(doc(db, 'events', event.id, 'rides', rideId), { status: 'cancelled' });
+    } catch (e: any) {
+      setSnack(e?.message ?? 'Failed to cancel ride');
+    }
   }
 
   async function deleteEvent() {
@@ -218,7 +243,7 @@ export default function EventDetail() {
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
         <Text variant="titleMedium">Rides</Text>
         {!myActiveRide && (
-          <Button mode="contained-tonal" onPress={() => openRideDialog()}>
+          <Button mode="contained-tonal" onPress={() => openRideDialog(myCancelledRide?.id)}>
             I need a ride
           </Button>
         )}
@@ -274,7 +299,7 @@ export default function EventDetail() {
         <Dialog visible={rideDialog} onDismiss={() => setRideDialog(false)}>
           <Dialog.Title>{editingRideId ? 'Edit pickup' : 'Request a ride'}</Dialog.Title>
           <Dialog.Content style={{ gap: 4 }}>
-            <RadioButton.Group value={pickupMode} onValueChange={(v) => setPickupMode(v as PickupMode)}>
+            <RadioButton.Group value={pickupMode} onValueChange={setPickupMode}>
               {appUser?.address ? (
                 <RadioButton.Item
                   label={`Home — ${appUser.address}`}
@@ -282,13 +307,14 @@ export default function EventDetail() {
                   labelNumberOfLines={2}
                 />
               ) : null}
-              {appUser?.carpoolAddress ? (
+              {carpoolLocations.map((loc) => (
                 <RadioButton.Item
-                  label={`Carpool — ${appUser.carpoolAddress}`}
-                  value="carpool"
+                  key={loc.id}
+                  label={`${loc.label} — ${loc.address}`}
+                  value={loc.id}
                   labelNumberOfLines={2}
                 />
-              ) : null}
+              ))}
               <RadioButton.Item label="Custom address" value="custom" />
             </RadioButton.Group>
             {pickupMode === 'custom' && (

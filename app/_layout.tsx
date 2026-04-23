@@ -27,6 +27,7 @@ export default function RootLayout() {
               <Stack.Screen name="event/[id]" options={{ headerShown: true, title: 'Event' }} />
               <Stack.Screen name="event/new" options={{ headerShown: true, title: 'New event', presentation: 'modal' }} />
               <Stack.Screen name="admin/approvals" options={{ headerShown: true, title: 'Approvals' }} />
+              <Stack.Screen name="admin/carpool-addresses" options={{ headerShown: true, title: 'Carpool locations' }} />
             </Stack>
             <StatusBar style="auto" />
           </AuthProvider>

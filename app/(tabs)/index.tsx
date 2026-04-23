@@ -54,14 +54,24 @@ export default function Home() {
               Welcome{appUser ? `, ${appUser.firstName}` : ''}
             </Text>
             {isAdmin && (
-              <Button
-                mode="contained-tonal"
-                onPress={() => router.push('/admin/approvals')}
-                style={{ marginHorizontal: 16, marginBottom: 12 }}
-                icon={pendingCount > 0 ? 'circle-medium' : undefined}
-              >
-                Admin · Pending approvals{pendingCount > 0 ? ` (${pendingCount})` : ''}
-              </Button>
+              <>
+                <Button
+                  mode="contained-tonal"
+                  onPress={() => router.push('/admin/approvals')}
+                  style={{ marginHorizontal: 16, marginBottom: 8 }}
+                  icon={pendingCount > 0 ? 'circle-medium' : undefined}
+                >
+                  Admin · Pending approvals{pendingCount > 0 ? ` (${pendingCount})` : ''}
+                </Button>
+                <Button
+                  mode="contained-tonal"
+                  onPress={() => router.push('/admin/carpool-addresses')}
+                  style={{ marginHorizontal: 16, marginBottom: 12 }}
+                  icon="map-marker-multiple-outline"
+                >
+                  Admin · Carpool locations
+                </Button>
+              </>
             )}
             <Section title="Upcoming" events={upcoming} />
             {upcoming.length === 0 && (

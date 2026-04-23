@@ -28,7 +28,6 @@ export default function Settings() {
   const [last, setLast] = useState('');
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
-  const [carpoolAddress, setCarpoolAddress] = useState('');
   const [notify, setNotify] = useState(true);
   const [share, setShare] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -45,7 +44,6 @@ export default function Settings() {
     setLast(appUser.lastName ?? '');
     setPhone(appUser.phone ?? '');
     setAddress(appUser.address ?? '');
-    setCarpoolAddress(appUser.carpoolAddress ?? '');
     setNotify(appUser.notificationsEnabled ?? true);
     setShare(appUser.shareLocation ?? false);
   }, [appUser?.uid]);
@@ -67,7 +65,6 @@ export default function Settings() {
         lastName: last.trim(),
         phone: phone.trim() || null,
         address: address.trim() || null,
-        carpoolAddress: carpoolAddress.trim() || null,
         notificationsEnabled: notify,
         shareLocation: share,
         updatedAt: serverTimestamp(),
@@ -82,17 +79,6 @@ export default function Settings() {
         }
       } else if (!address.trim()) {
         patch.addressGeo = null;
-      }
-
-      if (carpoolAddress.trim() && carpoolAddress.trim() !== appUser?.carpoolAddress) {
-        try {
-          const res = await geocodeAddress({ address: carpoolAddress.trim() });
-          patch.carpoolAddressGeo = { lat: res.data.lat, lng: res.data.lng };
-        } catch {
-          // ignore geocoding failures
-        }
-      } else if (!carpoolAddress.trim()) {
-        patch.carpoolAddressGeo = null;
       }
 
       await updateDoc(ref, patch as any);
@@ -128,7 +114,6 @@ export default function Settings() {
       <TextInput label="Last name" value={last} onChangeText={setLast} />
       <TextInput label="Phone" value={phone} onChangeText={setPhone} keyboardType="phone-pad" />
       <TextInput label="Home address" value={address} onChangeText={setAddress} multiline />
-      <TextInput label="Carpool pickup address" value={carpoolAddress} onChangeText={setCarpoolAddress} multiline />
 
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 }}>
         <View style={{ flex: 1, paddingRight: 12 }}>
