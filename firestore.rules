@@ -46,6 +46,7 @@ service cloud.firestore {
       allow update: if isSignedIn() && request.auth.uid == uid
         && request.resource.data.diff(resource.data).affectedKeys()
              .hasOnly(['firstName', 'lastName', 'phone', 'address', 'addressGeo',
+                       'carpoolAddress', 'carpoolAddressGeo',
                        'notificationsEnabled', 'shareLocation', 'updatedAt']);
 
       // Admins can update any user (approvals, eviction, admin promotion go
@@ -79,7 +80,7 @@ service cloud.firestore {
           && request.resource.data.status == 'open';
 
         // Update: driver claims the ride (open -> matched with their uid),
-        // or requester/admin cancels.
+        // requester/admin cancels, or requester edits their pickup address.
         allow update: if isApproved() && (
           (resource.data.status == 'open'
             && request.resource.data.status == 'matched'
@@ -87,6 +88,10 @@ service cloud.firestore {
             && request.resource.data.requesterUid == resource.data.requesterUid)
           || (request.resource.data.status == 'cancelled'
             && (request.auth.uid == resource.data.requesterUid || isAdmin()))
+          || (request.auth.uid == resource.data.requesterUid
+            && resource.data.status != 'cancelled'
+            && request.resource.data.status == resource.data.status
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['pickup']))
         );
 
         allow delete: if isAdmin();

@@ -8,25 +8,45 @@ export const onRideAccept = onDocumentUpdated(
     const before = event.data?.before.data();
     const after = event.data?.after.data();
     if (!before || !after) return;
-    if (before.status === 'matched' || after.status !== 'matched') return;
 
-    const driverUid = after.driverUid as string | undefined;
-    const requesterUid = after.requesterUid as string;
-    const driver = driverUid ? (await db.doc(`users/${driverUid}`).get()).data() : null;
-    const driverName = driver?.firstName ?? 'A driver';
+    // open -> matched: notify requester and admins
+    if (before.status === 'open' && after.status === 'matched') {
+      const driverUid = after.driverUid as string | undefined;
+      const requesterUid = after.requesterUid as string;
+      const driver = driverUid ? (await db.doc(`users/${driverUid}`).get()).data() : null;
+      const driverName = driver?.firstName ?? 'A driver';
 
-    const requesterTargets = await targetForUser(requesterUid);
-    const adminTargets = await targetsForAdmins(requesterUid);
+      const requesterTargets = await targetForUser(requesterUid);
+      const adminTargets = await targetsForAdmins(requesterUid);
+      await sendPushes(requesterTargets, {
+        title: 'Ride matched',
+        body: `${driverName} offered you a ride.`,
+        data: { type: 'ride-accept', eventId: event.params.eventId },
+      });
+      await sendPushes(adminTargets, {
+        title: 'Ride matched',
+        body: `${driverName} is giving a ride.`,
+        data: { type: 'ride-accept', eventId: event.params.eventId },
+      });
+      return;
+    }
 
-    await sendPushes(requesterTargets, {
-      title: 'Ride matched',
-      body: `${driverName} offered you a ride.`,
-      data: { type: 'ride-accept', eventId: event.params.eventId },
-    });
-    await sendPushes(adminTargets, {
-      title: 'Ride matched',
-      body: `${driverName} is giving a ride.`,
-      data: { type: 'ride-accept', eventId: event.params.eventId },
-    });
+    // matched -> cancelled: notify the driver their ride was cancelled
+    if (before.status === 'matched' && after.status === 'cancelled') {
+      const driverUid = before.driverUid as string | undefined;
+      if (!driverUid) return;
+      const requesterUid = before.requesterUid as string;
+      const evSnap = await db.doc(`events/${event.params.eventId}`).get();
+      const ev = evSnap.data();
+      const requester = (await db.doc(`users/${requesterUid}`).get()).data();
+      const requesterName = requester?.firstName ?? 'A member';
+
+      const driverTargets = await targetForUser(driverUid);
+      await sendPushes(driverTargets, {
+        title: 'Ride cancelled',
+        body: `${requesterName} cancelled their ride to ${ev?.title ?? 'an event'}.`,
+        data: { type: 'ride-cancel', eventId: event.params.eventId },
+      });
+    }
   },
 );

@@ -10,6 +10,8 @@ export type AppUser = {
   phone?: string;
   address?: string;
   addressGeo?: { lat: number; lng: number };
+  carpoolAddress?: string;
+  carpoolAddressGeo?: { lat: number; lng: number };
   shareLocation: boolean;
   status: UserStatus;
   isAdmin: boolean;
