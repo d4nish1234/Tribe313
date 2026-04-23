@@ -54,8 +54,8 @@ export function EventMap({ event, rides, memberPins, viewerUid }: Props) {
     (async () => {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') return;
-      const loc = await Location.getLastKnownPositionAsync();
-      if (loc) setOrigin({ lat: loc.coords.latitude, lng: loc.coords.longitude });
+      const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+      setOrigin({ lat: loc.coords.latitude, lng: loc.coords.longitude });
     })();
   }, []);
 

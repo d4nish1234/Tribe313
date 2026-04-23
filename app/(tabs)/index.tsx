@@ -4,6 +4,7 @@ import { router } from 'expo-router';
 import { format } from 'date-fns';
 import { useAuth } from '@/src/contexts/AuthContext';
 import { useEvents } from '@/src/hooks/useEvents';
+import { usePendingCount } from '@/src/hooks/usePendingCount';
 import type { EventDoc } from '@/src/types';
 
 function Section({ title, events }: { title: string; events: EventDoc[] }) {
@@ -32,6 +33,7 @@ function Section({ title, events }: { title: string; events: EventDoc[] }) {
 export default function Home() {
   const { loading, upcoming, past } = useEvents();
   const { isAdmin, appUser } = useAuth();
+  const pendingCount = usePendingCount();
 
   if (loading) {
     return (
@@ -56,8 +58,9 @@ export default function Home() {
                 mode="contained-tonal"
                 onPress={() => router.push('/admin/approvals')}
                 style={{ marginHorizontal: 16, marginBottom: 12 }}
+                icon={pendingCount > 0 ? 'circle-medium' : undefined}
               >
-                Admin · Pending approvals
+                Admin · Pending approvals{pendingCount > 0 ? ` (${pendingCount})` : ''}
               </Button>
             )}
             <Section title="Upcoming" events={upcoming} />

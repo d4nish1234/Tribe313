@@ -1,6 +1,6 @@
 import type { Timestamp } from 'firebase/firestore';
 
-export type UserStatus = 'pending' | 'approved' | 'evicted';
+export type UserStatus = 'pending' | 'approved' | 'evicted' | 'dismissed';
 
 export type AppUser = {
   uid: string;

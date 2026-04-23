@@ -2,10 +2,12 @@ import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthGate } from '@/src/hooks/useAuthGate';
 import { usePushRegistration } from '@/src/hooks/usePushRegistration';
+import { usePendingCount } from '@/src/hooks/usePendingCount';
 
 export default function TabsLayout() {
   useAuthGate();
   usePushRegistration();
+  const pendingCount = usePendingCount();
   return (
     <Tabs screenOptions={{ headerShown: true }}>
       <Tabs.Screen
@@ -13,6 +15,7 @@ export default function TabsLayout() {
         options={{
           title: 'Home',
           tabBarIcon: ({ color, size }) => <Ionicons name="home" color={color} size={size} />,
+          tabBarBadge: pendingCount > 0 ? pendingCount : undefined,
         }}
       />
       <Tabs.Screen
