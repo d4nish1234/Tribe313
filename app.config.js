@@ -10,6 +10,12 @@ export default {
     scheme: "tribe313",
     userInterfaceStyle: "automatic",
     newArchEnabled: true,
+    updates: {
+      url: `https://u.expo.dev/${process.env.EAS_PROJECT_ID || "2ca8a19b-c0b7-4bc3-bf92-ac0e0f970331"}`,
+    },
+    runtimeVersion: {
+      policy: "appVersion",
+    },
     ios: {
       supportsTablet: true,
       bundleIdentifier: IS_DEV ? "com.tribe313.app.dev" : "com.tribe313.app",
@@ -74,7 +80,7 @@ export default {
     ],
     extra: {
       eas: {
-        projectId: process.env.EAS_PROJECT_ID || "REPLACE_WITH_EAS_PROJECT_ID",
+        projectId: process.env.EAS_PROJECT_ID || "2ca8a19b-c0b7-4bc3-bf92-ac0e0f970331",
       },
       firebase: {
         apiKey: process.env.FIREBASE_API_KEY,

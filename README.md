@@ -69,11 +69,17 @@ Put the returned project ID in `.env` → `EAS_PROJECT_ID`.
 
 ## Daily development
 
+The app uses native modules (`expo-notifications`, `expo-location`, Google Maps) that Expo Go doesn't fully support, so development runs against a custom **dev client** (`expo-dev-client`) instead of Expo Go.
+
 ```bash
 npm install
 cd functions && npm install && cd ..
 
-# Start Expo
+# One-time (and after any new native dependency): build + install a dev client
+eas build --profile development --platform ios
+eas build --profile development --platform android
+
+# Start Expo — connects to the installed dev client, not Expo Go
 npx expo start
 
 # Start Firebase emulators (separate terminal)
@@ -83,11 +89,14 @@ firebase emulators:start
 ### Build + run on device
 
 ```bash
-eas build --profile development --platform ios
-eas build --profile development --platform android
+eas build --profile production --platform ios
+eas build --profile production --platform android
 ```
 
-Install the resulting dev build on a physical device (push notifications don't work in Expo Go on iOS).
+The `production` profile is signed for store distribution, so the build isn't directly installable like a dev client — get it onto a device via:
+
+- **iOS**: `eas submit --platform ios` uploads the build to TestFlight; install it there.
+- **Android**: the profile builds an `.aab` for Play Console (`eas submit --platform android`). For a directly-installable `.apk` instead, add an `android.buildType: "apk"` override to the `production` profile in [`eas.json`](eas.json), or use `eas build --profile preview` for ad-hoc internal distribution.
 
 ### Deploy backend
 
