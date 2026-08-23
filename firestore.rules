@@ -43,11 +43,16 @@ service cloud.firestore {
         && request.resource.data.isAdmin == false;
 
       // Self-update limited to profile + notification/share toggles.
+      // `emailVerified` is self-settable but only from false -> true (client
+      // syncs it from Firebase Auth after the user verifies their email).
       allow update: if isSignedIn() && request.auth.uid == uid
         && request.resource.data.diff(resource.data).affectedKeys()
              .hasOnly(['firstName', 'lastName', 'phone', 'address', 'addressGeo',
                        'carpoolAddress', 'carpoolAddressGeo',
-                       'notificationsEnabled', 'shareLocation', 'updatedAt']);
+                       'notificationsEnabled', 'shareLocation', 'updatedAt',
+                       'emailVerified'])
+        && (!('emailVerified' in request.resource.data.diff(resource.data).affectedKeys())
+            || request.resource.data.emailVerified == true);
 
       // Admins can update any user (approvals, eviction, admin promotion go
       // through callables, but console-driven edits should also be possible).
@@ -71,9 +76,12 @@ service cloud.firestore {
       match /rsvps/{uid} {
         allow read: if isApproved();
         // A member RSVPs for themselves; the `attended` flag may only be set
-        // by admins. We enforce that by comparing to prior value.
-        allow create, update: if isApproved() && request.auth.uid == uid
-          && (request.resource.data.attended == (resource == null ? false : resource.data.attended) || isAdmin());
+        // by admins. For non-admin writes, attended must be absent or false
+        // on create, and unchanged on update.
+        allow create: if isApproved() && request.auth.uid == uid
+          && request.resource.data.get('attended', false) == false;
+        allow update: if isApproved() && request.auth.uid == uid
+          && request.resource.data.get('attended', false) == resource.data.get('attended', false);
         allow update, delete: if isAdmin();
       }
 
@@ -92,6 +100,11 @@ service cloud.firestore {
             && request.resource.data.status == 'matched'
             && request.resource.data.driverUid == request.auth.uid
             && request.resource.data.requesterUid == resource.data.requesterUid)
+          || (resource.data.status == 'matched'
+            && resource.data.driverUid == request.auth.uid
+            && request.resource.data.status == 'open'
+            && request.resource.data.diff(resource.data).affectedKeys()
+                 .hasOnly(['status', 'driverUid', 'matchedAt']))
           || (request.resource.data.status == 'cancelled'
             && (request.auth.uid == resource.data.requesterUid || isAdmin()))
           || (request.auth.uid == resource.data.requesterUid

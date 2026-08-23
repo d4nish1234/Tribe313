@@ -12,7 +12,7 @@ import type { AppUser } from '@/src/types';
 type SortKey = 'name' | 'lastAttended';
 
 export default function Members() {
-  const { isAdmin } = useAuth();
+  const { isAdmin, firebaseUser } = useAuth();
   const { loading, members } = useMembers(true);
   const [sort, setSort] = useState<SortKey>('name');
   const [confirm, setConfirm] = useState<AppUser | null>(null);
@@ -146,6 +146,8 @@ export default function Members() {
                     />
                   );
                 }
+                const canEvict = item.uid !== firebaseUser?.uid && !item.isAdmin;
+                if (!canEvict) return null;
                 return <IconButton icon="account-remove" onPress={() => setConfirm(item)} />;
               }}
             />

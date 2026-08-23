@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { onAuthStateChanged, type User } from 'firebase/auth';
-import { doc, onSnapshot } from 'firebase/firestore';
+import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
 import { auth, db } from '../firebase/config';
 import type { AppUser } from '../types';
 
@@ -32,7 +32,11 @@ export function useCurrentUser(): State {
     const unsub = onSnapshot(
       ref,
       (snap) => {
-        setAppUser(snap.exists() ? ({ uid: snap.id, ...(snap.data() as any) } as AppUser) : null);
+        const data = snap.exists() ? snap.data() : null;
+        if (data && firebaseUser.emailVerified && !data.emailVerified) {
+          updateDoc(ref, { emailVerified: true });
+        }
+        setAppUser(data ? ({ uid: snap.id, ...data } as AppUser) : null);
         setLoading(false);
       },
       () => setLoading(false),

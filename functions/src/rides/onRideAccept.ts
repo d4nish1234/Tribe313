@@ -31,6 +31,30 @@ export const onRideAccept = onDocumentUpdated(
       return;
     }
 
+    // matched -> open: driver backed out, notify requester and admins
+    if (before.status === 'matched' && after.status === 'open') {
+      const driverUid = before.driverUid as string | undefined;
+      const requesterUid = before.requesterUid as string;
+      const driver = driverUid ? (await db.doc(`users/${driverUid}`).get()).data() : null;
+      const driverName = driver?.firstName ?? 'The driver';
+      const evSnap = await db.doc(`events/${event.params.eventId}`).get();
+      const ev = evSnap.data();
+
+      const requesterTargets = await targetForUser(requesterUid);
+      const adminTargets = await targetsForAdmins(driverUid);
+      await sendPushes(requesterTargets, {
+        title: 'Driver unmatched',
+        body: `${driverName} can no longer give you a ride to ${ev?.title ?? 'the event'}.`,
+        data: { type: 'ride-unmatch', eventId: event.params.eventId },
+      });
+      await sendPushes(adminTargets, {
+        title: 'Driver unmatched',
+        body: `${driverName} backed out of a ride for ${ev?.title ?? 'an event'}.`,
+        data: { type: 'ride-unmatch', eventId: event.params.eventId },
+      });
+      return;
+    }
+
     // matched -> cancelled: notify the driver their ride was cancelled
     if (before.status === 'matched' && after.status === 'cancelled') {
       const driverUid = before.driverUid as string | undefined;

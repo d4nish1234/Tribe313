@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, View } from 'react-native';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { ActivityIndicator, Text, View } from 'react-native';
 import MapView, { Marker, Polyline } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { getDirections } from '../firebase/fn';
@@ -10,6 +10,7 @@ type Props = {
   event: EventDoc;
   rides: Ride[];
   memberPins?: { uid: string; name: string; lat: number; lng: number }[];
+  carpoolPins?: { id: string; label: string; lat: number; lng: number }[];
   viewerUid: string | null;
 };
 
@@ -43,7 +44,36 @@ function deriveRole(viewerUid: string | null, rides: Ride[]): Role {
   return { kind: 'solo' };
 }
 
-export function EventMap({ event, rides, memberPins, viewerUid }: Props) {
+export function EventMap({ event, rides, memberPins, carpoolPins, viewerUid }: Props) {
+  const mapRef = useRef<MapView>(null);
+
+  const openRequesterUids = useMemo(
+    () => new Set(rides.filter((r) => r.status === 'open').map((r) => r.requesterUid)),
+    [rides],
+  );
+  const visibleMemberPins = useMemo(
+    () => (memberPins ?? []).filter((m) => openRequesterUids.has(m.uid)),
+    [memberPins, openRequesterUids],
+  );
+
+  const allCoordinates = useMemo(() => {
+    const coords: { latitude: number; longitude: number }[] = [
+      { latitude: event.location.lat, longitude: event.location.lng },
+    ];
+    for (const c of carpoolPins ?? []) {
+      coords.push({ latitude: c.lat, longitude: c.lng });
+    }
+    for (const m of visibleMemberPins) {
+      coords.push({ latitude: m.lat, longitude: m.lng });
+    }
+    for (const r of rides) {
+      if (r.status !== 'cancelled' && r.pickup?.lat) {
+        coords.push({ latitude: r.pickup.lat, longitude: r.pickup.lng });
+      }
+    }
+    return coords;
+  }, [event.location.lat, event.location.lng, carpoolPins, visibleMemberPins, rides]);
+
   const [origin, setOrigin] = useState<{ lat: number; lng: number } | null>(null);
   const [poly, setPoly] = useState<{ lat: number; lng: number }[] | null>(null);
   const [loading, setLoading] = useState(false);
@@ -84,7 +114,25 @@ export function EventMap({ event, rides, memberPins, viewerUid }: Props) {
         setLoading(false);
       }
     })();
-  }, [origin?.lat, origin?.lng, event.id, role.kind]);
+  }, [
+    origin?.lat,
+    origin?.lng,
+    event.id,
+    role.kind,
+    role.kind === 'driver'
+      ? role.pickups.map((p) => `${p.lat},${p.lng}`).join('|')
+      : role.kind === 'requester'
+      ? `${role.pickup.lat},${role.pickup.lng}`
+      : '',
+  ]);
+
+  function fitAll() {
+    if (!mapRef.current || allCoordinates.length === 0) return;
+    mapRef.current.fitToCoordinates(allCoordinates, {
+      edgePadding: { top: 48, right: 48, bottom: 48, left: 48 },
+      animated: false,
+    });
+  }
 
   const region = {
     latitude: event.location.lat,
@@ -95,13 +143,21 @@ export function EventMap({ event, rides, memberPins, viewerUid }: Props) {
 
   return (
     <View style={{ height: 320, borderRadius: 8, overflow: 'hidden' }}>
-      <MapView style={{ flex: 1 }} initialRegion={region}>
+      <MapView
+        ref={mapRef}
+        style={{ flex: 1 }}
+        initialRegion={region}
+        onMapReady={fitAll}
+      >
         <Marker
           coordinate={{ latitude: event.location.lat, longitude: event.location.lng }}
           title={event.title}
           description={event.location.label}
-          pinColor="red"
-        />
+          anchor={{ x: 0.5, y: 1 }}
+          tracksViewChanges={false}
+        >
+          <Text style={{ fontSize: 36 }}>🏁</Text>
+        </Marker>
         {rides
           .filter((r) => r.status !== 'cancelled' && r.pickup?.lat)
           .map((r) => (
@@ -111,14 +167,26 @@ export function EventMap({ event, rides, memberPins, viewerUid }: Props) {
               title="Pickup"
               description={r.pickup.label || r.pickup.address}
               pinColor="orange"
+              tracksViewChanges={false}
             />
           ))}
-        {(memberPins ?? []).map((m) => (
+        {visibleMemberPins.map((m) => (
           <Marker
             key={m.uid}
             coordinate={{ latitude: m.lat, longitude: m.lng }}
             title={m.name}
-            opacity={0.5}
+            pinColor="red"
+            tracksViewChanges={false}
+          />
+        ))}
+        {(carpoolPins ?? []).map((c) => (
+          <Marker
+            key={`carpool-${c.id}`}
+            coordinate={{ latitude: c.lat, longitude: c.lng }}
+            title={c.label}
+            description="Carpool location"
+            pinColor="blue"
+            tracksViewChanges={false}
           />
         ))}
         {poly && poly.length > 1 ? (

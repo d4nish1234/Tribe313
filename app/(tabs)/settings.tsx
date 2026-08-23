@@ -110,6 +110,12 @@ export default function Settings() {
   return (
     <ScrollView contentContainerStyle={{ padding: 16, gap: 12 }}>
       <Text variant="titleMedium">Profile</Text>
+      <TextInput
+        label="Email"
+        value={firebaseUser.email ?? ''}
+        editable={false}
+        style={{ opacity: 0.6 }}
+      />
       <TextInput label="First name" value={first} onChangeText={setFirst} />
       <TextInput label="Last name" value={last} onChangeText={setLast} />
       <TextInput label="Phone" value={phone} onChangeText={setPhone} keyboardType="phone-pad" />
