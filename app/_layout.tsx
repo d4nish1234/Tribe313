@@ -1,19 +1,21 @@
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useColorScheme } from 'react-native';
 import { PaperProvider } from 'react-native-paper';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import 'react-native-reanimated';
 
 import { AuthProvider } from '@/src/contexts/AuthContext';
-import { darkTheme, lightTheme } from '@/src/theme';
+import { lightTheme } from '@/src/theme';
 
 const queryClient = new QueryClient();
 
 export default function RootLayout() {
-  const scheme = useColorScheme();
-  const theme = scheme === 'dark' ? darkTheme : lightTheme;
+  // Screens don't set explicit backgrounds yet, so they assume a light surface.
+  // Following the device's dark-mode setting here would put dark-theme's light
+  // text colors on those (still-light) backgrounds. Force light until screens
+  // are made dark-mode aware.
+  const theme = lightTheme;
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
@@ -29,7 +31,7 @@ export default function RootLayout() {
               <Stack.Screen name="admin/approvals" options={{ headerShown: true, title: 'Approvals' }} />
               <Stack.Screen name="admin/carpool-addresses" options={{ headerShown: true, title: 'Carpool locations' }} />
             </Stack>
-            <StatusBar style="auto" />
+            <StatusBar style="dark" />
           </AuthProvider>
         </PaperProvider>
       </QueryClientProvider>

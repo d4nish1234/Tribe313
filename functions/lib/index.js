@@ -1,12 +1,14 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getDirections = exports.geocodeAddress = exports.onRsvpWrite = exports.onRideAccept = exports.onRideRequest = exports.onEventCreate = exports.selfDeleteAccount = exports.reinstateUser = exports.deactivateUser = exports.onUserStatusChange = exports.onUserPending = exports.approveUser = exports.promoteAdmin = exports.onUserCreate = void 0;
+exports.getDirections = exports.geocodeAddress = exports.onRsvpWrite = exports.onRideAccept = exports.onRideRequest = exports.onEventCreate = exports.selfDeleteAccount = exports.reinstateUser = exports.deactivateUser = exports.onUserStatusChange = exports.onUserPending = exports.approveUser = exports.demoteAdmin = exports.promoteAdmin = exports.onUserCreate = void 0;
 const v2_1 = require("firebase-functions/v2");
 (0, v2_1.setGlobalOptions)({ region: 'us-central1', maxInstances: 10 });
 var onUserCreate_1 = require("./auth/onUserCreate");
 Object.defineProperty(exports, "onUserCreate", { enumerable: true, get: function () { return onUserCreate_1.onUserCreate; } });
 var promoteAdmin_1 = require("./auth/promoteAdmin");
 Object.defineProperty(exports, "promoteAdmin", { enumerable: true, get: function () { return promoteAdmin_1.promoteAdmin; } });
+var demoteAdmin_1 = require("./auth/demoteAdmin");
+Object.defineProperty(exports, "demoteAdmin", { enumerable: true, get: function () { return demoteAdmin_1.demoteAdmin; } });
 var approveUser_1 = require("./approvals/approveUser");
 Object.defineProperty(exports, "approveUser", { enumerable: true, get: function () { return approveUser_1.approveUser; } });
 var onPendingUser_1 = require("./approvals/onPendingUser");

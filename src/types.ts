@@ -16,6 +16,7 @@ export type AppUser = {
   emailVerified?: boolean;
   status: UserStatus;
   isAdmin: boolean;
+  isSeedAdmin?: boolean;
   expoPushToken?: string;
   notificationsEnabled: boolean;
   badges: string[];

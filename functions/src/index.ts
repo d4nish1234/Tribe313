@@ -4,6 +4,7 @@ setGlobalOptions({ region: 'us-central1', maxInstances: 10 });
 
 export { onUserCreate } from './auth/onUserCreate';
 export { promoteAdmin } from './auth/promoteAdmin';
+export { demoteAdmin } from './auth/demoteAdmin';
 export { approveUser } from './approvals/approveUser';
 export { onUserPending, onUserStatusChange } from './approvals/onPendingUser';
 export { deactivateUser } from './users/deactivate';

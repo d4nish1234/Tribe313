@@ -21,6 +21,7 @@ exports.onUserCreate = v1_1.auth.user().onCreate(async (user) => {
         lastName: existing.data()?.lastName ?? rest.join(' ') ?? '',
         status: isSeedAdmin ? 'approved' : 'pending',
         isAdmin: isSeedAdmin,
+        isSeedAdmin,
         shareLocation: false,
         notificationsEnabled: true,
         badges: [],
