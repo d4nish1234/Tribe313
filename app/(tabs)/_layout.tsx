@@ -26,6 +26,13 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="benchmark"
+        options={{
+          title: 'Benchmark',
+          tabBarIcon: ({ color, size }) => <Ionicons name="barbell" color={color} size={size} />,
+        }}
+      />
+      <Tabs.Screen
         name="settings"
         options={{
           title: 'Settings',

@@ -5,6 +5,7 @@ import { format } from 'date-fns';
 import { useAuth } from '@/src/contexts/AuthContext';
 import { useEvents } from '@/src/hooks/useEvents';
 import { usePendingCount } from '@/src/hooks/usePendingCount';
+import { BrandLogo } from '@/src/components/BrandLogo';
 import type { EventDoc } from '@/src/types';
 
 function Section({ title, events }: { title: string; events: EventDoc[] }) {
@@ -48,6 +49,7 @@ export default function Home() {
       <FlatList
         data={[0]}
         keyExtractor={() => 'home'}
+        ListHeaderComponent={<BrandLogo />}
         renderItem={() => (
           <View style={{ paddingVertical: 16 }}>
             <Text variant="headlineSmall" style={{ marginHorizontal: 16, marginBottom: 12 }}>

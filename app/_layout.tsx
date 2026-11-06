@@ -30,6 +30,10 @@ export default function RootLayout() {
               <Stack.Screen name="event/new" options={{ headerShown: true, title: 'New event', presentation: 'modal' }} />
               <Stack.Screen name="admin/approvals" options={{ headerShown: true, title: 'Approvals' }} />
               <Stack.Screen name="admin/carpool-addresses" options={{ headerShown: true, title: 'Carpool locations' }} />
+              <Stack.Screen name="benchmark/entry/[date]" options={{ headerShown: true, title: 'Benchmark', headerBackTitle: 'Back' }} />
+              <Stack.Screen name="benchmark/plan" options={{ headerShown: true, title: 'Your plan', headerBackTitle: 'Back' }} />
+              <Stack.Screen name="benchmark/coach/index" options={{ headerShown: true, title: 'Coach', headerBackTitle: 'Back' }} />
+              <Stack.Screen name="benchmark/coach/[uid]" options={{ headerShown: true, title: 'Member', headerBackTitle: 'Back' }} />
             </Stack>
             <StatusBar style="dark" />
           </AuthProvider>

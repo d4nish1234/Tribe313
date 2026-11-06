@@ -1,0 +1,551 @@
+{
+  "app": "313 Tribe Benchmark",
+  "testDayOrder": ["splat", "bj", "dl", "bench", "pull", "carry", "hang", "hrp", "plank", "ws2", "ws1", "sledpush", "sledpull", "run", "bike"],
+  "levels": ["Foundation", "Level 1", "Level 2", "Level 3"],
+  "maxScore": 42,
+  "workouts": {
+    "Leg Day": { "exampleDay": "Monday", "tests": ["splat", "bj", "dl", "ws", "sledpush"] },
+    "Upper Body Day": { "exampleDay": "Wednesday", "tests": ["bench", "pull", "hrp"] },
+    "Grip & Cardio Day": { "exampleDay": "Friday", "tests": ["carry", "hang", "plank", "run", "bike", "sledpull"] }
+  },
+  "tests": [
+    {
+      "key": "splat",
+      "name": "Wall squat mobility",
+      "input": "in",
+      "unit": "in",
+      "better": "lower",
+      "scored": true,
+      "logged": true,
+      "workout": "Leg Day",
+      "note": "Closest distance you passed",
+      "standards": ["Toes 12 in from wall", "Toes 6 in from wall", "Toes 2 in from wall"],
+      "thresholds": "inches from wall, lower is better: L1<=12, L2<=6, L3<=2",
+      "howToTest": [
+        "Stand facing a wall, feet shoulder-width, arms straight overhead.",
+        "Start with toes 12 inches from the wall. Squat until thighs are below knee height, then stand up.",
+        "It doesn’t count if your hands, face or knees touch the wall, your heels lift, or you tip backward.",
+        "Passed? Move 2 inches closer and try again. Log the closest distance you passed."
+      ],
+      "plans": {
+        "Foundation -> Level 1": ["Knee-to-wall ankle rocks 2×10 each", "Goblet squat hold 3×30 sec", "Wall slides 3×10"],
+        "Level 1 -> Level 2": ["Open books 2×8 each side", "90/90 hip switches 2×8", "Overhead squat with a dowel 3×8"],
+        "Level 2 -> Level 3": ["Face-the-wall squat 3×5, slow", "Cossack squat 3×6 each", "Foam roller upper-back extension 2×10"],
+        "Hold Level 3": ["One hard attempt at the test every 2 weeks", "Keep its main exercise in your week, with fewer sets", "Spend the extra time on your weakest test"]
+      },
+      "photos": ["img/Overhead_Squat-0.jpg", "img/Overhead_Squat-1.jpg"]
+    },
+    {
+      "key": "bj",
+      "name": "Broad jump",
+      "input": "ftin",
+      "unit": "inches",
+      "better": "higher",
+      "scored": true,
+      "logged": true,
+      "workout": "Leg Day",
+      "note": null,
+      "standards": ["Your height", "Your height + 1 ft", "Your height + 2 ft"],
+      "thresholds": "inches, higher is better: L1>=height, L2>=height+12, L3>=height+24",
+      "howToTest": [
+        "Stand with toes behind a line, feet together.",
+        "Swing your arms and jump forward as far as you can. Land on both feet.",
+        "Measure from the line to the back of your closest heel.",
+        "Take 3 tries. Log your best one."
+      ],
+      "plans": {
+        "Foundation -> Level 1": ["Goblet squat 3×8", "Glute bridge 3×12", "Box jump 3×5, step down"],
+        "Level 1 -> Level 2": ["Broad jump 5×3, full rest", "Trap bar jump 4×3", "Split squat 3×8 each leg"],
+        "Level 2 -> Level 3": ["Broad jump and stick it 5×2", "Heavy trap bar deadlift 5×3", "Hip thrust 3×6"],
+        "Hold Level 3": ["One hard attempt at the test every 2 weeks", "Keep its main exercise in your week, with fewer sets", "Spend the extra time on your weakest test"]
+      },
+      "photos": ["img/Standing_Long_Jump-0.jpg", "img/Standing_Long_Jump-1.jpg"]
+    },
+    {
+      "key": "dl",
+      "name": "Trap bar deadlift",
+      "input": "lb",
+      "unit": "lb",
+      "better": "higher",
+      "scored": true,
+      "logged": true,
+      "workout": "Leg Day",
+      "note": "Heaviest weight lifted 5 times",
+      "standards": ["1.5× your bodyweight, 5 reps", "2× your bodyweight, 5 reps", "2.5× your bodyweight, 5 reps"],
+      "thresholds": "lb for 5 reps, higher is better: L1>=1.5*bodyweight, L2>=2*bodyweight, L3>=2.5*bodyweight",
+      "howToTest": [
+        "Stand inside the trap bar, grab the handles, chest up, back flat.",
+        "Stand up tall, then lower with control. That’s 1 rep.",
+        "Warm up with lighter sets, adding weight until 5 reps is hard but your form stays good.",
+        "Log the heaviest weight you lifted 5 times in a row."
+      ],
+      "plans": {
+        "Foundation -> Level 1": ["Kettlebell deadlift 3×10", "Romanian deadlift 3×8", "Trap bar deadlift 5×5, add 5–10 lb each week"],
+        "Level 1 -> Level 2": ["Trap bar deadlift 4×5 at 85%", "Romanian deadlift 3×6", "Back extensions 3×12"],
+        "Level 2 -> Level 3": ["Heavy doubles, once a week", "Deficit pulls 3×4", "Block pulls 3×3"],
+        "Hold Level 3": ["One hard attempt at the test every 2 weeks", "Keep its main exercise in your week, with fewer sets", "Spend the extra time on your weakest test"]
+      },
+      "photos": ["img/Trap_Bar_Deadlift-0.jpg", "img/Trap_Bar_Deadlift-1.jpg"]
+    },
+    {
+      "key": "ws",
+      "name": "Wall sit",
+      "input": "derived from ws2 + ws1",
+      "unit": null,
+      "better": null,
+      "scored": true,
+      "logged": false,
+      "workout": "Leg Day",
+      "note": null,
+      "standards": ["60 sec on both legs", "30 sec on each leg", "60 sec on each leg"],
+      "thresholds": "seconds: L1 = both-leg hold>=60; L2 = single-leg hold>=30; L3 = single-leg hold>=60 (single-leg uses weaker leg)",
+      "howToTest": ["Logged as two parts: both legs, then one leg.", "See the ⓘ on each part for how it’s done."],
+      "plans": {
+        "Foundation -> Level 1": ["Bodyweight squats 3×15", "Wall sit 4×30 sec", "Spanish squat 3×30 sec"],
+        "Level 1 -> Level 2": ["Single-leg box squat 3×6 each", "Split-squat hold 3×30 sec each", "Wall sit 3×75 sec"],
+        "Level 2 -> Level 3": ["Single-leg wall sit 4×40 sec each", "Pistol to box 3×5 each", "Step-ups 3×8 each"],
+        "Hold Level 3": ["One hard attempt at the test every 2 weeks", "Keep its main exercise in your week, with fewer sets", "Spend the extra time on your weakest test"]
+      },
+      "photos": null
+    },
+    {
+      "key": "ws2",
+      "name": "Wall sit, both legs",
+      "input": "time",
+      "unit": "seconds",
+      "better": "higher",
+      "scored": false,
+      "logged": true,
+      "workout": null,
+      "note": null,
+      "standards": null,
+      "thresholds": null,
+      "howToTest": [
+        "Back flat on a wall, slide down until thighs are level with the floor and knees are over ankles.",
+        "Hands off your legs.",
+        "Time stops when you stand up or slide down."
+      ],
+      "plans": null,
+      "photos": null
+    },
+    {
+      "key": "ws1",
+      "name": "Wall sit, one leg",
+      "input": "time",
+      "unit": "seconds",
+      "better": "higher",
+      "scored": false,
+      "logged": true,
+      "workout": null,
+      "note": "Log your weaker leg",
+      "standards": null,
+      "thresholds": null,
+      "howToTest": [
+        "Same wall sit position, then lift one foot off the floor.",
+        "Time it on each leg, resting in between.",
+        "Log the shorter of the two times."
+      ],
+      "plans": null,
+      "photos": null
+    },
+    {
+      "key": "bench",
+      "name": "Bench press",
+      "input": "reps",
+      "unit": "reps",
+      "better": "higher",
+      "scored": true,
+      "logged": true,
+      "workout": "Upper Body Day",
+      "note": "Reps with bar at your bodyweight",
+      "standards": ["10 reps at your bodyweight", "15 reps at your bodyweight", "20 reps at your bodyweight"],
+      "thresholds": { "L1": 10, "L2": 15, "L3": 20 },
+      "howToTest": [
+        "Load the bar to your bodyweight (round down to the nearest 5 lb).",
+        "Lower to your chest, press to straight arms. No bouncing.",
+        "A spotter must stand behind you every set.",
+        "Log how many clean reps you did without racking the bar."
+      ],
+      "plans": {
+        "Foundation -> Level 1": ["Push-ups 4 × max", "Dumbbell bench 3×10", "Band pull-aparts 3×20"],
+        "Level 1 -> Level 2": ["Bench at 85–90% of bodyweight 5×6", "Paused bench 3×5", "Dips 3×8"],
+        "Level 2 -> Level 3": ["Rest-pause sets at bodyweight, 3 sets", "Close-grip bench 3×8", "Add 5 total reps at bodyweight each week"],
+        "Hold Level 3": ["One hard attempt at the test every 2 weeks", "Keep its main exercise in your week, with fewer sets", "Spend the extra time on your weakest test"]
+      },
+      "photos": ["img/Barbell_Bench_Press_-_Medium_Grip-0.jpg", "img/Barbell_Bench_Press_-_Medium_Grip-1.jpg"]
+    },
+    {
+      "key": "pull",
+      "name": "Pull-ups",
+      "input": "reps",
+      "unit": "reps",
+      "better": "higher",
+      "scored": true,
+      "logged": true,
+      "workout": "Upper Body Day",
+      "note": null,
+      "standards": ["10 reps", "15 reps", "20 reps"],
+      "thresholds": { "L1": 10, "L2": 15, "L3": 20 },
+      "howToTest": [
+        "Hang with straight arms, palms facing away.",
+        "Pull until your chin is over the bar, then lower all the way down.",
+        "No swinging or kicking.",
+        "Log how many full reps you did."
+      ],
+      "plans": {
+        "Foundation -> Level 1": ["Negatives 5×3", "Band-assisted pull-ups 4×6", "Inverted rows 3×10"],
+        "Level 1 -> Level 2": ["Half your max, 5 times a day", "Weighted pull-ups 5×3", "Scap pull-ups 3×10"],
+        "Level 2 -> Level 3": ["Ladders 1 to 5, 3 rounds", "Weighted pull-ups 4×4", "Max reps in 10 min"],
+        "Hold Level 3": ["One hard attempt at the test every 2 weeks", "Keep its main exercise in your week, with fewer sets", "Spend the extra time on your weakest test"]
+      },
+      "photos": ["img/Pullups-0.jpg", "img/Pullups-1.jpg"]
+    },
+    {
+      "key": "hrp",
+      "name": "Hand-release push-ups",
+      "input": "reps",
+      "unit": "reps",
+      "better": "higher",
+      "scored": true,
+      "logged": true,
+      "workout": "Upper Body Day",
+      "note": null,
+      "standards": ["20 reps", "30 reps", "40 reps"],
+      "thresholds": { "L1": 20, "L2": 30, "L3": 40 },
+      "howToTest": [
+        "Lie flat on your chest, hands next to your shoulders.",
+        "Lift your hands off the floor for a moment, put them back down.",
+        "Push up to straight arms, body in a straight line. That’s 1 rep.",
+        "Go without stopping. Log your total."
+      ],
+      "plans": {
+        "Foundation -> Level 1": ["Incline push-ups 4×10", "Slow push-ups 3×5", "Triceps pushdowns 3×12"],
+        "Level 1 -> Level 2": ["Every minute for 10 min: 8–10 reps", "Weighted push-ups 3×8", "Close-grip push-ups 3×10"],
+        "Level 2 -> Level 3": ["Pyramid 2-4-6-8-10-8-6-4-2", "100 reps for time, once a week", "2 max sets at the end of training"],
+        "Hold Level 3": ["One hard attempt at the test every 2 weeks", "Keep its main exercise in your week, with fewer sets", "Spend the extra time on your weakest test"]
+      },
+      "photos": ["img/Pushups-0.jpg", "img/Pushups-1.jpg"]
+    },
+    {
+      "key": "carry",
+      "name": "Farmer's carry",
+      "input": "ft",
+      "unit": "ft",
+      "better": "higher",
+      "scored": true,
+      "logged": true,
+      "workout": "Grip & Cardio Day",
+      "note": "Dumbbells adding up to your bodyweight",
+      "standards": ["200 ft", "250 ft", "300 ft"],
+      "thresholds": { "L1": 200, "L2": 250, "L3": 300 },
+      "howToTest": [
+        "Pick two dumbbells that add up to your bodyweight. A 220 lb man uses 110 lb in each hand.",
+        "Stand tall and walk at a steady pace.",
+        "Stop when you put them down.",
+        "Log the distance in feet. The lane is marked every 50 ft."
+      ],
+      "plans": {
+        "Foundation -> Level 1": ["Suitcase carry 4×50 ft each side", "Dumbbell rows 3×10", "Dead hang 3×30 sec"],
+        "Level 1 -> Level 2": ["Farmer’s carry at 80% of bodyweight 4×100 ft", "Shrugs 3×12", "Towel hang 3×20 sec"],
+        "Level 2 -> Level 3": ["Farmer’s carry at 110% of bodyweight 5×50 ft", "Farmer’s carry at bodyweight 2×200 ft", "Plate pinch 3×30 sec"],
+        "Hold Level 3": ["One hard attempt at the test every 2 weeks", "Keep its main exercise in your week, with fewer sets", "Spend the extra time on your weakest test"]
+      },
+      "photos": ["img/Farmers_Walk-0.jpg", "img/Farmers_Walk-1.jpg"]
+    },
+    {
+      "key": "hang",
+      "name": "Dead hang",
+      "input": "time",
+      "unit": "seconds",
+      "better": "higher",
+      "scored": true,
+      "logged": true,
+      "workout": "Grip & Cardio Day",
+      "note": null,
+      "standards": ["1 min", "1 min 30 sec", "2 min"],
+      "thresholds": { "L1": 60, "L2": 90, "L3": 120 },
+      "howToTest": [
+        "Grab the pull-up bar, palms facing away.",
+        "Hang with straight arms, feet off the floor.",
+        "Time stops when you let go."
+      ],
+      "plans": {
+        "Foundation -> Level 1": ["Dead hang 5×20 sec", "Scap pull-ups 3×10", "Farmer holds 3×20 sec"],
+        "Level 1 -> Level 2": ["Dead hang 4×45 sec", "Towel hang 3×20 sec", "One-arm assisted hang 3×10 sec each"],
+        "Level 2 -> Level 3": ["Dead hang 3×75 sec", "Weighted dead hang 3×30 sec", "One max hang a week"],
+        "Hold Level 3": ["One hard attempt at the test every 2 weeks", "Keep its main exercise in your week, with fewer sets", "Spend the extra time on your weakest test"]
+      },
+      "photos": ["img/Scapular_Pull-Up-0.jpg", "img/Scapular_Pull-Up-1.jpg"]
+    },
+    {
+      "key": "plank",
+      "name": "Plank",
+      "input": "time",
+      "unit": "seconds",
+      "better": "higher",
+      "scored": true,
+      "logged": true,
+      "workout": "Grip & Cardio Day",
+      "note": null,
+      "standards": ["2 min", "2 min 30 sec", "3 min"],
+      "thresholds": { "L1": 120, "L2": 150, "L3": 180 },
+      "howToTest": [
+        "Forearms and toes on the floor, elbows under shoulders.",
+        "Body straight from head to heels. Squeeze your glutes and stomach.",
+        "Time stops when your hips sag or knees touch."
+      ],
+      "plans": {
+        "Foundation -> Level 1": ["Plank 4×30 sec", "Dead bugs 3×10", "Bird dogs 3×8 each"],
+        "Level 1 -> Level 2": ["Plank 3×60 sec", "Side plank 3×30 sec each", "Ab wheel 3×8"],
+        "Level 2 -> Level 3": ["Long-lever plank 3×45 sec", "One max plank a week", "Hollow hold 3×30 sec"],
+        "Hold Level 3": ["One hard attempt at the test every 2 weeks", "Keep its main exercise in your week, with fewer sets", "Spend the extra time on your weakest test"]
+      },
+      "photos": ["img/Plank-0.jpg", "img/Plank-1.jpg"]
+    },
+    {
+      "key": "run",
+      "name": "800m run",
+      "input": "time",
+      "unit": "seconds",
+      "better": "lower",
+      "scored": true,
+      "logged": true,
+      "workout": "Grip & Cardio Day",
+      "note": null,
+      "standards": ["3 min 15 sec or faster", "3 min or faster", "2 min 45 sec or faster"],
+      "thresholds": { "L1": 195, "L2": 180, "L3": 165 },
+      "howToTest": [
+        "800 metres is 2 laps of a running track, or 0.8 km on the treadmill.",
+        "On a treadmill, set the incline to 1%.",
+        "Run it as fast as you can. Log your time."
+      ],
+      "plans": {
+        "Foundation -> Level 1": ["Run 1 min, walk 1 min, 8 rounds", "Zone 2 walk or ruck 30 min, twice a week", "Strides 4×20 sec"],
+        "Level 1 -> Level 2": ["Run 200 m at goal pace 6 times, 90 sec rest", "Run 400 m 4 times, just faster than goal pace", "Zone 2 cardio, twice a week"],
+        "Level 2 -> Level 3": ["Run 600 m at goal pace 3 times, 3 min rest", "Run 200 m faster than goal pace 8 times", "Keep your Zone 2 cardio"],
+        "Hold Level 3": ["One hard attempt at the test every 2 weeks", "Keep its main exercise in your week, with fewer sets", "Spend the extra time on your weakest test"]
+      },
+      "photos": ["img/Running_Treadmill-0.jpg", "img/Running_Treadmill-1.jpg"]
+    },
+    {
+      "key": "bike",
+      "name": "Assault bike, 25 cal",
+      "input": "time",
+      "unit": "seconds",
+      "better": "lower",
+      "scored": true,
+      "logged": true,
+      "workout": "Grip & Cardio Day",
+      "note": null,
+      "standards": ["1 min 15 sec or faster", "1 min or faster", "50 sec or faster"],
+      "thresholds": { "L1": 75, "L2": 60, "L3": 50 },
+      "howToTest": [
+        "Set the bike screen to count calories.",
+        "On “go”, push and pull as hard as you can.",
+        "Stop the clock when the screen reads 25 calories. Log your time."
+      ],
+      "plans": {
+        "Foundation -> Level 1": ["20 sec hard, 40 sec easy, 8 rounds", "Zone 2 bike 20–30 min", "Sled push 4×40 ft"],
+        "Level 1 -> Level 2": ["Bike 10 cal 5 times, 1 min rest between", "Bike 15 cal 3 times at goal pace, 2 min rest", "Zone 2 cardio, twice a week"],
+        "Level 2 -> Level 3": ["Bike 25 cal 4 times, 3 min rest between", "15 sec all-out, 45 sec easy, 8 rounds", "Heavy sled push 6×30 ft"],
+        "Hold Level 3": ["One hard attempt at the test every 2 weeks", "Keep its main exercise in your week, with fewer sets", "Spend the extra time on your weakest test"]
+      },
+      "photos": ["img/Bicycling_Stationary-0.jpg", "img/Bicycling_Stationary-1.jpg"]
+    },
+    {
+      "key": "sledpush",
+      "name": "Sled push",
+      "input": "time",
+      "unit": "seconds",
+      "better": "lower",
+      "scored": true,
+      "logged": true,
+      "workout": "Leg Day",
+      "note": "Bodyweight on the sled, 50 ft",
+      "standards": ["25 sec or faster", "20 sec or faster", "15 sec or faster"],
+      "thresholds": { "L1": 25, "L2": 20, "L3": 15 },
+      "howToTest": [
+        "Load the sled so plates plus sled weigh about your bodyweight. A 200 lb man uses about 200 lb total.",
+        "Hands on the tall handles, arms straight, body leaning forward.",
+        "On “go”, drive the sled 50 ft with short, fast steps.",
+        "Log your time. Same sled and same floor every test day, so times are fair."
+      ],
+      "plans": {
+        "Foundation -> Level 1": ["Light sled push 6×40 ft", "Split squat 3×8 each leg", "Step-ups 3×8 each"],
+        "Level 1 -> Level 2": ["Sled push at 75% of bodyweight 6×50 ft", "Heavy sled push 5×30 ft", "Goblet squat 3×8"],
+        "Level 2 -> Level 3": ["Sled push at bodyweight 5×50 ft, 90 sec rest", "Sled sprint 6×25 ft, light", "Broad jump 5×3, full rest"],
+        "Hold Level 3": ["One hard attempt at the test every 2 weeks", "Keep its main exercise in your week, with fewer sets", "Spend the extra time on your weakest test"]
+      },
+      "photos": ["img/Sled_Push-0.jpg", "img/Sled_Push-1.jpg"]
+    },
+    {
+      "key": "sledpull",
+      "name": "Sled pull",
+      "input": "time",
+      "unit": "seconds",
+      "better": "lower",
+      "scored": true,
+      "logged": true,
+      "workout": "Grip & Cardio Day",
+      "note": "Half bodyweight on the sled, 50 ft",
+      "standards": ["30 sec or faster", "24 sec or faster", "18 sec or faster"],
+      "thresholds": { "L1": 30, "L2": 24, "L3": 18 },
+      "howToTest": [
+        "Load the sled to about half your bodyweight. A 200 lb man uses about 100 lb total.",
+        "Hold the straps or rope handles in front of you, arms straight. Sit back into a half squat.",
+        "On “go”, walk backward and drag the sled 50 ft. Keep your arms straight and chest up.",
+        "Log your time."
+      ],
+      "plans": {
+        "Foundation -> Level 1": ["Light backward sled drag 6×40 ft", "Inverted rows 3×10", "Farmer holds 3×20 sec"],
+        "Level 1 -> Level 2": ["Backward sled drag at 40% of bodyweight 6×50 ft", "Sled row 4×10", "Dumbbell rows 3×10"],
+        "Level 2 -> Level 3": ["Backward sled drag at half bodyweight 5×50 ft, 90 sec rest", "Hand-over-hand rope pull 4×50 ft", "Towel hang 3×20 sec"],
+        "Hold Level 3": ["One hard attempt at the test every 2 weeks", "Keep its main exercise in your week, with fewer sets", "Spend the extra time on your weakest test"]
+      },
+      "photos": ["img/Backward_Drag-0.jpg", "img/Backward_Drag-1.jpg"]
+    }
+  ],
+  "wallSquatFaults": {
+    "ankle": {
+      "buttonLabel": "Tipped backward",
+      "area": "Ankles",
+      "explanation": "Tipping backward means stiff ankles.",
+      "drills": ["Knee-to-wall ankle rocks 2×10 each", "Calf stretch off a step 2×45 sec", "Heel-raised goblet squat 3×8"]
+    },
+    "hip": {
+      "buttonLabel": "Feet turned out or knees caved in",
+      "area": "Hips",
+      "explanation": "Feet turning out or knees caving in means tight hips.",
+      "drills": ["90/90 hip switches 2×8", "Frog stretch 2×45 sec", "Goblet squat, band above knees 3×8"]
+    },
+    "upper": {
+      "buttonLabel": "Arms dropped or chest fell forward",
+      "area": "Upper back & shoulders",
+      "explanation": "Arms dropping or chest falling forward means a stiff upper back or shoulders.",
+      "drills": ["Wall slides 3×10", "Open books 2×8 each side", "Foam roller upper-back extension 2×10"]
+    }
+  },
+  "glossary": [
+    { "term": "Zone 2", "matches": ["Zone 2 cardio", "Zone 2 walk or ruck", "Zone 2 bike", "Zone 2"], "explanation": "Easy, steady cardio where you can still talk in full sentences. A brisk walk, a ruck or an easy bike. It builds your engine without wearing you out.", "photos": null },
+    { "term": "Ruck", "matches": ["ruck"], "explanation": "A walk carrying a backpack with weight in it. Start with 20–30 lb.", "photos": null },
+    { "term": "Goal pace", "matches": ["goal pace"], "explanation": "The speed you need to hit your next level’s time. For the 800m Level 1 (3:15), that’s 200 m in about 49 sec.", "photos": null },
+    { "term": "85%", "matches": ["at 85%", "85%"], "explanation": "85% of the heaviest weight you can lift 5 times. If your best is 300 lb, use about 255 lb.", "photos": null },
+    { "term": "85–90% of bodyweight", "matches": ["85–90% of bodyweight"], "explanation": "A little under your bodyweight. A 200 lb man would use 170–180 lb on the bar.", "photos": null },
+    { "term": "% of bodyweight", "matches": ["80% of bodyweight", "110% of bodyweight", "40% of bodyweight", "at half bodyweight", "at bodyweight", "at your bodyweight"], "explanation": "The total weight compared to what you weigh. For a 200 lb man, 80% is 160 lb. On a carry, split it between both hands (80 lb each). On a sled, count the sled plus plates.", "photos": null },
+    { "term": "Goblet squat", "matches": ["Goblet squat hold", "Goblet squat"], "explanation": "Hold one dumbbell or kettlebell against your chest. Sit down between your knees, chest up, then stand.", "photos": ["img/Goblet_Squat-0.jpg", "img/Goblet_Squat-1.jpg"] },
+    { "term": "Glute bridge", "matches": ["Glute bridge"], "explanation": "Lie on your back, knees bent, feet flat. Push through your heels to lift your hips until your body is straight from knees to shoulders. Lower slowly.", "photos": ["img/Barbell_Glute_Bridge-0.jpg", "img/Barbell_Glute_Bridge-1.jpg"] },
+    { "term": "Box jump", "matches": ["Box jump"], "explanation": "Jump onto a sturdy box (12–20 in high), land softly. Step down, don’t jump down.", "photos": ["img/Front_Box_Jump-0.jpg", "img/Front_Box_Jump-1.jpg"] },
+    { "term": "Stick it", "matches": ["stick it"], "explanation": "Land and hold completely still for 2 seconds before moving.", "photos": null },
+    { "term": "Trap bar jump", "matches": ["Trap bar jump"], "explanation": "Hold a light trap bar (about a quarter of your deadlift weight). Jump straight up, land softly, reset.", "photos": null },
+    { "term": "Split squat", "matches": ["Split squat", "Split-squat hold"], "explanation": "One foot forward, one foot back. Lower your back knee toward the floor, then stand. A “hold” means you pause at the bottom for the time given.", "photos": ["img/Split_Squats-0.jpg", "img/Split_Squats-1.jpg"] },
+    { "term": "Hip thrust", "matches": ["Hip thrust"], "explanation": "Upper back on a bench, barbell across your hips (use a pad). Push your hips up until your body is flat, squeeze, lower.", "photos": ["img/Barbell_Hip_Thrust-0.jpg", "img/Barbell_Hip_Thrust-1.jpg"] },
+    { "term": "Trap bar deadlift", "matches": ["Heavy trap bar deadlift", "Trap bar deadlift"], "explanation": "The same lift as the test. “Heavy” means a weight you can lift about 3 times.", "photos": ["img/Trap_Bar_Deadlift-0.jpg", "img/Trap_Bar_Deadlift-1.jpg"] },
+    { "term": "Dumbbell bench", "matches": ["Dumbbell bench"], "explanation": "Lie on a bench with a dumbbell in each hand. Press up to straight arms, lower to chest level.", "photos": ["img/Dumbbell_Bench_Press-0.jpg", "img/Dumbbell_Bench_Press-1.jpg"] },
+    { "term": "Band pull-aparts", "matches": ["Band pull-aparts"], "explanation": "Hold a light resistance band at shoulder height, arms straight. Pull it apart until it touches your chest. Keeps shoulders healthy.", "photos": ["img/Band_Pull_Apart-0.jpg", "img/Band_Pull_Apart-1.jpg"] },
+    { "term": "Paused bench", "matches": ["Paused bench"], "explanation": "A bench press where you hold the bar still on your chest for 2 seconds before pressing up.", "photos": null },
+    { "term": "Dips", "matches": ["Dips"], "explanation": "On parallel bars, lower until your shoulders are a little below your elbows, then press up. Loop a band under your knees if you need help.", "photos": ["img/Dips_-_Triceps_Version-0.jpg", "img/Dips_-_Triceps_Version-1.jpg"] },
+    { "term": "Rest-pause", "matches": ["Rest-pause sets"], "explanation": "Do as many reps as you can. Rack, rest 15 sec, do more. Rest 15 sec, do more. Those three pieces are one set.", "photos": null },
+    { "term": "Close-grip bench", "matches": ["Close-grip bench"], "explanation": "Bench press with hands shoulder-width apart. Works the back of the arms harder.", "photos": ["img/Close-Grip_Barbell_Bench_Press-0.jpg", "img/Close-Grip_Barbell_Bench_Press-1.jpg"] },
+    { "term": "Negatives", "matches": ["Negatives"], "explanation": "Jump or step up so your chin is over the bar. Lower yourself as slowly as you can, about 5 seconds. Each lowering is 1 rep.", "photos": null },
+    { "term": "Band-assisted pull-ups", "matches": ["Band-assisted pull-ups"], "explanation": "Loop a resistance band over the bar and put a knee or foot in it. The band takes some of your weight.", "photos": ["img/Band_Assisted_Pull-Up-0.jpg", "img/Band_Assisted_Pull-Up-1.jpg"] },
+    { "term": "Inverted rows", "matches": ["Inverted rows"], "explanation": "Set a bar at waist height. Lie under it, grab it, body straight, heels on the floor. Pull your chest to the bar.", "photos": ["img/Inverted_Row-0.jpg", "img/Inverted_Row-1.jpg"] },
+    { "term": "Half your max, 5 times a day", "matches": ["Half your max, 5 times a day"], "explanation": "If your best is 8 pull-ups, do sets of 4. Do a set 5 times through the day, hours apart. Never to failure. It trains the movement like a skill.", "photos": null },
+    { "term": "Weighted", "matches": ["Weighted pull-ups", "Weighted push-ups", "Weighted dead hang"], "explanation": "Add load: a dip belt with a plate, a dumbbell between your feet, or a backpack. Start with 10 lb.", "photos": null },
+    { "term": "Scap pull-ups", "matches": ["Scap pull-ups"], "explanation": "Hang with straight arms. Without bending your elbows, pull your shoulder blades down to lift yourself an inch. Lower and repeat.", "photos": ["img/Scapular_Pull-Up-0.jpg", "img/Scapular_Pull-Up-1.jpg"] },
+    { "term": "Ladders", "matches": ["Ladders 1 to 5"], "explanation": "Do 1 rep, rest briefly, then 2, then 3, up to 5. That’s one round. Start again at 1.", "photos": null },
+    { "term": "Max reps in 10 min", "matches": ["Max reps in 10 min"], "explanation": "Set a 10-min timer. Do as many pull-ups as you can in small sets with short rests. Write down the total and beat it next time.", "photos": null },
+    { "term": "Incline push-ups", "matches": ["Incline push-ups"], "explanation": "Push-ups with your hands on a bench or box. Easier than the floor. Lower the height as you get stronger.", "photos": ["img/Incline_Push-Up-0.jpg", "img/Incline_Push-Up-1.jpg"] },
+    { "term": "Slow push-ups", "matches": ["Slow push-ups"], "explanation": "Take 4 seconds to lower to the floor, then push up normally.", "photos": null },
+    { "term": "Triceps pushdowns", "matches": ["Triceps pushdowns"], "explanation": "At a cable machine, keep elbows at your sides and push the bar or rope down until your arms are straight.", "photos": ["img/Triceps_Pushdown_-_Rope_Attachment-0.jpg", "img/Triceps_Pushdown_-_Rope_Attachment-1.jpg"] },
+    { "term": "Every minute", "matches": ["Every minute for 10 min"], "explanation": "Start a 10-min timer. At the start of each minute, do the reps, then rest until the next minute starts.", "photos": null },
+    { "term": "Close-grip push-ups", "matches": ["Close-grip push-ups"], "explanation": "Push-ups with hands closer than shoulder-width. Works the back of the arms.", "photos": ["img/Push-Ups_-_Close_Triceps_Position-0.jpg", "img/Push-Ups_-_Close_Triceps_Position-1.jpg"] },
+    { "term": "Pyramid", "matches": ["Pyramid"], "explanation": "Do 2 reps, rest briefly, then 4, 6, 8, 10, then back down: 8, 6, 4, 2.", "photos": null },
+    { "term": "For time", "matches": ["for time"], "explanation": "Do it as fast as you can. Write down how long it took and beat it next time.", "photos": null },
+    { "term": "Suitcase carry", "matches": ["Suitcase carry"], "explanation": "Carry one heavy dumbbell in one hand like a suitcase. Stand tall, don’t lean. Switch hands each set.", "photos": null },
+    { "term": "Dumbbell rows", "matches": ["Dumbbell rows"], "explanation": "One hand and knee on a bench. Pull a dumbbell up to your hip with the other hand, lower slowly.", "photos": ["img/One-Arm_Dumbbell_Row-0.jpg", "img/One-Arm_Dumbbell_Row-1.jpg"] },
+    { "term": "Shrugs", "matches": ["Shrugs"], "explanation": "Hold heavy dumbbells at your sides. Lift your shoulders toward your ears, hold 1 second, lower.", "photos": ["img/Dumbbell_Shrug-0.jpg", "img/Dumbbell_Shrug-1.jpg"] },
+    { "term": "Towel hang", "matches": ["Towel hang"], "explanation": "Drape a towel over the pull-up bar and hang holding both ends. Much harder on your grip.", "photos": null },
+    { "term": "Plate pinch", "matches": ["Plate pinch"], "explanation": "Pinch two weight plates together, smooth sides out, and hold them at your side.", "photos": ["img/Plate_Pinch-0.jpg", "img/Plate_Pinch-1.jpg"] },
+    { "term": "Farmer holds", "matches": ["Farmer holds"], "explanation": "Pick up heavy dumbbells and just hold them, standing still.", "photos": ["img/Farmers_Walk-0.jpg", "img/Farmers_Walk-1.jpg"] },
+    { "term": "Dead hang", "matches": ["Dead hang"], "explanation": "Hang from the pull-up bar with straight arms as long as the time given.", "photos": null },
+    { "term": "One-arm assisted hang", "matches": ["One-arm assisted hang"], "explanation": "Hang with one hand. Keep the other lightly on a towel or band for help.", "photos": null },
+    { "term": "Kettlebell deadlift", "matches": ["Kettlebell deadlift"], "explanation": "Kettlebell between your feet. Push your hips back, grab it with a flat back, stand tall. Teaches the hinge.", "photos": null },
+    { "term": "Romanian deadlift", "matches": ["Romanian deadlift"], "explanation": "Hold the bar at your hips, knees soft. Push your hips back and slide the bar down your legs until you feel a hamstring stretch, then stand.", "photos": ["img/Romanian_Deadlift-0.jpg", "img/Romanian_Deadlift-1.jpg"] },
+    { "term": "Back extensions", "matches": ["Back extensions"], "explanation": "On the back extension bench, lower your upper body, then lift until your body is straight.", "photos": ["img/Hyperextensions_Back_Extensions-0.jpg", "img/Hyperextensions_Back_Extensions-1.jpg"] },
+    { "term": "Heavy doubles", "matches": ["Heavy doubles"], "explanation": "Sets of 2 reps with a weight close to your max. Do 3–5 sets.", "photos": null },
+    { "term": "Deficit pulls", "matches": ["Deficit pulls"], "explanation": "Trap bar deadlift while standing on a 1–2 inch plate, so you lift from lower down.", "photos": null },
+    { "term": "Block pulls", "matches": ["Block pulls"], "explanation": "Deadlift with the plates raised on blocks, so the lift is shorter and you can handle more weight.", "photos": null },
+    { "term": "Dead bugs", "matches": ["Dead bugs"], "explanation": "Lie on your back, arms up, knees bent over your hips. Slowly lower one arm and the opposite leg. Keep your lower back pressed into the floor.", "photos": ["img/Dead_Bug-0.jpg", "img/Dead_Bug-1.jpg"] },
+    { "term": "Bird dogs", "matches": ["Bird dogs"], "explanation": "On hands and knees, stretch out one arm and the opposite leg. Hold 2 seconds, switch.", "photos": null },
+    { "term": "Side plank", "matches": ["Side plank"], "explanation": "On one forearm, feet stacked, body straight sideways. Don’t let your hips drop.", "photos": null },
+    { "term": "Ab wheel", "matches": ["Ab wheel"], "explanation": "Kneel holding the wheel. Roll forward as far as you can control, then roll back.", "photos": ["img/Ab_Roller-0.jpg", "img/Ab_Roller-1.jpg"] },
+    { "term": "Long-lever plank", "matches": ["Long-lever plank"], "explanation": "A plank with your elbows further out in front of your shoulders. Much harder.", "photos": null },
+    { "term": "Hollow hold", "matches": ["Hollow hold"], "explanation": "Lie on your back, arms overhead. Lift your shoulders and legs a few inches, lower back pressed down. Hold.", "photos": null },
+    { "term": "Plank", "matches": ["Plank"], "explanation": "Forearms and toes, body straight from head to heels. Squeeze your glutes and stomach.", "photos": ["img/Plank-0.jpg", "img/Plank-1.jpg"] },
+    { "term": "Bodyweight squats", "matches": ["Bodyweight squats"], "explanation": "Squat down as low as you comfortably can with no weight, then stand.", "photos": ["img/Bodyweight_Squat-0.jpg", "img/Bodyweight_Squat-1.jpg"] },
+    { "term": "Single-leg wall sit", "matches": ["Single-leg wall sit"], "explanation": "A wall sit with one foot lifted off the floor.", "photos": null },
+    { "term": "Wall sit", "matches": ["Wall sit"], "explanation": "Back flat against a wall, thighs level with the floor, knees over ankles. Hold.", "photos": null },
+    { "term": "Spanish squat", "matches": ["Spanish squat"], "explanation": "Loop a heavy band around something solid and behind your knees. Lean back into the band and sit into a squat. Easy on the knees.", "photos": null },
+    { "term": "Single-leg box squat", "matches": ["Single-leg box squat"], "explanation": "Stand on one leg in front of a box. Sit back until you touch the box, stand up on the same leg.", "photos": ["img/Single-Leg_High_Box_Squat-0.jpg", "img/Single-Leg_High_Box_Squat-1.jpg"] },
+    { "term": "Pistol to box", "matches": ["Pistol to box"], "explanation": "Same as single-leg box squat, using a lower box.", "photos": null },
+    { "term": "Step-ups", "matches": ["Step-ups"], "explanation": "Step onto a knee-height box holding dumbbells. Drive through the top foot to stand up.", "photos": ["img/Dumbbell_Step_Ups-0.jpg", "img/Dumbbell_Step_Ups-1.jpg"] },
+    { "term": "Strides", "matches": ["Strides"], "explanation": "Run 20 seconds, building to fast but relaxed. Walk back. Do these after an easy session.", "photos": null },
+    { "term": "Backward sled drag", "matches": ["Backward sled drag", "Light backward sled drag"], "explanation": "Hold the sled straps with straight arms, sit back into a half squat, and walk backward with small steps. Easy on the knees.", "photos": null },
+    { "term": "Sled row", "matches": ["Sled row"], "explanation": "Stand facing the sled, holding the straps. Row your hands to your ribs to pull the sled toward you, then walk back and repeat.", "photos": ["img/Sled_Row-0.jpg", "img/Sled_Row-1.jpg"] },
+    { "term": "Rope pull", "matches": ["Hand-over-hand rope pull"], "explanation": "Tie a rope to the sled and walk it out. Stand still and pull it in toward you, one hand over the other.", "photos": null },
+    { "term": "Sled sprint", "matches": ["Sled sprint"], "explanation": "Push a light sled as fast as you can. Fast feet, low body.", "photos": null },
+    { "term": "Sled push", "matches": ["Light sled push", "75% of bodyweight"], "explanation": "Lean into the sled handles with straight arms and drive it forward with short, powerful steps. Use the weight written.", "photos": ["img/Sled_Push-0.jpg", "img/Sled_Push-1.jpg"] },
+    { "term": "Sled push", "matches": ["Sled push", "Heavy sled push"], "explanation": "Lean into the sled handles with straight arms and drive it forward with short, powerful steps.", "photos": ["img/Sled_Push-0.jpg", "img/Sled_Push-1.jpg"] },
+    { "term": "All-out", "matches": ["all-out"], "explanation": "As hard as you possibly can.", "photos": null },
+    { "term": "Intervals", "matches": ["20 sec hard, 40 sec easy"], "explanation": "Go hard for 20 sec, then pedal easily for 40 sec. That’s one round.", "photos": null },
+    { "term": "Knee-to-wall ankle rocks", "matches": ["Knee-to-wall ankle rocks"], "explanation": "Half-kneel facing a wall, front toes about 4 in away. Push the front knee forward to touch the wall without lifting your heel.", "photos": null },
+    { "term": "Calf stretch", "matches": ["Calf stretch off a step"], "explanation": "Stand on a step on the balls of your feet. Let your heels drop below the step and hold.", "photos": null },
+    { "term": "Heel-raised goblet squat", "matches": ["Heel-raised goblet squat"], "explanation": "A goblet squat with your heels on a small plate. Lets you sit deeper while your ankles loosen up.", "photos": null },
+    { "term": "90/90 hip switches", "matches": ["90/90 hip switches"], "explanation": "Sit with both knees bent at right angles, one leg in front, one to the side. Rotate your knees to switch sides.", "photos": null },
+    { "term": "Frog stretch", "matches": ["Frog stretch"], "explanation": "On hands and knees, slide your knees wide apart. Rock your hips back gently and hold.", "photos": null },
+    { "term": "Band above knees", "matches": ["band above knees"], "explanation": "A small loop band just above your knees. Push your knees out against it as you squat.", "photos": null },
+    { "term": "Wall slides", "matches": ["Wall slides"], "explanation": "Back and arms against a wall, arms in a “goal post”. Slide your arms up keeping them touching the wall, then back down.", "photos": null },
+    { "term": "Open books", "matches": ["Open books"], "explanation": "Lie on your side, knees bent, arms out in front. Open your top arm across to the other side and follow it with your eyes.", "photos": null },
+    { "term": "Upper-back extension", "matches": ["Foam roller upper-back extension"], "explanation": "Foam roller across your upper back, hands behind your head. Lean back over the roller, then sit up. Move it up an inch and repeat.", "photos": null },
+    { "term": "Overhead squat with a dowel", "matches": ["Overhead squat with a dowel"], "explanation": "Hold a broomstick overhead with a wide grip, arms straight. Squat as deep as you can, keeping the stick over your head.", "photos": ["img/Overhead_Squat-0.jpg", "img/Overhead_Squat-1.jpg"] },
+    { "term": "Face-the-wall squat", "matches": ["Face-the-wall squat"], "explanation": "The test itself, practised. Stand facing a wall a few inches away, arms overhead, and squat slowly without touching it.", "photos": null },
+    { "term": "Cossack squat", "matches": ["Cossack squat"], "explanation": "Wide stance. Shift your weight to one side and bend that knee, keeping the other leg straight with toes up.", "photos": null },
+    { "term": "Push-ups", "matches": ["Push-ups"], "explanation": "Hands under shoulders, body straight. Lower your chest to the floor and push back up.", "photos": ["img/Pushups-0.jpg", "img/Pushups-1.jpg"] },
+    { "term": "Broad jump", "matches": ["Broad jump"], "explanation": "The test itself. Jump forward from both feet, land on both.", "photos": ["img/Standing_Long_Jump-0.jpg", "img/Standing_Long_Jump-1.jpg"] },
+    { "term": "Bike for calories", "matches": ["Bike 10 cal", "Bike 15 cal", "Bike 25 cal"], "explanation": "Pedal until the screen shows that many calories, as a hard effort. Then rest as written.", "photos": ["img/Bicycling_Stationary-0.jpg", "img/Bicycling_Stationary-1.jpg"] },
+    { "term": "Running intervals", "matches": ["Run 200 m", "Run 400 m", "Run 600 m", "Run 1 min, walk 1 min"], "explanation": "A track lap is 400 m. On a treadmill, watch the distance. Run the set distance, then rest as written.", "photos": null },
+    { "term": "Farmer’s carry", "matches": ["Farmer’s carry"], "explanation": "Walk holding a heavy dumbbell in each hand, standing tall.", "photos": ["img/Farmers_Walk-0.jpg", "img/Farmers_Walk-1.jpg"] }
+  ],
+  "explainers": {
+    "howlog": { "title": "Logging on test day", "text": "Enter today’s date and your bodyweight. Weigh in at the gym. Do the tests in any order. After each one, tap its box and scroll to your result. Skipped a test? Leave it. Entered one by mistake? Tap it and choose Clear. Tap Save results at the bottom when you’re done. You can save more than once on the same day and it updates that day’s results. Not sure how a test works? Tap the i next to it." },
+    "bw": { "title": "Why bodyweight?", "text": "Three tests are set by what you weigh: bench press, deadlift and farmer’s carry. Weigh in on test day so your targets are accurate." },
+    "height": { "title": "Why height?", "text": "The broad jump target is based on your height. Level 1 is jumping your own height. You only enter it once." },
+    "levels": { "title": "How levels work", "text": "Every test has three levels. Each level is harder than the one before. Foundation: not at Level 1 yet. Everyone starts somewhere. Level 1, 2, 3: you passed that standard. The bars next to each test show your level: means Level 2. Gold bars mean Level 3." },
+    "overall": { "title": "Your overall level", "text": "Your overall level is your lowest test. Example: Level 2 on everything except pull-ups at Level 1 means you’re Level 1 overall. This keeps you balanced. Fix your weakest test and your overall level goes up. It shows “In progress” until you’ve done all 14 tests." },
+    "score": { "title": "Your score", "text": "Each test gives you points: Foundation = 0, Level 1 = 1, Level 2 = 2, Level 3 = 3. 14 tests × 3 points = 42 points maximum. Watch this number go up each test day." },
+    "plans": { "title": "Picking a plan", "text": "Each test has a plan for every step: Reach L1: for Foundation. Gets you to Level 1. Reach L2: you’re at Level 1, working to Level 2. Reach L3: you’re at Level 2, working to Level 3. Keep L3: you’ve made it. Hold it. The app picks your plan from your latest test. Tap another to look ahead. Tap any underlined word to see how the exercise is done." },
+    "week": { "title": "Your 3 workouts", "text": "You train 3 times a week . Each workout is already built for you from your test results. Leg Day : legs, jumping and mobility Upper Body Day : pushing and pulling Grip & Cardio Day : grip, core and fitness Leave a rest day between them. Monday, Wednesday, Friday works well, but any 3 days with a day off in between is fine. Open the workout, warm up, then do the exercises top to bottom. Your weakest test comes first, while you’re fresh. About 50–60 minutes. When you log a new test, the workouts update by themselves." },
+    "warmup": { "title": "Warm-up", "text": "10 minutes before every session: 5 min easy on the bike or treadmill, then 5 min of the mobility drills from your wall squat plan. After 40, joints and tendons need this. Don’t skip it." },
+    "deload": { "title": "Every 4th week, go lighter", "text": "Weeks 1, 2 and 3: train as planned. Week 4: do the same exercises with half the sets and lighter weights. Then start again. Your body gets stronger while it recovers. This is how you keep progressing without getting hurt." },
+    "cardio": { "title": "Extra cardio", "text": "On 1 or 2 rest days, do 30–45 minutes of Zone 2: easy, steady cardio where you can still talk. A brisk walk, a ruck (walking with a weighted backpack) or an easy bike ride. It improves your 800m and bike times and helps you recover." },
+    "between": { "title": "Between test days", "text": "Don’t test your maxes in training. Train hard but leave 1–2 reps in the tank. Save your all-out effort for test day." },
+    "coachinfo": { "title": "Extra work from Zaki", "text": "Zaki added these exercises just for you, on top of your normal plan. Do them as written. Tap any underlined word to see how it’s done. If something doesn’t feel right, tell Zaki." },
+    "coachhow": { "title": "Assigning exercises", "text": "Pick a brother from the list. Type an exercise. Start typing to pick from the app’s exercise list, or write your own. Add a note if it helps, like “every morning” or “before Day A”. Tap Add . It shows up at the top of his Train screen right away. Only you can see this screen. Each brother only sees his own exercises." },
+    "coachgrid": { "title": "Reading the group table", "text": "One row per brother, showing his latest test. F = Foundation (not at Level 1 yet) L1, L2, L3 = level reached — = skipped that test Swipe sideways to see every test. Tap a name to see his progress and assign him exercises. Copy all copies every test from every brother, one row per test day, ready to paste into Excel or Google Sheets." }
+  },
+  "pickerRanges": {
+    "time": "minutes 0-9, seconds 0-59",
+    "reps": "0-100",
+    "deadlift_lb": "45-800 step 5",
+    "carry_ft": "0-600 step 10",
+    "wall_squat_in": "0-24",
+    "broad_jump": "feet 0-12, inches 0-11",
+    "bodyweight_lb": "100-400",
+    "height": "feet 4-7, inches 0-11"
+  },
+  "pickerDefaults": {
+    "splat": 12, "bj": 66, "dl": 225, "bench": 10, "pull": 8, "carry": 200, "hang": 60, "hrp": 20,
+    "plank": 120, "ws2": 60, "ws1": 30, "sledpush": 25, "sledpull": 30, "run": 210, "bike": 75,
+    "bw": 185, "height": 70
+  }
+}

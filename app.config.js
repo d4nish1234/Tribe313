@@ -4,7 +4,7 @@ export default {
   expo: {
     name: IS_DEV ? "Tribe313 (Dev)" : "Tribe313",
     slug: "tribe313",
-    version: "1.0.0",
+    version: "1.1.0",
     orientation: "portrait",
     icon: "./assets/images/icon.png",
     scheme: "tribe313",
