@@ -24,6 +24,7 @@ import { useAuth } from '@/src/contexts/AuthContext';
 import { db } from '@/src/firebase/config';
 import { geocodeAddress } from '@/src/firebase/fn';
 import { useCarpoolLocations, type CarpoolLocation } from '@/src/hooks/useCarpoolLocations';
+import { RowDivider } from '@/src/components/RowDivider';
 
 export default function CarpoolAddresses() {
   const { isAdmin } = useAuth();
@@ -115,6 +116,7 @@ export default function CarpoolAddresses() {
       <FlatList
         data={locations}
         keyExtractor={(l) => l.id}
+        ItemSeparatorComponent={() => <RowDivider />}
         ListEmptyComponent={
           <Text style={{ padding: 24, textAlign: 'center', opacity: 0.7 }}>
             No carpool locations yet. Tap + to add one.

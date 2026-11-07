@@ -1,16 +1,18 @@
-/** Benchmark colour tokens (light only, like the rest of the app). */
+import { palette } from '../theme';
+
+/** Benchmark colour tokens: the app's brand palette plus benchmark-only extras. */
 export const B = {
-  green: '#1F3D2B',
-  greenSoft: '#E6EEE9',
+  green: palette.primary,
+  greenSoft: palette.primarySoft,
   greenText: '#FFFFFF',
-  gold: '#C9A961',
-  goldSoft: '#F6EFDD',
-  text: '#1A1A1A',
-  muted: '#6B6B6B',
-  border: '#D9D9D9',
-  surface: '#FFFFFF',
-  background: '#F6F6F4',
-  danger: '#D7263D',
+  gold: palette.secondary,
+  goldSoft: palette.secondarySoft,
+  text: palette.text,
+  muted: palette.muted,
+  border: palette.border,
+  surface: palette.surface,
+  background: palette.background,
+  danger: palette.danger,
   barEmpty: '#D9DED9',
   backdrop: 'rgba(0,0,0,0.4)',
 } as const;

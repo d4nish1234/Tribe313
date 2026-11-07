@@ -1,12 +1,13 @@
 import { useState } from 'react';
-import { ScrollView, View } from 'react-native';
 import { Button, HelperText, Text } from 'react-native-paper';
-import { router } from 'expo-router';
-import { reload, sendEmailVerification, signOut } from 'firebase/auth';
+import { sendEmailVerification, signOut } from 'firebase/auth';
 import { doc, updateDoc } from 'firebase/firestore';
 import { auth, db } from '@/src/firebase/config';
+import { AuthScreen } from '@/src/components/AuthScreen';
+import { useAuth } from '@/src/contexts/AuthContext';
 
 export default function Verify() {
+  const { reloadUser } = useAuth();
   const [msg, setMsg] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState<'resend' | 'check' | null>(null);
@@ -32,37 +33,41 @@ export default function Verify() {
     if (!auth.currentUser) return;
     setBusy('check');
     try {
-      await reload(auth.currentUser);
+      await reloadUser();
       if (auth.currentUser.emailVerified) {
+        // No navigation here: the auth gate sees emailVerified and moves on.
         await updateDoc(doc(db, 'users', auth.currentUser.uid), { emailVerified: true });
-        router.replace('/');
       } else {
         setErr('Email not verified yet. Check your inbox (and spam).');
       }
+    } catch (e: any) {
+      setErr(e?.message ?? 'Couldn’t check. Try again.');
     } finally {
       setBusy(null);
     }
   }
 
   return (
-    <ScrollView contentContainerStyle={{ flexGrow: 1, padding: 24, justifyContent: 'center', gap: 12 }}>
-      <Text variant="headlineMedium">Verify your email</Text>
+    <AuthScreen
+      title="Verify your email"
+      footer={
+        <Button onPress={() => signOut(auth)} textColor="#FFFFFF">
+          Sign out
+        </Button>
+      }
+    >
       <Text>
-        We sent a verification link to{' '}
-        <Text style={{ fontWeight: '600' }}>{auth.currentUser?.email}</Text>. Click the link, then tap
-        below.
+        We sent a verification link to <Text style={{ fontWeight: '600' }}>{auth.currentUser?.email}</Text>. Open
+        the link, then tap below.
       </Text>
       {msg ? <HelperText type="info">{msg}</HelperText> : null}
       {err ? <HelperText type="error">{err}</HelperText> : null}
-      <Button mode="contained" onPress={check} loading={busy === 'check'}>
+      <Button mode="contained" onPress={check} loading={busy === 'check'} contentStyle={{ minHeight: 48 }}>
         I&apos;ve verified
       </Button>
       <Button mode="outlined" onPress={resend} loading={busy === 'resend'}>
         Resend email
       </Button>
-      <View style={{ marginTop: 24 }}>
-        <Button onPress={() => signOut(auth)}>Sign out</Button>
-      </View>
-    </ScrollView>
+    </AuthScreen>
   );
 }

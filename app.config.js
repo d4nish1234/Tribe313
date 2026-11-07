@@ -30,7 +30,7 @@ export default {
     android: {
       package: IS_DEV ? "com.tribe313.app.dev" : "com.tribe313.app",
       adaptiveIcon: {
-        backgroundColor: "#E6F4FE",
+        backgroundColor: "#FFFFFF",
         foregroundImage: "./assets/images/icon.png",
       },
       edgeToEdgeEnabled: true,

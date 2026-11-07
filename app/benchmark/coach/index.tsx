@@ -15,6 +15,8 @@ import { displayResult } from '@/src/benchmark/components/display';
 import { shareBenchmarkPdf } from '@/src/benchmark/pdf';
 import { B } from '@/src/benchmark/theme';
 import type { Session } from '@/src/benchmark/types';
+import { rowDivider } from '@/src/components/RowDivider';
+import { palette } from '@/src/theme';
 
 export default function CoachScreen() {
   return (
@@ -247,7 +249,7 @@ const styles = StyleSheet.create({
   content: { padding: 16, width: '100%', maxWidth: 560, alignSelf: 'center' },
   card: { backgroundColor: B.surface, borderRadius: 12, paddingHorizontal: 12 },
   memberRow: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 60, paddingVertical: 8 },
-  rowBorder: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: B.border },
+  rowBorder: rowDivider,
   name: { fontSize: 16, fontWeight: '600', color: B.text },
   link: { color: B.green },
   muted: { color: B.muted, fontSize: 13 },
@@ -257,8 +259,8 @@ const styles = StyleSheet.create({
   gridName: {
     justifyContent: 'center',
     paddingHorizontal: 12,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: B.border,
+    borderBottomWidth: 1,
+    borderBottomColor: palette.divider,
     borderRightWidth: 1,
     borderRightColor: B.border,
   },
@@ -266,8 +268,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 8,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: B.border,
+    borderBottomWidth: 1,
+    borderBottomColor: palette.divider,
   },
   th: { fontSize: 11, fontWeight: '700', color: B.muted, textTransform: 'uppercase', paddingHorizontal: 4 },
   td: { fontSize: 13, color: B.text, paddingHorizontal: 4 },

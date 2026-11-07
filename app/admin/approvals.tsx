@@ -7,6 +7,7 @@ import { useAuth } from '@/src/contexts/AuthContext';
 import { useMembers } from '@/src/hooks/useMembers';
 import { approveUser } from '@/src/firebase/fn';
 import { db } from '@/src/firebase/config';
+import { RowDivider } from '@/src/components/RowDivider';
 
 export default function Approvals() {
   const { isAdmin } = useAuth();
@@ -64,30 +65,32 @@ export default function Approvals() {
               No pending members.
             </Text>
           ) : (
-            pending.map((item) => (
-              <List.Item
-                key={item.uid}
-                title={`${item.firstName} ${item.lastName}`}
-                description={item.email}
-                right={() => (
-                  <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
-                    <Button
-                      onPress={() => dismiss(item.uid)}
-                      loading={busy === item.uid}
-                      mode="outlined"
-                    >
-                      Dismiss
-                    </Button>
-                    <Button
-                      onPress={() => approve(item.uid)}
-                      loading={busy === item.uid}
-                      mode="contained-tonal"
-                    >
-                      Approve
-                    </Button>
-                  </View>
-                )}
-              />
+            pending.map((item, i) => (
+              <View key={item.uid}>
+                {i > 0 ? <RowDivider /> : null}
+                <List.Item
+                  title={`${item.firstName} ${item.lastName}`}
+                  description={item.email}
+                  right={() => (
+                    <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
+                      <Button
+                        onPress={() => dismiss(item.uid)}
+                        loading={busy === item.uid}
+                        mode="outlined"
+                      >
+                        Dismiss
+                      </Button>
+                      <Button
+                        onPress={() => approve(item.uid)}
+                        loading={busy === item.uid}
+                        mode="contained-tonal"
+                      >
+                        Approve
+                      </Button>
+                    </View>
+                  )}
+                />
+              </View>
             ))
           )}
 
@@ -100,23 +103,25 @@ export default function Approvals() {
               >
                 Not approved
               </Text>
-              {dismissed.map((item) => (
-                <List.Item
-                  key={item.uid}
-                  title={`${item.firstName} ${item.lastName}`}
-                  description={item.email}
-                  titleStyle={{ opacity: 0.5 }}
-                  descriptionStyle={{ opacity: 0.5 }}
-                  right={() => (
-                    <Button
-                      onPress={() => restore(item.uid)}
-                      loading={busy === item.uid}
-                      mode="outlined"
-                    >
-                      Restore
-                    </Button>
-                  )}
-                />
+              {dismissed.map((item, i) => (
+                <View key={item.uid}>
+                  {i > 0 ? <RowDivider /> : null}
+                  <List.Item
+                    title={`${item.firstName} ${item.lastName}`}
+                    description={item.email}
+                    titleStyle={{ opacity: 0.5 }}
+                    descriptionStyle={{ opacity: 0.5 }}
+                    right={() => (
+                      <Button
+                        onPress={() => restore(item.uid)}
+                        loading={busy === item.uid}
+                        mode="outlined"
+                      >
+                        Restore
+                      </Button>
+                    )}
+                  />
+                </View>
               ))}
             </>
           )}

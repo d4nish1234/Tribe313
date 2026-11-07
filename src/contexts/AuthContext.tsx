@@ -9,12 +9,14 @@ type Ctx = {
   appUser: AppUser | null;
   isAdmin: boolean;
   isApproved: boolean;
+  /** Re-read the Firebase user (e.g. after verifying email) and re-render. */
+  reloadUser: () => Promise<void>;
 };
 
 const AuthCtx = createContext<Ctx | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const { loading, firebaseUser, appUser } = useCurrentUser();
+  const { loading, firebaseUser, appUser, reloadUser } = useCurrentUser();
   const isAdmin = !!appUser?.isAdmin;
   const isApproved = appUser?.status === 'approved';
 
@@ -35,7 +37,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, [firebaseUser, isAdmin]);
   return (
-    <AuthCtx.Provider value={{ loading, firebaseUser, appUser, isAdmin, isApproved }}>
+    <AuthCtx.Provider value={{ loading, firebaseUser, appUser, isAdmin, isApproved, reloadUser }}>
       {children}
     </AuthCtx.Provider>
   );

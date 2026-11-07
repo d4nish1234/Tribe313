@@ -1,12 +1,13 @@
 import { useMemo, useState } from 'react';
 import { FlatList, View } from 'react-native';
-import { ActivityIndicator, Button, Chip, Dialog, IconButton, List, Menu, Portal, SegmentedButtons, Text } from 'react-native-paper';
+import { ActivityIndicator, Button, Dialog, IconButton, List, Menu, Portal, SegmentedButtons, Text } from 'react-native-paper';
 import { format } from 'date-fns';
 import { useAuth } from '@/src/contexts/AuthContext';
 import { useMembers } from '@/src/hooks/useMembers';
 import { deactivateUser, demoteAdmin, promoteAdmin, reinstateUser } from '@/src/firebase/fn';
 import { BadgeList } from '@/src/components/BadgeList';
 import { palette } from '@/src/theme';
+import { RowDivider } from '@/src/components/RowDivider';
 import type { AppUser } from '@/src/types';
 
 type SortKey = 'name' | 'lastAttended';
@@ -121,6 +122,10 @@ export default function Members() {
       <FlatList
         data={data}
         keyExtractor={(m) => (typeof m === 'string' ? m : m.uid)}
+        // No line next to the "EVICTED" heading, only between people.
+        ItemSeparatorComponent={({ leadingItem }: { leadingItem: unknown }) =>
+          typeof leadingItem === 'string' ? null : <RowDivider />
+        }
         renderItem={({ item }) => {
           if (item === 'evicted-header') {
             return (
@@ -149,9 +154,9 @@ export default function Members() {
                     {item.firstName} {item.lastName}
                   </Text>
                   {item.isAdmin && !isEvicted && (
-                    <Chip compact textStyle={{ color: palette.primary }}>
-                      Admin
-                    </Chip>
+                    <Text variant="bodyMedium" style={{ color: palette.muted }}>
+                      (Admin)
+                    </Text>
                   )}
                 </View>
               )}

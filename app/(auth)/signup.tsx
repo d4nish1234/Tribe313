@@ -1,20 +1,19 @@
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
-import { Button, HelperText, Text, TextInput } from 'react-native-paper';
-import { Link, router } from 'expo-router';
-import {
-  createUserWithEmailAndPassword,
-  sendEmailVerification,
-  updateProfile,
-} from 'firebase/auth';
+import { View } from 'react-native';
+import { Button, HelperText, TextInput } from 'react-native-paper';
+import { router } from 'expo-router';
+import { createUserWithEmailAndPassword, sendEmailVerification, updateProfile } from 'firebase/auth';
 import { doc, serverTimestamp, setDoc } from 'firebase/firestore';
 import { auth, db } from '@/src/firebase/config';
+import { AuthScreen } from '@/src/components/AuthScreen';
+import { authErrorMessage } from '@/src/lib/authErrors';
 
 export default function Signup() {
   const [firstName, setFirst] = useState('');
   const [lastName, setLast] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -49,28 +48,77 @@ export default function Signup() {
         { merge: true },
       );
       await sendEmailVerification(cred.user);
-      router.replace('/verify');
-    } catch (e: any) {
-      setErr(e.message ?? 'Signup failed');
+      // No navigation here: the auth gate moves to /verify once the account exists.
+    } catch (e) {
+      setErr(authErrorMessage(e, 'Couldn’t create your account. Try again.'));
     } finally {
       setBusy(false);
     }
   }
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView contentContainerStyle={{ flexGrow: 1, padding: 24, justifyContent: 'center', gap: 12 }}>
-        <Text variant="headlineMedium">Create account</Text>
-        <TextInput label="First name" value={firstName} onChangeText={setFirst} />
-        <TextInput label="Last name" value={lastName} onChangeText={setLast} />
-        <TextInput label="Email" value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" />
-        <TextInput label="Password" value={password} onChangeText={setPassword} secureTextEntry />
-        {err ? <HelperText type="error">{err}</HelperText> : null}
-        <Button mode="contained" onPress={submit} loading={busy} disabled={busy}>
-          Sign up
+    <AuthScreen
+      title="Create account"
+      subtitle="An admin approves every new member."
+      footer={
+        <Button onPress={() => router.replace('/login')} textColor="#FFFFFF">
+          Already a member? Log in
         </Button>
-        <Link href="/login"><Text>Back to log in</Text></Link>
-      </ScrollView>
-    </KeyboardAvoidingView>
+      }
+    >
+      <View style={{ flexDirection: 'row', gap: 12 }}>
+        <TextInput
+          mode="outlined"
+          label="First name"
+          value={firstName}
+          onChangeText={setFirst}
+          autoComplete="given-name"
+          textContentType="givenName"
+          style={{ flex: 1 }}
+        />
+        <TextInput
+          mode="outlined"
+          label="Last name"
+          value={lastName}
+          onChangeText={setLast}
+          autoComplete="family-name"
+          textContentType="familyName"
+          style={{ flex: 1 }}
+        />
+      </View>
+      <TextInput
+        mode="outlined"
+        label="Email"
+        value={email}
+        onChangeText={setEmail}
+        autoCapitalize="none"
+        autoComplete="email"
+        textContentType="emailAddress"
+        keyboardType="email-address"
+      />
+      <View>
+        <TextInput
+          mode="outlined"
+          label="Password"
+          value={password}
+          onChangeText={setPassword}
+          secureTextEntry={!showPassword}
+          autoComplete="new-password"
+          textContentType="newPassword"
+          right={
+            <TextInput.Icon
+              icon={showPassword ? 'eye-off' : 'eye'}
+              onPress={() => setShowPassword((s) => !s)}
+              accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
+            />
+          }
+        />
+        <HelperText type="info">At least 6 characters.</HelperText>
+      </View>
+      {err ? <HelperText type="error">{err}</HelperText> : null}
+      <Button mode="contained" onPress={submit} loading={busy} disabled={busy} contentStyle={{ minHeight: 48 }}>
+        Sign up
+      </Button>
+    </AuthScreen>
   );
 }
