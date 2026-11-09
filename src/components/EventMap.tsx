@@ -134,6 +134,17 @@ export function EventMap({ event, rides, memberPins, carpoolPins, viewerUid }: P
     });
   }
 
+  // react-native-maps 1.20 runs through the New Architecture's legacy interop,
+  // which crashes (-[AIRMap insertReactSubview:atIndex:] with nil) when markers
+  // are removed from the middle of the list, e.g. cancelling a ride drops its
+  // pickup pin and the requester's member pin. A fresh mount never hits this,
+  // so remount the map whenever the set of markers changes.
+  const markerSetKey = [
+    ...rides.filter((r) => r.status !== 'cancelled' && r.pickup?.lat).map((r) => `r${r.id}`),
+    ...visibleMemberPins.map((m) => `m${m.uid}`),
+    ...(carpoolPins ?? []).map((c) => `c${c.id}`),
+  ].join('|');
+
   const region = {
     latitude: event.location.lat,
     longitude: event.location.lng,
@@ -144,6 +155,7 @@ export function EventMap({ event, rides, memberPins, carpoolPins, viewerUid }: P
   return (
     <View style={{ height: 320, borderRadius: 8, overflow: 'hidden' }}>
       <MapView
+        key={markerSetKey}
         ref={mapRef}
         style={{ flex: 1 }}
         initialRegion={region}

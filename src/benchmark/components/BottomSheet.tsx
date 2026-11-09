@@ -39,7 +39,13 @@ export function BottomSheet({
 
   // The backdrop fades in place while only the sheet slides up; closing
   // plays the reverse before the Modal unmounts.
+  // The Modal is a full-screen native layer: if it stayed mounted after
+  // closing it would swallow every tap, the header Back button included. So
+  // unmount whenever the close ends, even if the animation was interrupted,
+  // unless the sheet was reopened in the meantime.
   const [mounted, setMounted] = useState(visible);
+  const visibleRef = useRef(visible);
+  visibleRef.current = visible;
   const progress = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     if (visible) {
@@ -51,7 +57,9 @@ export function BottomSheet({
       duration: 200,
       easing: Easing.in(Easing.cubic),
       useNativeDriver: true,
-    }).start(({ finished }) => finished && setMounted(false));
+    }).start(() => {
+      if (!visibleRef.current) setMounted(false);
+    });
   }, [visible, progress]);
   useEffect(() => {
     if (!mounted || !visible) return;

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Button } from 'react-native-paper';
 import type { PickerSpec } from '../types';
@@ -29,23 +29,31 @@ export function PickerSheet({
 }) {
   const [cols, setCols] = useState<number[]>([]);
 
+  // The caller clears `spec` the moment the sheet closes. Keep showing the last
+  // one so the sheet stays mounted and closes via visible=false. Unmounting a
+  // visible native Modal on iOS can leave an invisible layer that blocks taps.
+  const lastSpec = useRef(spec);
+  if (spec) lastSpec.current = spec;
+  const current = spec ?? lastSpec.current;
+
   useEffect(() => {
     if (visible && spec) setCols(spec.fromValue(value ?? fallback));
   }, [visible, spec, value, fallback]);
 
-  if (!spec) return null;
+  if (!current) return null;
+  const spec_ = current;
 
   const done = () => {
-    const v = spec.toValue(cols);
-    onDone(spec.isEmpty(v) ? null : v);
+    const v = spec_.toValue(cols);
+    onDone(spec_.isEmpty(v) ? null : v);
   };
 
   return (
     <BottomSheet
       visible={visible}
       onClose={onClose}
-      title={spec.title}
-      subtitle={spec.subtitle}
+      title={spec_.title}
+      subtitle={spec_.subtitle}
       scroll={false}
       footer={
         <View style={styles.buttons}>
@@ -68,10 +76,10 @@ export function PickerSheet({
     >
       <View style={styles.wheels}>
         <WheelBand />
-        {cols.length === spec.columns.length &&
-          spec.columns.map((c, i) => (
+        {cols.length === spec_.columns.length &&
+          spec_.columns.map((c, i) => (
             <WheelColumn
-              key={`${spec.title}-${i}`}
+              key={`${spec_.title}-${i}`}
               values={c.values}
               value={cols[i]}
               label={c.label}
