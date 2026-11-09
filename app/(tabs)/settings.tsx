@@ -20,6 +20,7 @@ import { doc, serverTimestamp, updateDoc } from 'firebase/firestore';
 import { useAuth } from '@/src/contexts/AuthContext';
 import { auth, db } from '@/src/firebase/config';
 import { geocodeAddress, selfDeleteAccount } from '@/src/firebase/fn';
+import { AppVersion } from '@/src/components/AppVersion';
 import { DangerZone } from '@/src/components/DangerZone';
 
 export default function Settings() {
@@ -153,6 +154,8 @@ export default function Settings() {
           Delete my account
         </Button>
       </DangerZone>
+
+      <AppVersion />
 
       <Portal>
         <Dialog visible={confirmDelete} onDismiss={() => setConfirmDelete(false)}>

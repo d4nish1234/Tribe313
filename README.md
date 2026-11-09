@@ -89,6 +89,10 @@ firebase emulators:start
 ### Build + run on device
 
 ```bash
+# Both platforms in one go
+eas build --profile production --platform all
+
+# Or one at a time
 eas build --profile production --platform ios
 eas build --profile production --platform android
 ```
