@@ -24,7 +24,9 @@
  * Why a module-level request instead of route params: params are strings in a
  * URL, so they can't carry a list of hundreds of items or a callback. The
  * request lives here for the life of the pick screen; only one is open at a
- * time, and opening another cancels the first.
+ * time, and opening another cancels the first. The pick screen is a singular
+ * route, so a second push (a double tap) reuses the open screen: it follows
+ * `subscribePick` and switches to the newest request.
  */
 import { router } from 'expo-router';
 import { matchesWords } from './search';
@@ -57,6 +59,20 @@ export interface PickRequest extends PickOptions {
 
 let current: PickRequest | null = null;
 let nextKey = 1;
+const listeners = new Set<() => void>();
+
+function setCurrent(req: PickRequest | null) {
+  current = req;
+  listeners.forEach((l) => l());
+}
+
+/** Be told when the open request changes (a new one starts, or it finishes). Returns unsubscribe. */
+export function subscribePick(listener: () => void): () => void {
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
+  };
+}
 
 /** Start a pick without navigating. Used by pickOne/pickMany and by tests. */
 export function startPick(options: PickOptions, multiple: boolean): Promise<string[] | null> {
@@ -64,15 +80,15 @@ export function startPick(options: PickOptions, multiple: boolean): Promise<stri
   current?.resolve(null);
   return new Promise((resolve) => {
     const key = nextKey++;
-    current = {
+    setCurrent({
       ...options,
       key,
       multiple,
       resolve: (ids) => {
-        if (current?.key === key) current = null;
+        if (current?.key === key) setCurrent(null);
         resolve(ids);
       },
-    };
+    });
   });
 }
 

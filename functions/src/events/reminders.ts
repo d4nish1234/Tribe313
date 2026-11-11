@@ -20,16 +20,24 @@ export const remindTomorrow = onSchedule({ schedule: 'every day 18:00', timeZone
   const everyone = await targetsForAllApproved();
 
   for (const ev of events.docs) {
-    const data = ev.data();
-    if (data.reminderSentAt) continue;
+    if (ev.data().reminderSentAt) continue;
+
+    // Claim the event in a transaction before sending, so two overlapping runs
+    // (Cloud Scheduler can deliver a job twice) can't both send it. Claiming
+    // first also means a crash after this point misses the reminder rather than
+    // sending it twice on a retry; the miss is the lesser problem.
+    const data = await db.runTransaction(async (tx) => {
+      const snap = await tx.get(ev.ref);
+      if (!snap.exists || snap.get('reminderSentAt')) return null;
+      tx.update(ev.ref, { reminderSentAt: FieldValue.serverTimestamp() });
+      return snap.data()!;
+    });
+    if (!data) continue;
 
     const declined = await ev.ref.collection('rsvps').where('status', '==', 'no').get();
     const out = new Set(declined.docs.map((d) => d.id));
     const time = formatTimeOfDay(timeIn((data.startsAt as Timestamp).toMillis()));
 
-    // Mark first: a crash after sending would otherwise send twice on retry,
-    // and a missed reminder is the lesser problem.
-    await ev.ref.update({ reminderSentAt: FieldValue.serverTimestamp() });
     await sendPushes(
       everyone.filter((t) => !out.has(t.uid)),
       {

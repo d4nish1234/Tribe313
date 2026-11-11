@@ -1,4 +1,4 @@
-import { currentPick, filterPickItems, finishPick, startPick, toPickItem } from '../picker';
+import { currentPick, filterPickItems, finishPick, startPick, subscribePick, toPickItem } from '../picker';
 import { matchesWords } from '../search';
 
 jest.mock('expo-router', () => ({ router: { push: jest.fn(), back: jest.fn() } }));
@@ -62,5 +62,21 @@ describe('pick requests', () => {
     await expect(first).resolves.toBeNull();
     finishPick(currentPick()!.key, ['A']);
     await expect(second).resolves.toEqual(['A']);
+  });
+
+  it('tells the open pick screen when a newer request replaces it (double tap)', async () => {
+    const seen: (number | undefined)[] = [];
+    const unsubscribe = subscribePick(() => seen.push(currentPick()?.key));
+    const first = startPick(opts, false);
+    const firstKey = currentPick()!.key;
+    const second = startPick(opts, false);
+    const secondKey = currentPick()!.key;
+    finishPick(secondKey, ['B']);
+    unsubscribe();
+    startPick(opts, false); // not seen after unsubscribe
+    finishPick(currentPick()!.key, null);
+    expect(seen).toEqual([firstKey, undefined, secondKey, undefined]);
+    await expect(first).resolves.toBeNull();
+    await expect(second).resolves.toEqual(['B']);
   });
 });

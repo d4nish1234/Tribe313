@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { NavigationProp, ParamListBase } from '@react-navigation/native';
 import { CardRow, CardSlice, cardStyles } from '@/src/components/Cards';
 import { AppButton } from '@/src/components/AppButton';
-import { currentPick, filterPickItems, finishPick } from '@/src/lib/picker';
+import { currentPick, filterPickItems, finishPick, subscribePick, type PickRequest } from '@/src/lib/picker';
 import { palette } from '@/src/theme';
 
 type Row = { kind: 'custom'; text: string } | { kind: 'item'; id: string; title: string; subtitle?: string | null };
@@ -16,30 +16,19 @@ type Row = { kind: 'custom'; text: string } | { kind: 'item'; id: string; title:
  * pickMany from src/lib/picker.ts, which explains the options.
  */
 export default function PickScreen() {
-  // Read once: the request belongs to this screen for as long as it's open.
-  const [req] = useState(currentPick);
-  const insets = useSafeAreaInsets();
-  const [query, setQuery] = useState('');
-  const [chosen, setChosen] = useState<string[]>(req?.selected ?? []);
-  const closing = useRef(false);
-
-  // Leaving without choosing (Back button, swipe back) counts as cancel. This
-  // listens for the screen being removed rather than using an effect cleanup,
-  // which React can run early in development. After a choice it's a no-op.
-  const navigation = useNavigation<NavigationProp<ParamListBase>>();
+  // The request this screen shows. It moves to a newer request if one starts
+  // while the screen is open (this route is singular, so a double tap on a
+  // picker reuses it), but never back to null, so the screen doesn't go blank
+  // while it animates away after a choice.
+  const [req, setReq] = useState(currentPick);
   useEffect(() => {
-    if (!req) return;
-    return navigation.addListener('beforeRemove', () => finishPick(req.key, null));
-  }, [navigation, req]);
-
-  const rows = useMemo<Row[]>(() => {
-    if (!req) return [];
-    const { custom, items } = filterPickItems(req.items, query, req.allowCustom);
-    return [
-      ...(custom ? [{ kind: 'custom' as const, text: custom }] : []),
-      ...items.map((it) => ({ kind: 'item' as const, id: it.id, title: it.title, subtitle: it.subtitle })),
-    ];
-  }, [req, query]);
+    const follow = () => {
+      const next = currentPick();
+      if (next) setReq(next);
+    };
+    follow(); // in case it changed between the first render and this effect
+    return subscribePick(follow);
+  }, []);
 
   if (!req) {
     return (
@@ -51,6 +40,29 @@ export default function PickScreen() {
       </View>
     );
   }
+  // Keyed by request, so a newer request starts with a fresh search and ticks.
+  return <PickBody key={req.key} req={req} />;
+}
+
+function PickBody({ req }: { req: PickRequest }) {
+  const insets = useSafeAreaInsets();
+  const [query, setQuery] = useState('');
+  const [chosen, setChosen] = useState<string[]>(req.selected ?? []);
+  const closing = useRef(false);
+
+  // Leaving without choosing (Back button, swipe back) counts as cancel. This
+  // listens for the screen being removed rather than using an effect cleanup,
+  // which React can run early in development. After a choice it's a no-op.
+  const navigation = useNavigation<NavigationProp<ParamListBase>>();
+  useEffect(() => navigation.addListener('beforeRemove', () => finishPick(req.key, null)), [navigation, req]);
+
+  const rows = useMemo<Row[]>(() => {
+    const { custom, items } = filterPickItems(req.items, query, req.allowCustom);
+    return [
+      ...(custom ? [{ kind: 'custom' as const, text: custom }] : []),
+      ...items.map((it) => ({ kind: 'item' as const, id: it.id, title: it.title, subtitle: it.subtitle })),
+    ];
+  }, [req, query]);
 
   // Close once only: a quick second tap would otherwise go back twice and
   // also pop the screen that opened the picker.

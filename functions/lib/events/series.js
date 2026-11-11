@@ -20,7 +20,9 @@ const recurrence_1 = require("../shared/recurrence");
  * - A series is deleted: remove its future events that nobody has RSVPed to.
  *
  * Syncing is idempotent: event ids are `<seriesId>_<date>`, so running twice
- * (retries, overlapping runs) never makes a second event for a date.
+ * (retries, overlapping runs) never makes a second event for a date. The
+ * trigger syncs from a fresh read of the series, so late triggers can't undo
+ * a newer edit or a delete.
  */
 function ruleOf(s) {
     return {
@@ -108,8 +110,13 @@ exports.onSeriesWrite = (0, firestore_1.onDocumentWritten)('eventSeries/{seriesI
     const before = event.data?.before.data();
     const after = event.data?.after.data() ?? null;
     const { seriesId } = event.params;
-    await syncSeries(seriesId, after);
-    if (after && !before) {
+    // Sync from the series as it is now, not the copy this trigger carries.
+    // Triggers can run out of order: an edit's trigger arriving after the delete's
+    // would otherwise recreate events for a series that's gone.
+    const current = await admin_1.db.doc(`eventSeries/${seriesId}`).get();
+    await syncSeries(seriesId, current.exists ? current.data() : null);
+    // The push still uses before/after: it's about this write being a create.
+    if (after && !before && current.exists) {
         const word = after.repeat === 'weekly' ? 'weekly' : after.repeat === 'biweekly' ? 'every-2-weeks' : 'monthly';
         await (0, push_1.sendPushes)(await (0, push_1.targetsForAllApproved)(after.createdBy), {
             title: `New ${word} event`,
