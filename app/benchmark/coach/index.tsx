@@ -2,7 +2,6 @@ import { useMemo, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { ActivityIndicator, IconButton, SegmentedButtons, Text } from 'react-native-paper';
 import { Stack, router } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/src/contexts/AuthContext';
 import { useMembers } from '@/src/hooks/useMembers';
 import { latestVersion, getVersion } from '@/src/benchmark/registry';
@@ -15,8 +14,8 @@ import { displayResult } from '@/src/benchmark/components/display';
 import { shareBenchmarkPdf } from '@/src/benchmark/pdf';
 import { B } from '@/src/benchmark/theme';
 import type { Session } from '@/src/benchmark/types';
-import { rowDivider } from '@/src/components/RowDivider';
 import { palette } from '@/src/theme';
+import { CardBox, CardRow } from '@/src/components/Cards';
 
 export default function CoachScreen() {
   return (
@@ -147,35 +146,34 @@ function open(uid: string) {
 function MemberList({ rows }: { rows: Row[] }) {
   return (
     <ScrollView contentContainerStyle={styles.content}>
-      <View style={styles.card}>
-        {rows.map((r, i) => {
-          const sc = r.latest ? scoreSession(r.latest) : null;
-          return (
-            <Pressable
-              key={r.uid}
-              style={[styles.memberRow, i > 0 && styles.rowBorder]}
-              onPress={() => open(r.uid)}
-              accessibilityRole="button"
-            >
-              <View style={{ flex: 1 }}>
-                <Text style={styles.name}>{r.name}</Text>
-                <Text style={styles.muted}>
-                  {r.latest ? formatDate(r.latest.date) : 'No benchmarks yet'}
-                  {r.assigned ? ` · ${r.assigned} assigned` : ''}
-                </Text>
-              </View>
-              {sc ? (
-                <Text style={styles.score}>
-                  {sc.score}
-                  <Text style={styles.muted}>/{sc.maxScore}</Text>
-                </Text>
-              ) : null}
-              <Ionicons name="chevron-forward" size={18} color={B.muted} />
-            </Pressable>
-          );
-        })}
-        {rows.length === 0 ? <Text style={[styles.muted, { padding: 12 }]}>No members.</Text> : null}
-      </View>
+      {rows.length === 0 ? (
+        <Text style={styles.muted}>No members.</Text>
+      ) : (
+        <CardBox>
+          {rows.map((r, i) => {
+            const sc = r.latest ? scoreSession(r.latest) : null;
+            return (
+              <CardRow
+                key={r.uid}
+                first={i === 0}
+                onPress={() => open(r.uid)}
+                title={r.name}
+                subtitle={`${r.latest ? formatDate(r.latest.date) : 'No benchmarks yet'}${
+                  r.assigned ? ` · ${r.assigned} assigned` : ''
+                }`}
+                right={
+                  sc ? (
+                    <Text style={styles.score}>
+                      {sc.score}
+                      <Text style={styles.muted}>/{sc.maxScore}</Text>
+                    </Text>
+                  ) : null
+                }
+              />
+            );
+          })}
+        </CardBox>
+      )}
     </ScrollView>
   );
 }
@@ -247,9 +245,6 @@ const styles = StyleSheet.create({
   toolbar: { padding: 16, paddingBottom: 0, gap: 4, width: '100%', maxWidth: 560, alignSelf: 'center' },
   links: { alignItems: 'flex-end' },
   content: { padding: 16, width: '100%', maxWidth: 560, alignSelf: 'center' },
-  card: { backgroundColor: B.surface, borderRadius: 12, paddingHorizontal: 12 },
-  memberRow: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 60, paddingVertical: 8 },
-  rowBorder: rowDivider,
   name: { fontSize: 16, fontWeight: '600', color: B.text },
   link: { color: B.green },
   muted: { color: B.muted, fontSize: 13 },

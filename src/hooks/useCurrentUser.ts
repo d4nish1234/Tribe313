@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { onAuthStateChanged, reload, type User } from 'firebase/auth';
-import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc } from 'firebase/firestore';
+import { listenDoc } from '../lib/live';
 import { auth, db } from '../firebase/config';
 import type { AppUser } from '../types';
 
@@ -43,7 +44,7 @@ export function useCurrentUser(): State {
     if (!firebaseUser) return;
     const ref = doc(db, 'users', firebaseUser.uid);
     setLoading(true);
-    const unsub = onSnapshot(
+    const unsub = listenDoc(
       ref,
       (snap) => {
         const data = snap.exists() ? snap.data() : null;

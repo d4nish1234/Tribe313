@@ -35,6 +35,7 @@ export default function RootLayout() {
                 <Stack.Screen name="(auth)" />
                 <Stack.Screen name="(gate)" />
                 <Stack.Screen name="(tabs)" />
+                <Stack.Screen name="pick" dangerouslySingular options={{ headerShown: true, title: 'Choose', headerBackTitle: 'Back' }} />
                 <Stack.Screen name="event/[id]" dangerouslySingular options={{ headerShown: true, title: 'Event' }} />
                 <Stack.Screen name="event/new" dangerouslySingular options={{ headerShown: true, title: 'New event', presentation: 'modal' }} />
                 <Stack.Screen name="admin/approvals" dangerouslySingular options={{ headerShown: true, title: 'Approvals' }} />

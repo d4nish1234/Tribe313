@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { FlatList, View } from 'react-native';
-import { ActivityIndicator, Dialog, IconButton, List, Portal, Text, TextInput } from 'react-native-paper';
+import { Alert, ScrollView, View } from 'react-native';
+import { ActivityIndicator, Dialog, IconButton, Portal, Text, TextInput } from 'react-native-paper';
 import { Redirect } from 'expo-router';
 import {
   addDoc,
@@ -14,7 +14,8 @@ import { useAuth } from '@/src/contexts/AuthContext';
 import { db } from '@/src/firebase/config';
 import { geocodeAddress } from '@/src/firebase/fn';
 import { useCarpoolLocations, type CarpoolLocation } from '@/src/hooks/useCarpoolLocations';
-import { RowDivider } from '@/src/components/RowDivider';
+import { CardBox, CardRow, cardStyles } from '@/src/components/Cards';
+import { palette } from '@/src/theme';
 import { AppButton, AppFab } from '@/src/components/AppButton';
 
 export default function CarpoolAddresses() {
@@ -26,6 +27,7 @@ export default function CarpoolAddresses() {
   const [label, setLabel] = useState('');
   const [address, setAddress] = useState('');
   const [busy, setBusy] = useState(false);
+  const [toDelete, setToDelete] = useState<CarpoolLocation | null>(null);
 
   if (!isAdmin) return <Redirect href="/" />;
 
@@ -85,13 +87,24 @@ export default function CarpoolAddresses() {
         });
       }
       closeDialog();
+    } catch (e: any) {
+      Alert.alert('Something went wrong', String(e?.message ?? e));
     } finally {
       setBusy(false);
     }
   }
 
-  async function remove(id: string) {
-    await deleteDoc(doc(db, 'carpoolLocations', id));
+  async function confirmDelete() {
+    if (!toDelete) return;
+    setBusy(true);
+    try {
+      await deleteDoc(doc(db, 'carpoolLocations', toDelete.id));
+      setToDelete(null);
+    } catch (e: any) {
+      Alert.alert('Something went wrong', String(e?.message ?? e));
+    } finally {
+      setBusy(false);
+    }
   }
 
   if (loading) {
@@ -104,28 +117,37 @@ export default function CarpoolAddresses() {
 
   return (
     <View style={{ flex: 1 }}>
-      <FlatList
-        data={locations}
-        keyExtractor={(l) => l.id}
-        ItemSeparatorComponent={() => <RowDivider />}
-        ListEmptyComponent={
-          <Text style={{ padding: 24, textAlign: 'center', opacity: 0.7 }}>
-            No carpool locations yet. Tap + to add one.
-          </Text>
-        }
-        renderItem={({ item }) => (
-          <List.Item
-            title={item.label}
-            description={item.address}
-            right={() => (
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <IconButton icon="pencil-outline" onPress={() => openEdit(item)} />
-                <IconButton icon="trash-can-outline" onPress={() => remove(item.id)} />
-              </View>
-            )}
-          />
+      <ScrollView contentContainerStyle={[cardStyles.content, { paddingBottom: 120 }]}>
+        {locations.length === 0 ? (
+          <Text style={cardStyles.muted}>No carpool locations yet. Tap + to add one.</Text>
+        ) : (
+          <CardBox>
+            {locations.map((item, i) => (
+              <CardRow
+                key={item.id}
+                first={i === 0}
+                title={item.label}
+                subtitle={item.address}
+                right={
+                  <View style={{ flexDirection: 'row' }}>
+                    <IconButton
+                      icon="pencil-outline"
+                      accessibilityLabel={`Edit ${item.label}`}
+                      onPress={() => openEdit(item)}
+                    />
+                    <IconButton
+                      icon="trash-can-outline"
+                      iconColor={palette.danger}
+                      accessibilityLabel={`Delete ${item.label}`}
+                      onPress={() => setToDelete(item)}
+                    />
+                  </View>
+                }
+              />
+            ))}
+          </CardBox>
         )}
-      />
+      </ScrollView>
 
       <AppFab
         icon="plus"
@@ -155,6 +177,23 @@ export default function CarpoolAddresses() {
             </AppButton>
             <AppButton variant="text" onPress={save} loading={busy} disabled={!label.trim() || !address.trim()}>
               {editing ? 'Update' : 'Add'}
+            </AppButton>
+          </Dialog.Actions>
+        </Dialog>
+
+        <Dialog visible={!!toDelete} onDismiss={() => setToDelete(null)}>
+          <Dialog.Title>Delete location?</Dialog.Title>
+          <Dialog.Content>
+            <Text>
+              “{toDelete?.label}” will no longer show as a pickup point on event maps.
+            </Text>
+          </Dialog.Content>
+          <Dialog.Actions>
+            <AppButton variant="text" onPress={() => setToDelete(null)} disabled={busy}>
+              Cancel
+            </AppButton>
+            <AppButton variant="text" tone="danger" onPress={confirmDelete} loading={busy}>
+              Delete
             </AppButton>
           </Dialog.Actions>
         </Dialog>

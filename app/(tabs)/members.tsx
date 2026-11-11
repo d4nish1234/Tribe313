@@ -1,60 +1,29 @@
-import { useMemo, useState } from 'react';
-import { FlatList, View } from 'react-native';
-import { ActivityIndicator, Dialog, IconButton, List, Menu, Portal, SegmentedButtons, Text } from 'react-native-paper';
+import { useMemo, useState, type ReactNode } from 'react';
+import { Alert, SectionList, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Dialog, Icon, IconButton, Menu, Portal, Searchbar, SegmentedButtons, Text } from 'react-native-paper';
 import { format } from 'date-fns';
 import { useAuth } from '@/src/contexts/AuthContext';
 import { useMembers } from '@/src/hooks/useMembers';
 import { deactivateUser, demoteAdmin, promoteAdmin, reinstateUser } from '@/src/firebase/fn';
 import { BadgeList } from '@/src/components/BadgeList';
 import { palette } from '@/src/theme';
-import { RowDivider } from '@/src/components/RowDivider';
+import { CardRow, CardSlice, SectionHeader, cardStyles } from '@/src/components/Cards';
 import type { AppUser } from '@/src/types';
+import { groupMembers, type MemberSort } from '@/src/lib/members';
 import { AppButton } from '@/src/components/AppButton';
-
-type SortKey = 'name' | 'lastAttended';
 
 export default function Members() {
   const { isAdmin, firebaseUser } = useAuth();
   const { loading, members } = useMembers(true);
-  const [sort, setSort] = useState<SortKey>('name');
+  const [sort, setSort] = useState<MemberSort>('name');
   const [confirm, setConfirm] = useState<AppUser | null>(null);
   const [reinstate, setReinstate] = useState<AppUser | null>(null);
   const [adminAction, setAdminAction] = useState<{ user: AppUser; type: 'promote' | 'demote' } | null>(null);
   const [menuUid, setMenuUid] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  const active = useMemo(() => members.filter((m) => m.status === 'approved'), [members]);
-  const evicted = useMemo(() => members.filter((m) => m.status === 'evicted'), [members]);
-
-  const byName = (a: AppUser, b: AppUser) =>
-    `${a.firstName} ${a.lastName}`.localeCompare(`${b.firstName} ${b.lastName}`);
-
-  const applySort = (arr: AppUser[]) => {
-    const copy = [...arr];
-    if (sort === 'name') {
-      copy.sort(byName);
-    } else {
-      copy.sort((a, b) => {
-        const at = a.lastAttendedAt?.toMillis?.() ?? 0;
-        const bt = b.lastAttendedAt?.toMillis?.() ?? 0;
-        return bt - at;
-      });
-    }
-    return copy;
-  };
-
-  // Admins are always shown first, alphabetized, so the leadership list reads
-  // as a stable roster regardless of the Name/Last attended toggle below.
-  const sortedAdmins = useMemo(
-    () => [...active].filter((m) => m.isAdmin).sort(byName),
-    [active],
-  );
-  const sortedMembers = useMemo(
-    () => applySort(active.filter((m) => !m.isAdmin)),
-    [active, sort],
-  );
-
-  const sortedEvicted = useMemo(() => [...evicted].sort(byName), [evicted]);
+  const [query, setQuery] = useState('');
+  const groups = useMemo(() => groupMembers(members, { query, sort, isAdmin }), [members, query, sort, isAdmin]);
 
   async function remove() {
     if (!confirm) return;
@@ -62,6 +31,8 @@ export default function Members() {
     try {
       await deactivateUser({ uid: confirm.uid });
       setConfirm(null);
+    } catch (e: any) {
+      Alert.alert('Something went wrong', String(e?.message ?? e));
     } finally {
       setBusy(false);
     }
@@ -73,6 +44,8 @@ export default function Members() {
     try {
       await reinstateUser({ uid: reinstate.uid });
       setReinstate(null);
+    } catch (e: any) {
+      Alert.alert('Something went wrong', String(e?.message ?? e));
     } finally {
       setBusy(false);
     }
@@ -88,6 +61,8 @@ export default function Members() {
         await demoteAdmin({ uid: adminAction.user.uid });
       }
       setAdminAction(null);
+    } catch (e: any) {
+      Alert.alert('Something went wrong', String(e?.message ?? e));
     } finally {
       setBusy(false);
     }
@@ -101,156 +76,161 @@ export default function Members() {
     );
   }
 
-  type Row = AppUser | 'evicted-header';
-  const data: Row[] = [
-    ...sortedAdmins,
-    ...sortedMembers,
-    ...(isAdmin && sortedEvicted.length > 0 ? (['evicted-header' as const, ...sortedEvicted]) : []),
-  ];
+  function renderMember(item: AppUser, i: number) {
+    const isEvicted = item.status === 'evicted';
+    const missed = item.missedEventCount ?? 0;
+    const showAlert = isAdmin && missed >= 2 && !isEvicted;
+    const last = item.lastAttendedAt?.toDate?.();
+    const isSelf = item.uid === firebaseUser?.uid;
+    const canEvict = !isSelf && !item.isAdmin;
+    const canDemote = !isSelf && item.isAdmin && !item.isSeedAdmin;
+    const canPromote = !item.isAdmin;
+
+    let right: ReactNode = null;
+    if (isAdmin && isEvicted) {
+      right = (
+        <IconButton
+          icon="account-reactivate"
+          iconColor={palette.primary}
+          accessibilityLabel={`Reinstate ${item.firstName}`}
+          onPress={() => setReinstate(item)}
+        />
+      );
+    } else if (isAdmin && (canEvict || canPromote || canDemote)) {
+      right = (
+        <Menu
+          visible={menuUid === item.uid}
+          onDismiss={() => setMenuUid(null)}
+          anchor={
+            <IconButton
+              icon="dots-vertical"
+              accessibilityLabel={`Actions for ${item.firstName}`}
+              onPress={() => setMenuUid(item.uid)}
+            />
+          }
+        >
+          {canPromote && (
+            <Menu.Item
+              leadingIcon="shield-account"
+              title="Make admin"
+              onPress={() => {
+                setMenuUid(null);
+                setAdminAction({ user: item, type: 'promote' });
+              }}
+            />
+          )}
+          {canDemote && (
+            <Menu.Item
+              leadingIcon="shield-off"
+              title="Remove admin"
+              onPress={() => {
+                setMenuUid(null);
+                setAdminAction({ user: item, type: 'demote' });
+              }}
+            />
+          )}
+          {canEvict && (
+            <Menu.Item
+              leadingIcon="account-remove"
+              title="Remove member"
+              titleStyle={{ color: palette.danger }}
+              onPress={() => {
+                setMenuUid(null);
+                setConfirm(item);
+              }}
+            />
+          )}
+        </Menu>
+      );
+    }
+
+    return (
+      <CardRow
+        key={item.uid}
+        first={i === 0}
+        dim={isEvicted}
+        title={`${item.firstName} ${item.lastName}`}
+        subtitle={
+          <>
+            {isAdmin && !!item.email && (
+              <Text selectable numberOfLines={1} style={cardStyles.muted}>
+                {item.email}
+              </Text>
+            )}
+            {isAdmin && (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                {showAlert ? <Icon source="alert-circle" color={palette.danger} size={14} /> : null}
+                <Text style={[cardStyles.muted, showAlert && { color: palette.danger }]}>
+                  {last ? `Last attended ${format(last, 'PP')}` : 'No attendance on record'}
+                  {missed > 0 && !isEvicted ? ` · missed ${missed}` : ''}
+                </Text>
+              </View>
+            )}
+            {!isEvicted && (item.badges?.length ?? 0) > 0 ? (
+              <View style={{ marginTop: 4 }}>
+                <BadgeList badges={item.badges ?? []} compact />
+              </View>
+            ) : null}
+          </>
+        }
+        right={right}
+      />
+    );
+  }
+
+  const sections = [
+    { title: 'Admins', data: groups.admins },
+    { title: 'Members', data: groups.members },
+    { title: 'Evicted', data: groups.evicted },
+  ].filter((g) => g.data.length > 0);
 
   return (
     <View style={{ flex: 1 }}>
-      <View style={{ padding: 16 }}>
-        <SegmentedButtons
-          value={sort}
-          onValueChange={(v) => setSort(v as SortKey)}
-          buttons={[
-            { value: 'name', label: 'Name' },
-            { value: 'lastAttended', label: 'Last attended' },
-          ]}
+      {/* Pinned above the list so search stays in reach while scrolling. */}
+      <View style={[styles.controls, { paddingBottom: 4 }]}>
+        <Searchbar
+          placeholder={isAdmin ? 'Search by name or email' : 'Search by name'}
+          value={query}
+          onChangeText={setQuery}
+          autoCorrect={false}
+          autoCapitalize="none"
+          style={{ backgroundColor: palette.surface }}
         />
+        {/* Sorting by attendance is an admin tool; members just see A–Z. */}
+        {isAdmin ? (
+          <SegmentedButtons
+            value={sort}
+            onValueChange={(v) => setSort(v as MemberSort)}
+            buttons={[
+              { value: 'name', label: 'Name' },
+              { value: 'lastAttended', label: 'Last attended' },
+            ]}
+          />
+        ) : null}
       </View>
-      <FlatList
-        data={data}
-        keyExtractor={(m) => (typeof m === 'string' ? m : m.uid)}
-        // No line next to the "EVICTED" heading, only between people.
-        ItemSeparatorComponent={({ leadingItem }: { leadingItem: unknown }) =>
-          typeof leadingItem === 'string' ? null : <RowDivider />
+      {/* Virtualised: only rows near the screen are drawn, so a long roster stays fast. */}
+      <SectionList
+        sections={sections}
+        keyExtractor={(u) => u.uid}
+        stickySectionHeadersEnabled={false}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        contentContainerStyle={styles.list}
+        renderSectionHeader={({ section }) => (
+          <View style={styles.sectionGap}>
+            <SectionHeader title={`${section.title} · ${section.data.length}`} />
+          </View>
+        )}
+        renderItem={({ item, index, section }) => (
+          <CardSlice first={index === 0} last={index === section.data.length - 1}>
+            {renderMember(item, index)}
+          </CardSlice>
+        )}
+        ListEmptyComponent={
+          <Text style={[cardStyles.muted, { paddingTop: 12 }]}>
+            {query.trim() ? `No one matches “${query.trim()}”.` : 'No members yet.'}
+          </Text>
         }
-        renderItem={({ item }) => {
-          if (item === 'evicted-header') {
-            return (
-              <Text
-                variant="labelMedium"
-                style={{ paddingHorizontal: 16, paddingTop: 12, paddingBottom: 4, opacity: 0.5 }}
-              >
-                EVICTED
-              </Text>
-            );
-          }
-
-          const isEvicted = item.status === 'evicted';
-          const missed = item.missedEventCount ?? 0;
-          const showAlert = isAdmin && missed >= 2 && !isEvicted;
-          const last = item.lastAttendedAt?.toDate?.();
-
-          return (
-            <List.Item
-              title={() => (
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                  <Text
-                    variant="bodyLarge"
-                    style={isEvicted ? { opacity: 0.45 } : undefined}
-                  >
-                    {item.firstName} {item.lastName}
-                  </Text>
-                  {item.isAdmin && !isEvicted && (
-                    <Text variant="bodyMedium" style={{ color: palette.muted }}>
-                      (Admin)
-                    </Text>
-                  )}
-                </View>
-              )}
-              description={() => (
-                <View style={{ gap: 4, marginTop: 4 }}>
-                  {isAdmin && !!item.email && (
-                    <Text
-                      selectable
-                      numberOfLines={1}
-                      style={{ opacity: isEvicted ? 0.35 : 0.7, fontSize: 12 }}
-                    >
-                      {item.email}
-                    </Text>
-                  )}
-                  {isAdmin && (
-                    <Text style={{ opacity: isEvicted ? 0.35 : 0.7, fontSize: 12 }}>
-                      {last ? `Last attended ${format(last, 'PP')}` : 'No attendance on record'}
-                      {missed > 0 && !isEvicted ? ` · missed ${missed}` : ''}
-                    </Text>
-                  )}
-                  {!isEvicted && <BadgeList badges={item.badges ?? []} compact />}
-                </View>
-              )}
-              left={() => (
-                <View style={{ width: 32, alignItems: 'center', justifyContent: 'center' }}>
-                  {showAlert ? (
-                    <IconButton icon="alert-circle" iconColor={palette.danger} size={24} />
-                  ) : null}
-                </View>
-              )}
-              right={() => {
-                if (!isAdmin) return null;
-                if (isEvicted) {
-                  return (
-                    <IconButton
-                      icon="account-reactivate"
-                      iconColor={palette.primary}
-                      onPress={() => setReinstate(item)}
-                    />
-                  );
-                }
-
-                const isSelf = item.uid === firebaseUser?.uid;
-                const canEvict = !isSelf && !item.isAdmin;
-                const canDemote = !isSelf && item.isAdmin && !item.isSeedAdmin;
-                const canPromote = !item.isAdmin;
-                if (!canEvict && !canPromote && !canDemote) return null;
-
-                return (
-                  <Menu
-                    visible={menuUid === item.uid}
-                    onDismiss={() => setMenuUid(null)}
-                    anchor={
-                      <IconButton icon="dots-vertical" onPress={() => setMenuUid(item.uid)} />
-                    }
-                  >
-                    {canPromote && (
-                      <Menu.Item
-                        leadingIcon="shield-account"
-                        title="Make admin"
-                        onPress={() => {
-                          setMenuUid(null);
-                          setAdminAction({ user: item, type: 'promote' });
-                        }}
-                      />
-                    )}
-                    {canDemote && (
-                      <Menu.Item
-                        leadingIcon="shield-off"
-                        title="Remove admin"
-                        onPress={() => {
-                          setMenuUid(null);
-                          setAdminAction({ user: item, type: 'demote' });
-                        }}
-                      />
-                    )}
-                    {canEvict && (
-                      <Menu.Item
-                        leadingIcon="account-remove"
-                        title="Remove member"
-                        titleStyle={{ color: palette.danger }}
-                        onPress={() => {
-                          setMenuUid(null);
-                          setConfirm(item);
-                        }}
-                      />
-                    )}
-                  </Menu>
-                );
-              }}
-            />
-          );
-        }}
       />
       <Portal>
         <Dialog visible={!!confirm} onDismiss={() => setConfirm(null)}>
@@ -317,3 +297,9 @@ export default function Members() {
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  controls: { paddingHorizontal: 16, paddingTop: 16, gap: 12, width: '100%', maxWidth: 560, alignSelf: 'center' },
+  list: { paddingHorizontal: 16, paddingBottom: 40, width: '100%', maxWidth: 560, alignSelf: 'center' },
+  sectionGap: { paddingTop: 16, paddingBottom: 8 },
+});

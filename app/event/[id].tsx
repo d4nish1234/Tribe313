@@ -26,10 +26,9 @@ import { useMemo, useState } from "react";
 import { ScrollView, View } from "react-native";
 import {
   ActivityIndicator,
-  Card,
   Dialog,
   Divider,
-  IconButton,
+  Icon,
   Portal,
   RadioButton,
   Snackbar,
@@ -37,6 +36,8 @@ import {
   TextInput,
 } from "react-native-paper";
 import { AppButton } from '@/src/components/AppButton';
+import { palette } from '@/src/theme';
+import { CardBox, CardRow, SectionHeader } from '@/src/components/Cards';
 
 // pickupMode is 'home', 'custom', or a carpoolLocation ID
 function resolveMode(
@@ -401,14 +402,14 @@ export default function EventDetail() {
         <>
           {rideGroups.driverSections.map((section) => (
             <View key={section.uid} style={{ gap: 8 }}>
-              <Text variant="titleSmall" style={{ marginTop: 4 }}>
-                {section.title}
-              </Text>
-              {section.rides.map((r) => {
+              <SectionHeader title={section.title} />
+              <CardBox>
+              {section.rides.map((r, i) => {
                 const isOwner = r.requesterUid === firebaseUser.uid;
                 return (
                   <RideCard
                     key={r.id}
+                    first={i === 0}
                     ride={r}
                     requesterName={nameFor(r.requesterUid)}
                     driverName={r.driverUid ? nameFor(r.driverUid) : undefined}
@@ -421,19 +422,20 @@ export default function EventDetail() {
                   />
                 );
               })}
+              </CardBox>
             </View>
           ))}
           {rideGroups.unassigned.length > 0 && (
             <View style={{ gap: 8 }}>
-              <Text variant="titleSmall" style={{ marginTop: 4 }}>
-                Needs a ride
-              </Text>
-              {rideGroups.unassigned.map((r) => {
+              <SectionHeader title="Needs a ride" />
+              <CardBox>
+              {rideGroups.unassigned.map((r, i) => {
                 const isOwner = r.requesterUid === firebaseUser.uid;
                 const canOffer = !isOwner && !myActiveRide;
                 return (
                   <RideCard
                     key={r.id}
+                    first={i === 0}
                     ride={r}
                     requesterName={nameFor(r.requesterUid)}
                     driverName={undefined}
@@ -447,6 +449,7 @@ export default function EventDetail() {
                   />
                 );
               })}
+              </CardBox>
             </View>
           )}
         </>
@@ -456,21 +459,33 @@ export default function EventDetail() {
         <>
           <Divider />
           <Text variant="titleMedium">Admin · Attendance</Text>
-          {rsvps
-            .filter((r) => r.status === "yes")
-            .map((r) => (
-              <Card key={r.uid} style={{ marginBottom: 8 }}>
-                <Card.Title
-                  title={nameFor(r.uid)}
-                  right={() => (
-                    <IconButton
-                      icon={r.attended ? "check-circle" : "circle-outline"}
-                      onPress={() => toggleAttended(r.uid, !r.attended)}
-                    />
-                  )}
-                />
-              </Card>
-            ))}
+          {yesCount > 0 ? (
+            <CardBox>
+              {rsvps
+                .filter((r) => r.status === "yes")
+                .map((r, i) => (
+                  <CardRow
+                    key={r.uid}
+                    first={i === 0}
+                    title={nameFor(r.uid)}
+                    subtitle={r.attended ? "Attended" : "Not marked"}
+                    onPress={() => toggleAttended(r.uid, !r.attended)}
+                    chevron={null}
+                    accessibilityRole="checkbox"
+                    accessibilityState={{ checked: !!r.attended }}
+                    right={
+                      <Icon
+                        source={r.attended ? "check-circle" : "circle-outline"}
+                        color={r.attended ? palette.primary : palette.muted}
+                        size={24}
+                      />
+                    }
+                  />
+                ))}
+            </CardBox>
+          ) : (
+            <Text style={{ opacity: 0.7 }}>No one has said they’re going yet.</Text>
+          )}
           <AppButton
             variant="secondary"
             tone="danger"

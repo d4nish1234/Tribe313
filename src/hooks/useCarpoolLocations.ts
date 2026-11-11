@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { collection, onSnapshot, orderBy, query } from 'firebase/firestore';
+import { collection, orderBy, query } from 'firebase/firestore';
+import { listenQuery } from '../lib/live';
 import { db } from '../firebase/config';
 
 export type CarpoolLocation = {
@@ -15,10 +16,10 @@ export function useCarpoolLocations() {
 
   useEffect(() => {
     const q = query(collection(db, 'carpoolLocations'), orderBy('label'));
-    return onSnapshot(
+    return listenQuery(
       q,
-      (snap) => setLocations(snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) } as CarpoolLocation))),
-      () => setLocations([]),
+      (snap) => setLocations(snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }) as CarpoolLocation)),
+      () => setLocations((l) => l ?? []),
     );
   }, []);
 

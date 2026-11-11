@@ -1,13 +1,13 @@
 import { useState } from 'react';
-import { FlatList, View } from 'react-native';
-import { ActivityIndicator, Divider, List, Text } from 'react-native-paper';
+import { Alert, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Text } from 'react-native-paper';
 import { Redirect } from 'expo-router';
 import { doc, updateDoc } from 'firebase/firestore';
 import { useAuth } from '@/src/contexts/AuthContext';
 import { useMembers } from '@/src/hooks/useMembers';
 import { approveUser } from '@/src/firebase/fn';
 import { db } from '@/src/firebase/config';
-import { RowDivider } from '@/src/components/RowDivider';
+import { CardBox, CardRow, SectionHeader, cardStyles } from '@/src/components/Cards';
 import { AppButton } from '@/src/components/AppButton';
 
 export default function Approvals() {
@@ -24,6 +24,8 @@ export default function Approvals() {
     setBusy(uid);
     try {
       await approveUser({ uid });
+    } catch (e: any) {
+      Alert.alert('Something went wrong', String(e?.message ?? e));
     } finally {
       setBusy(null);
     }
@@ -33,6 +35,8 @@ export default function Approvals() {
     setBusy(uid);
     try {
       await updateDoc(doc(db, 'users', uid), { status: 'dismissed' });
+    } catch (e: any) {
+      Alert.alert('Something went wrong', String(e?.message ?? e));
     } finally {
       setBusy(null);
     }
@@ -42,6 +46,8 @@ export default function Approvals() {
     setBusy(uid);
     try {
       await updateDoc(doc(db, 'users', uid), { status: 'pending' });
+    } catch (e: any) {
+      Alert.alert('Something went wrong', String(e?.message ?? e));
     } finally {
       setBusy(null);
     }
@@ -56,78 +62,72 @@ export default function Approvals() {
   }
 
   return (
-    <FlatList
-      data={[0]}
-      keyExtractor={() => 'root'}
-      renderItem={() => (
-        <View>
-          {pending.length === 0 ? (
-            <Text style={{ padding: 24, textAlign: 'center', opacity: 0.7 }}>
-              No pending members.
-            </Text>
-          ) : (
-            pending.map((item, i) => (
-              <View key={item.uid}>
-                {i > 0 ? <RowDivider /> : null}
-                <List.Item
-                  title={`${item.firstName} ${item.lastName}`}
-                  description={item.email}
-                  right={() => (
-                    <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
-                      <AppButton
-                        onPress={() => dismiss(item.uid)}
-                        loading={busy === item.uid}
-                        variant="secondary"
-                      >
-                        Dismiss
-                      </AppButton>
-                      <AppButton
-                        onPress={() => approve(item.uid)}
-                        loading={busy === item.uid}
-                        variant="secondary"
-                      >
-                        Approve
-                      </AppButton>
-                    </View>
-                  )}
-                />
-              </View>
-            ))
-          )}
-
-          {dismissed.length > 0 && (
-            <>
-              <Divider style={{ marginTop: 8 }} />
-              <Text
-                variant="titleSmall"
-                style={{ marginHorizontal: 16, marginTop: 16, marginBottom: 4, opacity: 0.6 }}
-              >
-                Not approved
-              </Text>
-              {dismissed.map((item, i) => (
-                <View key={item.uid}>
-                  {i > 0 ? <RowDivider /> : null}
-                  <List.Item
-                    title={`${item.firstName} ${item.lastName}`}
-                    description={item.email}
-                    titleStyle={{ opacity: 0.5 }}
-                    descriptionStyle={{ opacity: 0.5 }}
-                    right={() => (
-                      <AppButton
-                        onPress={() => restore(item.uid)}
-                        loading={busy === item.uid}
-                        variant="secondary"
-                      >
-                        Restore
-                      </AppButton>
-                    )}
-                  />
-                </View>
-              ))}
-            </>
-          )}
-        </View>
+    <ScrollView contentContainerStyle={[cardStyles.content, { paddingBottom: 40 }]}>
+      <SectionHeader title="Waiting for approval" />
+      {pending.length === 0 ? (
+        <Text style={cardStyles.muted}>No pending members.</Text>
+      ) : (
+        <CardBox>
+          {pending.map((item, i) => (
+            <CardRow
+              key={item.uid}
+              first={i === 0}
+              title={`${item.firstName} ${item.lastName}`}
+              subtitle={
+                <>
+                  <Text style={cardStyles.muted} selectable>
+                    {item.email}
+                  </Text>
+                  <View style={styles.actions}>
+                    <AppButton
+                      variant="secondary"
+                      style={styles.action}
+                      onPress={() => dismiss(item.uid)}
+                      disabled={busy === item.uid}
+                    >
+                      Dismiss
+                    </AppButton>
+                    <AppButton style={styles.action} onPress={() => approve(item.uid)} loading={busy === item.uid}>
+                      Approve
+                    </AppButton>
+                  </View>
+                </>
+              }
+            />
+          ))}
+        </CardBox>
       )}
-    />
+
+      {dismissed.length > 0 && (
+        <>
+          <SectionHeader title="Not approved" />
+          <CardBox>
+            {dismissed.map((item, i) => (
+              <CardRow
+                key={item.uid}
+                first={i === 0}
+                dim
+                title={`${item.firstName} ${item.lastName}`}
+                subtitle={item.email}
+                right={
+                  <AppButton
+                    variant="text"
+                    onPress={() => restore(item.uid)}
+                    loading={busy === item.uid}
+                  >
+                    Restore
+                  </AppButton>
+                }
+              />
+            ))}
+          </CardBox>
+        </>
+      )}
+    </ScrollView>
   );
 }
+
+const styles = StyleSheet.create({
+  actions: { flexDirection: 'row', gap: 8, marginTop: 8 },
+  action: { flex: 1 },
+});

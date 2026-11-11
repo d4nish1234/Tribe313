@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, View } from 'react-native';
 import { ActivityIndicator, Text, TextInput } from 'react-native-paper';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { useAuth } from '@/src/contexts/AuthContext';
@@ -13,7 +13,9 @@ import { ExplainProvider, ExplainText, InfoLink, useExplain } from '@/src/benchm
 import { LevelBadge } from '@/src/benchmark/components/Bits';
 import { ProgressTable } from '@/src/benchmark/components/ProgressTable';
 import { displayResult } from '@/src/benchmark/components/display';
-import { B, TAP } from '@/src/benchmark/theme';
+import { B } from '@/src/benchmark/theme';
+import { CardRow, rowDivider } from '@/src/components/Cards';
+import { pickOne, toPickItem } from '@/src/lib/picker';
 import { AppButton } from '@/src/components/AppButton';
 
 export default function MemberScreen() {
@@ -45,14 +47,18 @@ function Member() {
   const [note, setNote] = useState('');
   const [adding, setAdding] = useState(false);
   const [confirmRemove, setConfirmRemove] = useState<string | null>(null);
-  const [focused, setFocused] = useState(false);
 
-  const exercises = useMemo(() => latestVersion().allExercises(), []);
-  const suggestions = useMemo(() => {
-    const q = text.trim().toLowerCase();
-    if (q.length < 2) return [];
-    return exercises.filter((e) => e.toLowerCase().includes(q) && e.toLowerCase() !== q).slice(0, 6);
-  }, [text, exercises]);
+  // Pick from the plan's exercises, or type a new one (allowCustom).
+  const chooseExercise = async () => {
+    const picked = await pickOne({
+      title: 'Choose exercise',
+      items: latestVersion().allExercises().map(toPickItem),
+      selected: text ? [text] : [],
+      allowCustom: true,
+      searchPlaceholder: 'Search or type an exercise',
+    });
+    if (picked) setText(picked.slice(0, 200));
+  };
 
   if (!isAdmin) {
     return (
@@ -187,26 +193,19 @@ function Member() {
 
       <Text style={styles.group}>Assign an exercise</Text>
       <View style={[styles.card, { paddingVertical: 12, gap: 8 }]}>
-        <TextInput
-          mode="outlined"
-          label="Exercise"
-          value={text}
-          onChangeText={setText}
-          onFocus={() => setFocused(true)}
-          onBlur={() => setFocused(false)}
-          placeholder="e.g. Goblet squat 3×8"
-          activeOutlineColor={B.green}
-          maxLength={200}
-        />
-        {focused && suggestions.length > 0 ? (
-          <View style={styles.suggestions}>
-            {suggestions.map((s) => (
-              <Pressable key={s} style={styles.suggestion} onPress={() => setText(s)} accessibilityRole="button">
-                <Text style={styles.body}>{s}</Text>
-              </Pressable>
-            ))}
-          </View>
-        ) : null}
+        <View style={styles.pickRow}>
+          <CardRow
+            first
+            title="Exercise"
+            onPress={chooseExercise}
+            accessibilityHint="Opens the list of exercises to choose from"
+            right={
+              <Text style={[styles.pickValue, !text && { color: B.muted }]} numberOfLines={2}>
+                {text || 'Choose'}
+              </Text>
+            }
+          />
+        </View>
         <TextInput
           mode="outlined"
           label="Note (optional)"
@@ -236,12 +235,12 @@ const styles = StyleSheet.create({
   summaryValue: { color: '#fff', fontSize: 24, fontWeight: '700', marginTop: 2 },
   group: { fontSize: 13, fontWeight: '700', color: B.muted, textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 6 },
   rowBetween: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  card: { backgroundColor: B.surface, borderRadius: 12, paddingHorizontal: 12 },
+  card: { backgroundColor: B.surface, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 4 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 48, paddingVertical: 4 },
-  rowBorder: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: B.border },
+  rowBorder: rowDivider,
+  pickRow: { borderWidth: 1, borderColor: B.border, borderRadius: 10, paddingHorizontal: 12 },
+  pickValue: { flexShrink: 1, maxWidth: '60%', textAlign: 'right', fontSize: 16, color: B.text },
   body: { fontSize: 15, color: B.text },
   muted: { color: B.muted, fontSize: 13 },
   score: { fontWeight: '700', color: B.green, minWidth: 48, textAlign: 'right' },
-  suggestions: { borderWidth: 1, borderColor: B.border, borderRadius: 8, overflow: 'hidden' },
-  suggestion: { paddingHorizontal: 12, minHeight: TAP, justifyContent: 'center', borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: B.border },
 });

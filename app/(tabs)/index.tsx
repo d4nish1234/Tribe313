@@ -1,99 +1,99 @@
-import { FlatList, RefreshControl, View } from 'react-native';
-import { ActivityIndicator, Card, Text } from 'react-native-paper';
+import { useMemo } from 'react';
+import { ScrollView, View } from 'react-native';
+import { ActivityIndicator, Text } from 'react-native-paper';
 import { router } from 'expo-router';
-import { format } from 'date-fns';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@/src/contexts/AuthContext';
 import { useEvents } from '@/src/hooks/useEvents';
 import { usePendingCount } from '@/src/hooks/usePendingCount';
 import { BrandLogo } from '@/src/components/BrandLogo';
-import type { EventDoc } from '@/src/types';
-import { AppButton, AppFab } from '@/src/components/AppButton';
+import { AppButton } from '@/src/components/AppButton';
+import { CardBox, SectionHeader, cardStyles } from '@/src/components/Cards';
+import { EventRow } from '@/src/components/EventRow';
+import { useAssignments, useBenchmarkSessions } from '@/src/benchmark/hooks';
+import { getVersion, latestVersion } from '@/src/benchmark/registry';
+import { knownSessions } from '@/src/benchmark/engine/score';
+import { buildWorkouts } from '@/src/benchmark/engine/workouts';
+import { ExplainProvider, InfoLink, useExplain } from '@/src/benchmark/components/Explain';
+import { WeekWorkouts } from '@/src/benchmark/components/WeekWorkouts';
+import { CoachExtras } from '@/src/benchmark/components/CoachExtras';
 
-function Section({ title, events }: { title: string; events: EventDoc[] }) {
-  if (events.length === 0) return null;
+export default function HomeTab() {
   return (
-    <View style={{ gap: 8, marginBottom: 16 }}>
-      <Text variant="titleMedium" style={{ marginHorizontal: 16 }}>
-        {title}
-      </Text>
-      {events.map((e) => (
-        <Card
-          key={e.id}
-          style={{ marginHorizontal: 16 }}
-          onPress={() => router.push({ pathname: '/event/[id]', params: { id: e.id } })}
-        >
-          <Card.Title
-            title={e.title}
-            subtitle={`${format(e.startsAt.toDate(), 'PPp')} · ${e.location?.label ?? ''}`}
-          />
-        </Card>
-      ))}
-    </View>
+    <ExplainProvider>
+      <Home />
+    </ExplainProvider>
   );
 }
 
-export default function Home() {
-  const { loading, upcoming, past } = useEvents();
-  const { isAdmin, appUser } = useAuth();
+function Home() {
+  const { loading, upcoming } = useEvents();
+  const { isAdmin, appUser, firebaseUser } = useAuth();
   const pendingCount = usePendingCount();
+  const insets = useSafeAreaInsets();
+  const explain = useExplain();
 
-  if (loading) {
-    return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-        <ActivityIndicator />
-      </View>
-    );
-  }
+  // Same data and rules as Your plan, so the two always agree.
+  const { sessions } = useBenchmarkSessions(firebaseUser?.uid);
+  const { assignments } = useAssignments(firebaseUser?.uid);
+  const latest = useMemo(() => knownSessions(sessions)[0] ?? null, [sessions]);
+  const v = latest ? getVersion(latest.version)! : latestVersion();
+  const workouts = useMemo(() => buildWorkouts(v, latest), [v, latest]);
+
+  const next = upcoming[0];
 
   return (
     <View style={{ flex: 1 }}>
-      <FlatList
-        data={[0]}
-        keyExtractor={() => 'home'}
-        ListHeaderComponent={<BrandLogo />}
-        renderItem={() => (
-          <View style={{ paddingVertical: 16 }}>
-            <Text variant="headlineSmall" style={{ marginHorizontal: 16, marginBottom: 12 }}>
-              Welcome{appUser ? `, ${appUser.firstName}` : ''}
+      <ScrollView contentContainerStyle={{ paddingBottom: 24 + insets.bottom }}>
+        <BrandLogo />
+        <View style={cardStyles.content}>
+          <Text variant="headlineSmall">Welcome{appUser ? `, ${appUser.firstName}` : ''}</Text>
+
+          {isAdmin && (
+            <View style={{ gap: 8 }}>
+              <AppButton
+                variant="secondary"
+                onPress={() => router.push('/admin/approvals')}
+                icon={pendingCount > 0 ? 'circle-medium' : undefined}
+              >
+                Admin · Pending approvals{pendingCount > 0 ? ` (${pendingCount})` : ''}
+              </AppButton>
+              <AppButton
+                variant="secondary"
+                onPress={() => router.push('/admin/carpool-addresses')}
+                icon="map-marker-multiple-outline"
+              >
+                Admin · Carpool locations
+              </AppButton>
+            </View>
+          )}
+
+          {/* Only the next event; the rest are one tap away. */}
+          <SectionHeader title="Up next" />
+          {loading ? (
+            <ActivityIndicator style={{ marginVertical: 12 }} />
+          ) : next ? (
+            <CardBox>
+              <EventRow event={next} first />
+            </CardBox>
+          ) : (
+            <Text style={cardStyles.muted}>No upcoming events.</Text>
+          )}
+
+          <SectionHeader
+            title="Your workouts this week"
+            right={<InfoLink label="How?" onPress={() => explain(v.explainer('week'))} />}
+          />
+          <WeekWorkouts v={v} workouts={workouts} />
+          {!latest ? (
+            <Text style={cardStyles.muted}>
+              Do your first benchmark and these will be built around your results.
             </Text>
-            {isAdmin && (
-              <>
-                <AppButton
-                  variant="secondary"
-                  onPress={() => router.push('/admin/approvals')}
-                  style={{ marginHorizontal: 16, marginBottom: 8 }}
-                  icon={pendingCount > 0 ? 'circle-medium' : undefined}
-                >
-                  Admin · Pending approvals{pendingCount > 0 ? ` (${pendingCount})` : ''}
-                </AppButton>
-                <AppButton
-                  variant="secondary"
-                  onPress={() => router.push('/admin/carpool-addresses')}
-                  style={{ marginHorizontal: 16, marginBottom: 12 }}
-                  icon="map-marker-multiple-outline"
-                >
-                  Admin · Carpool locations
-                </AppButton>
-              </>
-            )}
-            <Section title="Upcoming" events={upcoming} />
-            {upcoming.length === 0 && (
-              <Text style={{ marginHorizontal: 16, marginBottom: 16, opacity: 0.7 }}>
-                No upcoming events.
-              </Text>
-            )}
-            <Section title="Past" events={past} />
-          </View>
-        )}
-        refreshControl={<RefreshControl refreshing={false} onRefresh={() => {}} />}
-      />
-      {isAdmin && (
-        <AppFab
-          icon="plus"
-          accessibilityLabel="New event"
-          onPress={() => router.push('/event/new')}
-        />
-      )}
+          ) : null}
+
+          <CoachExtras v={v} assignments={assignments} />
+        </View>
+      </ScrollView>
     </View>
   );
 }
