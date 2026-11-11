@@ -7,6 +7,7 @@ export const B = {
   greenText: '#FFFFFF',
   gold: palette.secondary,
   goldSoft: palette.secondarySoft,
+  goldText: palette.goldText,
   text: palette.text,
   muted: palette.muted,
   border: palette.border,

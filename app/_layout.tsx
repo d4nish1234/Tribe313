@@ -42,7 +42,7 @@ export default function RootLayout() {
                 <Stack.Screen name="admin/index" dangerouslySingular options={{ headerShown: true, title: 'Admin', headerBackTitle: 'Back' }} />
                 <Stack.Screen name="admin/series/[id]" dangerouslySingular options={{ headerShown: true, title: 'Recurring event', headerBackTitle: 'Back' }} />
                 <Stack.Screen name="benchmark/entry/[date]" dangerouslySingular options={{ headerShown: true, title: 'Benchmark', headerBackTitle: 'Back' }} />
-                <Stack.Screen name="benchmark/plan" dangerouslySingular options={{ headerShown: true, title: 'Your plan', headerBackTitle: 'Back' }} />
+                <Stack.Screen name="benchmark/progress" dangerouslySingular options={{ headerShown: true, title: 'Progress', headerBackTitle: 'Back' }} />
                 <Stack.Screen name="benchmark/coach/index" dangerouslySingular options={{ headerShown: true, title: 'Coach', headerBackTitle: 'Back' }} />
                 <Stack.Screen name="benchmark/coach/[uid]" dangerouslySingular options={{ headerShown: true, title: 'Member', headerBackTitle: 'Back' }} />
               </Stack>

@@ -10,6 +10,8 @@ import { getVersion, latestVersion } from '@/src/benchmark/registry';
 import { useBenchmarkProfile, useBenchmarkSessions, useEntryDraft, type EntryDraft } from '@/src/benchmark/hooks';
 import { deleteSession, saveSession } from '@/src/benchmark/data';
 import { formatDate, formatFtIn, formatValue, fromIsoDate, toIsoDate } from '@/src/benchmark/engine/format';
+import { prefillFrom } from '@/src/benchmark/engine/progress';
+import { shortDate } from '@/src/benchmark/components/Charts';
 import { ExplainProvider, InfoLink, useExplain } from '@/src/benchmark/components/Explain';
 import { CrossfadeThumb, testExplainContent } from '@/src/benchmark/components/Bits';
 import { PickerSheet } from '@/src/benchmark/components/PickerSheet';
@@ -101,9 +103,15 @@ function Entry() {
       setForm(f);
       setSaved(formFromSession(existing));
     } else {
+      // A new benchmark starts from the last results, each marked "Same as
+      // <date>" until it's changed or confirmed. Only the tests you redo change.
+      const pre = prefillFrom(sessions, latestVersion());
       const f = emptyForm();
       f.bodyweight = sessions[0]?.bodyweight ?? null;
       f.heightIn = profile?.heightIn ?? null;
+      f.results = { ...pre.results };
+      f.wallSquatFaults = pre.wallSquatFaults;
+      f.carried = pre.from;
       setForm(f);
     }
     setInited(true);
@@ -115,7 +123,17 @@ function Entry() {
     draftApplied.current = true;
     if (draft) {
       const { date: draftDate, writtenOn: _writtenOn, ...rest } = draft;
-      setForm((f) => ({ ...f, ...rest, results: { ...f.results, ...rest.results } }));
+      setForm((f) => {
+        const results = { ...f.results, ...rest.results };
+        // Drafts from before pre-fill have no `carried`: keep a mark only where
+        // the draft still holds last time's value.
+        const carried =
+          rest.carried ??
+          Object.fromEntries(
+            Object.entries(f.carried ?? {}).filter(([k]) => results[k] === f.results[k]),
+          );
+        return { ...f, ...rest, results, carried };
+      });
       if (draftDate) setDate(draftDate);
       setToast('Restored your unsaved results');
     }
@@ -133,8 +151,13 @@ function Entry() {
     });
   };
 
-  const setResult = (key: string, value: number | null) =>
-    update({ results: { ...form.results, [key]: value } });
+  // Choosing a value, even the same one, confirms it: it's no longer "same as last time".
+  const setResult = (key: string, value: number | null) => {
+    const { [key]: _confirmed, ...carried } = form.carried ?? {};
+    update({ results: { ...form.results, [key]: value }, carried });
+  };
+  const carried = form.carried ?? {};
+  const carriedCount = Object.keys(carried).filter((k) => form.results[k] != null).length;
 
   // What's changed since the last save.
   const changed = useMemo(() => {
@@ -142,7 +165,7 @@ function Entry() {
     const resultKeys = (v?.logOrder ?? []).filter(
       (k) => (form.results[k] ?? null) !== (base.results[k] ?? null),
     );
-    const newResults = resultKeys.filter((k) => form.results[k] != null);
+    const newResults = resultKeys.filter((k) => form.results[k] != null && !form.carried?.[k]);
     const other =
       form.bodyweight !== base.bodyweight ||
       form.heightIn !== base.heightIn ||
@@ -153,6 +176,9 @@ function Entry() {
 
   const hasAnyResult = Object.values(form.results).some((x) => typeof x === 'number');
   const dirty = changed.any && (hasAnyResult || saved !== null);
+  // A new benchmark needs at least one result entered today: one made only of
+  // last time's numbers would show progress that never happened.
+  const nothingNew = !saved && changed.newCount === 0;
 
   const save = async () => {
     if (!uid || !v) return;
@@ -256,8 +282,6 @@ function Entry() {
         : lastResult(sessions, pickerKey, savedDate) ?? v.pickerDefault(pickerKey)
       : 0;
 
-  const showHeightRow = profile?.heightIn == null || form.heightIn == null;
-
   return (
     <View style={{ flex: 1, backgroundColor: B.background }}>
       <Stack.Screen
@@ -333,23 +357,19 @@ function Entry() {
               label="Bodyweight"
             />
           </View>
-          {showHeightRow ? (
-            <>
-              <View style={styles.divider} />
-              <View style={styles.fieldRow}>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.fieldLabel}>Height</Text>
-                  <InfoLink label="Why?" onPress={() => v && explain(v.explainer('height'))} />
-                </View>
-                <ResultBox
-                  text={form.heightIn != null ? formatFtIn(form.heightIn) : null}
-                  unsaved={form.heightIn !== (saved?.heightIn ?? null)}
-                  onPress={() => !readOnly && setPicking('height')}
-                  label="Height"
-                />
-              </View>
-            </>
-          ) : null}
+          <View style={styles.divider} />
+          <View style={styles.fieldRow}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.fieldLabel}>Height</Text>
+              <InfoLink label="Why?" onPress={() => v && explain(v.explainer('height'))} />
+            </View>
+            <ResultBox
+              text={form.heightIn != null ? formatFtIn(form.heightIn) : null}
+              unsaved={form.heightIn !== (saved?.heightIn ?? null)}
+              onPress={() => !readOnly && setPicking('height')}
+              label="Height"
+            />
+          </View>
         </View>
 
         {v ? (
@@ -362,6 +382,7 @@ function Entry() {
               {v.logOrder.map((key, i) => {
                 const t = v.tests[key];
                 const value = form.results[key] ?? null;
+                const sameAs = value != null ? carried[key] : undefined;
                 return (
                   <View key={key}>
                     {i > 0 ? <View style={styles.divider} /> : null}
@@ -375,10 +396,12 @@ function Entry() {
                       <View style={{ flex: 1 }}>
                         <Text style={styles.testName}>{t.name}</Text>
                         {t.note ? <Text style={styles.muted}>{t.note}</Text> : null}
+                        {sameAs ? <Text style={styles.sameAs}>Same as {shortDate(sameAs)}</Text> : null}
                       </View>
                       <ResultBox
                         text={value != null ? formatValue(t.input, value) : null}
-                        unsaved={changed.resultKeys.has(key)}
+                        unsaved={changed.resultKeys.has(key) && !sameAs}
+                        sameAs={sameAs ? shortDate(sameAs) : undefined}
                         onPress={() => setPicking(key)}
                         label={t.name}
                       />
@@ -439,14 +462,18 @@ function Entry() {
         <View style={[styles.saveBar, { paddingBottom: Math.max(insets.bottom, 12) }]}>
           <AppButton
             loading={saving}
-            disabled={saving || !dirty}
+            disabled={saving || !dirty || nothingNew}
             onPress={save}
           >
-            {!dirty
-              ? 'All saved ✓'
-              : changed.newCount > 0
-                ? `Save ${changed.newCount} new result${changed.newCount === 1 ? '' : 's'}`
-                : 'Save changes'}
+            {nothingNew
+              ? 'Enter a result from today'
+              : !dirty
+                ? 'All saved ✓'
+                : !saved && carriedCount > 0
+                  ? `Save ${changed.newCount} new + ${carriedCount} same`
+                  : changed.newCount > 0
+                    ? `Save ${changed.newCount} new result${changed.newCount === 1 ? '' : 's'}`
+                    : 'Save changes'}
           </AppButton>
         </View>
       ) : null}
@@ -476,11 +503,14 @@ function Entry() {
 function ResultBox({
   text,
   unsaved,
+  sameAs,
   onPress,
   label,
 }: {
   text: string | null;
   unsaved: boolean;
+  /** Still last time's result (that benchmark's short date): shown greyed until changed or confirmed. */
+  sameAs?: string;
   onPress: () => void;
   label: string;
 }) {
@@ -488,11 +518,13 @@ function ResultBox({
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
-      accessibilityLabel={`${label}: ${text ?? 'empty'}`}
-      accessibilityHint={text ? 'Change result' : 'Add result'}
-      style={[styles.box, !text && styles.boxEmpty, unsaved && text != null && styles.boxUnsaved]}
+      accessibilityLabel={`${label}: ${text ?? 'empty'}${sameAs ? `, same as ${sameAs}` : ''}`}
+      accessibilityHint={sameAs ? 'Change it, or press Done to keep it' : text ? 'Change result' : 'Add result'}
+      style={[styles.box, !text && styles.boxEmpty, sameAs && styles.boxSame, unsaved && text != null && styles.boxUnsaved]}
     >
-      <Text style={[styles.boxText, !text && { color: B.muted, fontWeight: '400' }]}>{text ?? 'Tap to add'}</Text>
+      <Text style={[styles.boxText, (!text || sameAs) && { color: B.muted, fontWeight: '400' }]}>
+        {text ?? 'Tap to add'}
+      </Text>
     </Pressable>
   );
 }
@@ -527,6 +559,8 @@ const styles = StyleSheet.create({
     backgroundColor: B.surface,
   },
   boxEmpty: { borderStyle: 'dashed', borderColor: B.muted },
+  boxSame: { backgroundColor: B.background },
+  sameAs: { color: B.goldText, fontSize: 13, fontWeight: '600' },
   boxUnsaved: { borderWidth: 2.5, borderColor: B.green },
   boxText: { fontSize: 16, fontWeight: '600', color: B.text, fontVariant: ['tabular-nums'] },
   faults: { paddingBottom: 12, gap: 6 },

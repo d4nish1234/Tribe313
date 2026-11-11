@@ -29,7 +29,7 @@ function Home() {
   const insets = useSafeAreaInsets();
   const explain = useExplain();
 
-  // Same data and rules as Your plan, so the two always agree.
+  // Same data and rules as the Training tab, so the two always agree.
   const { sessions } = useBenchmarkSessions(firebaseUser?.uid);
   const { assignments } = useAssignments(firebaseUser?.uid);
   const latest = useMemo(() => knownSessions(sessions)[0] ?? null, [sessions]);

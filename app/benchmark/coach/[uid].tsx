@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, View } from 'react-native';
 import { ActivityIndicator, Text, TextInput } from 'react-native-paper';
-import { Stack, useLocalSearchParams } from 'expo-router';
+import { Stack, router, useLocalSearchParams } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/src/contexts/AuthContext';
 import { useMembers } from '@/src/hooks/useMembers';
 import { getVersion, latestVersion } from '@/src/benchmark/registry';
@@ -11,7 +12,6 @@ import { knownSessions, scoreSession, weakestFirst } from '@/src/benchmark/engin
 import { LEVEL_LONG, formatDate } from '@/src/benchmark/engine/format';
 import { ExplainProvider, ExplainText, InfoLink, useExplain } from '@/src/benchmark/components/Explain';
 import { LevelBadge } from '@/src/benchmark/components/Bits';
-import { ProgressTable } from '@/src/benchmark/components/ProgressTable';
 import { displayResult } from '@/src/benchmark/components/display';
 import { B } from '@/src/benchmark/theme';
 import { CardRow, rowDivider } from '@/src/components/Cards';
@@ -38,7 +38,6 @@ function Member() {
 
   const known = useMemo(() => knownSessions(sessions), [sessions]);
   const latest = known[0] ?? null;
-  const first = known.length > 1 ? known[known.length - 1] : null;
   const v = latest ? getVersion(latest.version)! : latestVersion();
   const sc = latest ? scoreSession(latest) : null;
   const weakest = latest ? weakestFirst(latest).filter((k) => v.levelFor(k, latest) !== null).slice(0, 3) : [];
@@ -137,23 +136,15 @@ function Member() {
             ))}
           </View>
 
-          <Text style={styles.group}>{first ? 'First vs latest' : 'Latest benchmark'}</Text>
-          <View style={[styles.card, { paddingVertical: 8 }]}>
-            <ProgressTable v={v} latest={latest} first={first} />
-          </View>
-
-          <Text style={styles.group}>Benchmarks</Text>
           <View style={styles.card}>
-            {sessions.map((s, i) => {
-              const ss = scoreSession(s);
-              return (
-                <View key={s.date} style={[styles.row, i > 0 && styles.rowBorder]}>
-                  <Text style={[styles.body, { flex: 1 }]}>{formatDate(s.date)}</Text>
-                  <Text style={styles.muted}>{s.bodyweight} lb</Text>
-                  <Text style={styles.score}>{ss ? `${ss.score}/${ss.maxScore}` : `v${s.version}`}</Text>
-                </View>
-              );
-            })}
+            <CardRow
+              first
+              title="Progress"
+              subtitle={`${sessions.length} benchmark${sessions.length === 1 ? '' : 's'} · last ${formatDate(latest.date)}`}
+              left={<Ionicons name="trending-up" size={20} color={B.green} />}
+              onPress={() => router.push({ pathname: '/benchmark/progress', params: { uid } })}
+              accessibilityHint="Opens charts of their score and tests over time"
+            />
           </View>
         </>
       ) : (

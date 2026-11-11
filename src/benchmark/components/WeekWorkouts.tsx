@@ -9,7 +9,7 @@ import { ExplainText, useExplain } from './Explain';
 
 /**
  * The member's three workouts for the week, each a card that opens to its
- * exercises. Shown on Home and on Your plan. Needs an ExplainProvider above it.
+ * exercises. Shown on Home and on the Training tab. Needs an ExplainProvider above it.
  */
 export function WeekWorkouts({ v, workouts }: { v: BenchmarkVersion; workouts: Workout[] }) {
   const explain = useExplain();

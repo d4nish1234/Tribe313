@@ -3,15 +3,16 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { ActivityIndicator, Text } from 'react-native-paper';
 import { useAuth } from '@/src/contexts/AuthContext';
 import { getVersion, latestVersion } from '@/src/benchmark/registry';
-import { useBenchmarkSessions } from '@/src/benchmark/hooks';
+import { useAssignments, useBenchmarkSessions } from '@/src/benchmark/hooks';
 import { knownSessions, weakestFirst } from '@/src/benchmark/engine/score';
 import { buildWorkouts, planForLevel, workoutFor } from '@/src/benchmark/engine/workouts';
 import { ExplainProvider, ExplainText, InfoLink, useExplain } from '@/src/benchmark/components/Explain';
 import { LevelBars, testExplainContent } from '@/src/benchmark/components/Bits';
 import { displayResult } from '@/src/benchmark/components/display';
-import { ProgressTable } from '@/src/benchmark/components/ProgressTable';
+import { CoachExtras } from '@/src/benchmark/components/CoachExtras';
 import { WeekWorkouts } from '@/src/benchmark/components/WeekWorkouts';
-import { ExpandableCard, SectionHeader } from '@/src/components/Cards';
+import { CardBox, CardRow, ExpandableCard, SectionHeader } from '@/src/components/Cards';
+import { Ionicons } from '@expo/vector-icons';
 import { B, TAP } from '@/src/benchmark/theme';
 import {
   PLAN_KEYS,
@@ -20,25 +21,29 @@ import {
   type Session,
 } from '@/src/benchmark/types';
 
-export default function PlanScreen() {
+/**
+ * Training tab: what to do between benchmarks. This week's workouts, extra
+ * exercises from a coach, every test's plan (weakest first) and general tips.
+ * Built from the latest benchmark; logging one is on the Benchmark tab.
+ */
+export default function TrainingTab() {
   return (
     <ExplainProvider>
-      <Plan />
+      <Training />
     </ExplainProvider>
   );
 }
 
-function Plan() {
+function Training() {
   const { firebaseUser } = useAuth();
   const { loading, sessions } = useBenchmarkSessions(firebaseUser?.uid);
+  const { assignments } = useAssignments(firebaseUser?.uid);
   const explain = useExplain();
   const known = useMemo(() => knownSessions(sessions), [sessions]);
   const latest = known[0] ?? null;
-  const first = known.length > 1 ? known[known.length - 1] : null;
   const v = latest ? getVersion(latest.version)! : latestVersion();
   const workouts = useMemo(() => buildWorkouts(v, latest), [v, latest]);
   const [openTest, setOpenTest] = useState<string | null>(null);
-  const [progressOpen, setProgressOpen] = useState(false);
 
   if (loading) {
     return (
@@ -57,8 +62,8 @@ function Plan() {
       {!latest ? (
         <View style={styles.notice}>
           <Text style={styles.body}>
-            Do your first benchmark to get a plan built for you. Until then, every test shows the “Reach L1”
-            plan.
+            Do your first benchmark on the Benchmark tab to get a plan built for you. Until then, every test
+            shows the “Reach L1” plan.
           </Text>
         </View>
       ) : null}
@@ -70,12 +75,7 @@ function Plan() {
       />
       <WeekWorkouts v={v} workouts={workouts} />
 
-      {/* Progress */}
-      {latest ? (
-        <ExpandableCard title="Your progress" open={progressOpen} onToggle={() => setProgressOpen((o) => !o)}>
-          <ProgressTable v={v} latest={latest} first={first} />
-        </ExpandableCard>
-      ) : null}
+      <CoachExtras v={v} assignments={assignments} />
 
       {/* Tests */}
       <SectionHeader
@@ -92,6 +92,20 @@ function Plan() {
           onToggle={() => setOpenTest(openTest === key ? null : key)}
         />
       ))}
+
+      {/* Good to know */}
+      <SectionHeader title="Good to know" />
+      <CardBox>
+        {v.goodToKnow.map((g, i) => (
+          <CardRow
+            key={g.explainer}
+            first={i === 0}
+            left={<Ionicons name="information-circle-outline" size={20} color={B.green} />}
+            title={g.label}
+            onPress={() => explain(v.explainer(g.explainer))}
+          />
+        ))}
+      </CardBox>
     </ScrollView>
   );
 }

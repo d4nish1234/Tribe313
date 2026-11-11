@@ -42,7 +42,12 @@ Expo SDK 54 · expo-router 6 (typed routes) · React Native 0.81 · react-native
 - Search: `matchesWords` in `src/lib/search.ts` is the one search rule: every word must match, in any order, ignoring case and accents.
 - Choosing from a list: `await pickOne({...})` or `await pickMany({...})` from `src/lib/picker.ts`. It opens `app/pick.tsx`, a search field over card rows, and returns the chosen ids, or null on Back. Use it instead of building a new picker screen. Its options (`allowCustom`, `selected`, `keywords`, …) are documented at the top of the file.
 
-## Benchmark feature (`src/benchmark/`, `app/benchmark/`, `app/(tabs)/benchmark.tsx`)
+## Benchmark feature (`src/benchmark/`, `app/benchmark/`, `app/(tabs)/benchmark.tsx`, `app/(tabs)/training.tsx`)
+- Screens:
+  - The Benchmark tab is for logging only: the summary, New benchmark and Progress. Keep it that way.
+  - The Training tab holds the workouts, coach extras, test plans and tips.
+  - `ProgressView` (charts, past benchmarks, PDF) is shared by `app/benchmark/progress.tsx` and the coach screen's Progress segment.
+- A new benchmark is pre-filled with each test's last result, marked "Same as <date>" until it's changed or confirmed. Saving needs at least one result entered that day. The pre-fill logic is in `engine/progress.ts`.
 - Every saved benchmark stores `version` and is always scored and rendered with that version (`registry.ts`).
 - `versions/v1/data.json` must never be edited. Changing the tests, scoring or test order means adding `versions/v2/` and bumping `LATEST_VERSION`.
 - Rewrite outdated wording in the help text at display time, in the version's `index.ts`, not in the data.

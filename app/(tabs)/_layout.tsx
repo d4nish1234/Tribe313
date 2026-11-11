@@ -31,10 +31,17 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="training"
+        options={{
+          title: 'Training',
+          tabBarIcon: ({ color, size }) => <Ionicons name="barbell" color={color as string} size={size} />,
+        }}
+      />
+      <Tabs.Screen
         name="benchmark"
         options={{
           title: 'Benchmark',
-          tabBarIcon: ({ color, size }) => <Ionicons name="barbell" color={color as string} size={size} />,
+          tabBarIcon: ({ color, size }) => <Ionicons name="stopwatch" color={color as string} size={size} />,
         }}
       />
     </Tabs>

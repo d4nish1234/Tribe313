@@ -161,6 +161,11 @@ export interface EntryDraft {
   heightIn: number | null;
   results: Record<string, number | null>;
   wallSquatFaults: string[];
+  /**
+   * New benchmarks: tests still showing last time's result, by key, with the
+   * date it came from. A test leaves this once it's changed or confirmed.
+   */
+  carried?: Record<string, string>;
   /** Day the draft was last written (YYYY-MM-DD). Set by `write`. */
   writtenOn?: string;
 }
