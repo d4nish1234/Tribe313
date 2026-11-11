@@ -16,7 +16,7 @@ function go(to: Target) {
 }
 
 export function useAuthGate() {
-  const { loading, firebaseUser, appUser } = useAuth();
+  const { loading, firebaseUser, appUser, emailVerified } = useAuth();
   const segments = useSegments();
 
   useEffect(() => {
@@ -29,7 +29,7 @@ export function useAuthGate() {
       return;
     }
 
-    if (!firebaseUser.emailVerified) {
+    if (!emailVerified) {
       if (segments.join('/') !== '(auth)/verify') go('/verify');
       return;
     }
@@ -51,5 +51,5 @@ export function useAuthGate() {
       // second time and slide Home in twice.
       go('/(tabs)');
     }
-  }, [loading, firebaseUser?.uid, firebaseUser?.emailVerified, appUser?.status, segments]);
+  }, [loading, firebaseUser?.uid, emailVerified, appUser?.status, segments]);
 }

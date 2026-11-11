@@ -1,5 +1,5 @@
 import { FlatList, RefreshControl, View } from 'react-native';
-import { ActivityIndicator, Button, Card, FAB, Text } from 'react-native-paper';
+import { ActivityIndicator, Card, Text } from 'react-native-paper';
 import { router } from 'expo-router';
 import { format } from 'date-fns';
 import { useAuth } from '@/src/contexts/AuthContext';
@@ -7,6 +7,7 @@ import { useEvents } from '@/src/hooks/useEvents';
 import { usePendingCount } from '@/src/hooks/usePendingCount';
 import { BrandLogo } from '@/src/components/BrandLogo';
 import type { EventDoc } from '@/src/types';
+import { AppButton, AppFab } from '@/src/components/AppButton';
 
 function Section({ title, events }: { title: string; events: EventDoc[] }) {
   if (events.length === 0) return null;
@@ -57,22 +58,22 @@ export default function Home() {
             </Text>
             {isAdmin && (
               <>
-                <Button
-                  mode="contained-tonal"
+                <AppButton
+                  variant="secondary"
                   onPress={() => router.push('/admin/approvals')}
                   style={{ marginHorizontal: 16, marginBottom: 8 }}
                   icon={pendingCount > 0 ? 'circle-medium' : undefined}
                 >
                   Admin · Pending approvals{pendingCount > 0 ? ` (${pendingCount})` : ''}
-                </Button>
-                <Button
-                  mode="contained-tonal"
+                </AppButton>
+                <AppButton
+                  variant="secondary"
                   onPress={() => router.push('/admin/carpool-addresses')}
                   style={{ marginHorizontal: 16, marginBottom: 12 }}
                   icon="map-marker-multiple-outline"
                 >
                   Admin · Carpool locations
-                </Button>
+                </AppButton>
               </>
             )}
             <Section title="Upcoming" events={upcoming} />
@@ -87,9 +88,9 @@ export default function Home() {
         refreshControl={<RefreshControl refreshing={false} onRefresh={() => {}} />}
       />
       {isAdmin && (
-        <FAB
+        <AppFab
           icon="plus"
-          style={{ position: 'absolute', right: 16, bottom: 24 }}
+          accessibilityLabel="New event"
           onPress={() => router.push('/event/new')}
         />
       )}

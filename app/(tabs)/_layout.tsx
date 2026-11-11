@@ -14,7 +14,7 @@ export default function TabsLayout() {
         name="index"
         options={{
           title: 'Home',
-          tabBarIcon: ({ color, size }) => <Ionicons name="home" color={color} size={size} />,
+          tabBarIcon: ({ color, size }) => <Ionicons name="home" color={color as string} size={size} />,
           tabBarBadge: pendingCount > 0 ? pendingCount : undefined,
         }}
       />
@@ -22,21 +22,21 @@ export default function TabsLayout() {
         name="members"
         options={{
           title: 'Members',
-          tabBarIcon: ({ color, size }) => <Ionicons name="people" color={color} size={size} />,
+          tabBarIcon: ({ color, size }) => <Ionicons name="people" color={color as string} size={size} />,
         }}
       />
       <Tabs.Screen
         name="benchmark"
         options={{
           title: 'Benchmark',
-          tabBarIcon: ({ color, size }) => <Ionicons name="barbell" color={color} size={size} />,
+          tabBarIcon: ({ color, size }) => <Ionicons name="barbell" color={color as string} size={size} />,
         }}
       />
       <Tabs.Screen
         name="settings"
         options={{
           title: 'Settings',
-          tabBarIcon: ({ color, size }) => <Ionicons name="settings" color={color} size={size} />,
+          tabBarIcon: ({ color, size }) => <Ionicons name="settings" color={color as string} size={size} />,
         }}
       />
     </Tabs>

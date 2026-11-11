@@ -27,7 +27,11 @@ export default function RootLayout() {
               {/* dangerouslySingular: pushing a screen that's already open (a double
                   tap, a tap registered twice) reuses it instead of stacking a copy
                   that makes Back look broken. Keyed by route + params. */}
-              <Stack screenOptions={{ headerShown: false, headerBackTitle: 'Back' }}>
+              <Stack
+                // SDK 58 makes the iOS 26 header transparent (Liquid Glass) with
+                // content scrolling under it; our screens assume a solid header.
+                screenOptions={{ headerShown: false, headerBackTitle: 'Back', headerTransparent: false }}
+              >
                 <Stack.Screen name="(auth)" />
                 <Stack.Screen name="(gate)" />
                 <Stack.Screen name="(tabs)" />

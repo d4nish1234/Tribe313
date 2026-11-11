@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { Button, HelperText, Text } from 'react-native-paper';
+import { HelperText, Text } from 'react-native-paper';
 import { sendEmailVerification, signOut } from 'firebase/auth';
 import { doc, updateDoc } from 'firebase/firestore';
 import { auth, db } from '@/src/firebase/config';
 import { AuthScreen } from '@/src/components/AuthScreen';
 import { useAuth } from '@/src/contexts/AuthContext';
+import { AppButton } from '@/src/components/AppButton';
 
 export default function Verify() {
   const { reloadUser } = useAuth();
@@ -51,9 +52,9 @@ export default function Verify() {
     <AuthScreen
       title="Verify your email"
       footer={
-        <Button onPress={() => signOut(auth)} textColor="#FFFFFF">
+        <AppButton variant="text" onPress={() => signOut(auth)} tone="onDark">
           Sign out
-        </Button>
+        </AppButton>
       }
     >
       <Text>
@@ -62,12 +63,12 @@ export default function Verify() {
       </Text>
       {msg ? <HelperText type="info">{msg}</HelperText> : null}
       {err ? <HelperText type="error">{err}</HelperText> : null}
-      <Button mode="contained" onPress={check} loading={busy === 'check'} contentStyle={{ minHeight: 48 }}>
+      <AppButton onPress={check} loading={busy === 'check'}>
         I&apos;ve verified
-      </Button>
-      <Button mode="outlined" onPress={resend} loading={busy === 'resend'}>
+      </AppButton>
+      <AppButton variant="secondary" onPress={resend} loading={busy === 'resend'}>
         Resend email
-      </Button>
+      </AppButton>
     </AuthScreen>
   );
 }

@@ -1,6 +1,7 @@
 import { useLayoutEffect, useMemo, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { ActivityIndicator, FAB, IconButton, Text } from 'react-native-paper';
+import { ActivityIndicator, IconButton, Text } from 'react-native-paper';
+import { AppFab } from '@/src/components/AppButton';
 import { router, useNavigation } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -187,11 +188,9 @@ function BenchmarkHome() {
         </View>
       </ScrollView>
 
-      <FAB
+      <AppFab
         icon="plus"
         label="New benchmark"
-        color="#fff"
-        style={[styles.fab, { bottom: 16 }]}
         onPress={() => router.push({ pathname: '/benchmark/entry/[date]', params: { date: 'new' } })}
       />
 
@@ -302,5 +301,4 @@ const styles = StyleSheet.create({
   benchScore: { fontSize: 20, fontWeight: '700', color: B.green },
   listRow: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 52 },
   divider: { height: StyleSheet.hairlineWidth, backgroundColor: B.border },
-  fab: { position: 'absolute', right: 16, backgroundColor: B.green },
 });

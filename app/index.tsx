@@ -3,7 +3,7 @@ import { Redirect } from 'expo-router';
 import { useAuth } from '@/src/contexts/AuthContext';
 
 export default function Index() {
-  const { loading, firebaseUser, appUser } = useAuth();
+  const { loading, firebaseUser, appUser, emailVerified } = useAuth();
 
   if (loading) {
     return (
@@ -14,7 +14,7 @@ export default function Index() {
   }
 
   if (!firebaseUser) return <Redirect href="/login" />;
-  if (!firebaseUser.emailVerified) return <Redirect href="/verify" />;
+  if (!emailVerified) return <Redirect href="/verify" />;
   if (!appUser) {
     return (
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>

@@ -1,10 +1,11 @@
 import { View } from 'react-native';
-import { Button, Switch, Text } from 'react-native-paper';
+import { Switch, Text } from 'react-native-paper';
 import { signOut } from 'firebase/auth';
 import { doc, updateDoc } from 'firebase/firestore';
 import { useAuth } from '@/src/contexts/AuthContext';
 import { auth, db } from '@/src/firebase/config';
 import { AuthScreen } from '@/src/components/AuthScreen';
+import { AppButton } from '@/src/components/AppButton';
 
 export default function Evicted() {
   const { firebaseUser, appUser } = useAuth();
@@ -19,9 +20,9 @@ export default function Evicted() {
     <AuthScreen
       title="You were evicted"
       footer={
-        <Button onPress={() => signOut(auth)} textColor="#FFFFFF">
+        <AppButton variant="text" onPress={() => signOut(auth)} tone="onDark">
           Sign out
-        </Button>
+        </AppButton>
       }
     >
       <Text>Chopping block was in effect and you were evicted. You can come back by joining a session.</Text>

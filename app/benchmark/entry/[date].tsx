@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { ActivityIndicator, Button, Chip, Snackbar, Text } from 'react-native-paper';
+import { ActivityIndicator, Chip, Snackbar, Text } from 'react-native-paper';
 import { Stack, router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -15,6 +15,7 @@ import { CrossfadeThumb, testExplainContent } from '@/src/benchmark/components/B
 import { PickerSheet } from '@/src/benchmark/components/PickerSheet';
 import { B, TAP } from '@/src/benchmark/theme';
 import type { BenchmarkVersion, Session } from '@/src/benchmark/types';
+import { AppButton } from '@/src/components/AppButton';
 
 const NOTE_SEEN_KEY = 'benchmark:testDayNoteSeen';
 
@@ -421,27 +422,22 @@ function Entry() {
         ) : null}
 
         {savedDate ? (
-          <Button
-            mode="outlined"
+          <AppButton
+            variant="secondary"
             icon="trash-can-outline"
-            textColor={B.danger}
+            tone="danger"
             style={styles.deleteBtn}
-            contentStyle={{ minHeight: TAP }}
             onPress={remove}
             disabled={saving}
           >
             Delete this benchmark
-          </Button>
+          </AppButton>
         ) : null}
       </ScrollView>
 
       {!readOnly ? (
         <View style={[styles.saveBar, { paddingBottom: Math.max(insets.bottom, 12) }]}>
-          <Button
-            mode="contained"
-            buttonColor={B.green}
-            contentStyle={{ minHeight: 52 }}
-            labelStyle={{ fontSize: 17 }}
+          <AppButton
             loading={saving}
             disabled={saving || !dirty}
             onPress={save}
@@ -451,7 +447,7 @@ function Entry() {
               : changed.newCount > 0
                 ? `Save ${changed.newCount} new result${changed.newCount === 1 ? '' : 's'}`
                 : 'Save changes'}
-          </Button>
+          </AppButton>
         </View>
       ) : null}
 

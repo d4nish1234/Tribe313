@@ -1,16 +1,6 @@
 import { useState } from 'react';
 import { FlatList, View } from 'react-native';
-import {
-  ActivityIndicator,
-  Button,
-  Dialog,
-  FAB,
-  IconButton,
-  List,
-  Portal,
-  Text,
-  TextInput,
-} from 'react-native-paper';
+import { ActivityIndicator, Dialog, IconButton, List, Portal, Text, TextInput } from 'react-native-paper';
 import { Redirect } from 'expo-router';
 import {
   addDoc,
@@ -25,6 +15,7 @@ import { db } from '@/src/firebase/config';
 import { geocodeAddress } from '@/src/firebase/fn';
 import { useCarpoolLocations, type CarpoolLocation } from '@/src/hooks/useCarpoolLocations';
 import { RowDivider } from '@/src/components/RowDivider';
+import { AppButton, AppFab } from '@/src/components/AppButton';
 
 export default function CarpoolAddresses() {
   const { isAdmin } = useAuth();
@@ -136,9 +127,9 @@ export default function CarpoolAddresses() {
         )}
       />
 
-      <FAB
+      <AppFab
         icon="plus"
-        style={{ position: 'absolute', right: 16, bottom: 24 }}
+        accessibilityLabel="Add carpool location"
         onPress={openAdd}
       />
 
@@ -159,12 +150,12 @@ export default function CarpoolAddresses() {
             />
           </Dialog.Content>
           <Dialog.Actions>
-            <Button onPress={closeDialog} disabled={busy}>
+            <AppButton variant="text" onPress={closeDialog} disabled={busy}>
               Cancel
-            </Button>
-            <Button onPress={save} loading={busy} disabled={!label.trim() || !address.trim()}>
+            </AppButton>
+            <AppButton variant="text" onPress={save} loading={busy} disabled={!label.trim() || !address.trim()}>
               {editing ? 'Update' : 'Add'}
-            </Button>
+            </AppButton>
           </Dialog.Actions>
         </Dialog>
       </Portal>

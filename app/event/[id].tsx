@@ -26,7 +26,6 @@ import { useMemo, useState } from "react";
 import { ScrollView, View } from "react-native";
 import {
   ActivityIndicator,
-  Button,
   Card,
   Dialog,
   Divider,
@@ -37,6 +36,7 @@ import {
   Text,
   TextInput,
 } from "react-native-paper";
+import { AppButton } from '@/src/components/AppButton';
 
 // pickupMode is 'home', 'custom', or a carpoolLocation ID
 function resolveMode(
@@ -389,9 +389,9 @@ export default function EventDetail() {
       >
         <Text variant="titleMedium">Rides</Text>
         {!myActiveRide && !iAmDriving && (
-          <Button mode="contained-tonal" onPress={() => openRideDialog()}>
+          <AppButton variant="secondary" onPress={() => openRideDialog()}>
             I need a ride
-          </Button>
+          </AppButton>
         )}
       </View>
 
@@ -471,13 +471,13 @@ export default function EventDetail() {
                 />
               </Card>
             ))}
-          <Button
-            mode="outlined"
-            textColor="#D7263D"
+          <AppButton
+            variant="secondary"
+            tone="danger"
             onPress={() => setDeleteConfirm(true)}
           >
             Delete event
-          </Button>
+          </AppButton>
         </>
       )}
 
@@ -499,10 +499,10 @@ export default function EventDetail() {
             </Text>
           </Dialog.Content>
           <Dialog.Actions>
-            <Button onPress={() => setPendingRsvpNo(false)}>No</Button>
-            <Button onPress={confirmRsvpNoCancelRide} textColor="#D7263D">
+            <AppButton variant="text" onPress={() => setPendingRsvpNo(false)}>No</AppButton>
+            <AppButton variant="text" onPress={confirmRsvpNoCancelRide} tone="danger">
               Yes
-            </Button>
+            </AppButton>
           </Dialog.Actions>
         </Dialog>
 
@@ -517,10 +517,10 @@ export default function EventDetail() {
             </Text>
           </Dialog.Content>
           <Dialog.Actions>
-            <Button onPress={() => setDeleteConfirm(false)}>Cancel</Button>
-            <Button onPress={deleteEvent} textColor="#D7263D">
+            <AppButton variant="text" onPress={() => setDeleteConfirm(false)}>Cancel</AppButton>
+            <AppButton variant="text" onPress={deleteEvent} tone="danger">
               Delete
-            </Button>
+            </AppButton>
           </Dialog.Actions>
         </Dialog>
 
@@ -558,12 +558,12 @@ export default function EventDetail() {
             )}
           </Dialog.Content>
           <Dialog.Actions>
-            <Button onPress={() => setRideDialog(false)} disabled={rideBusy}>
+            <AppButton variant="text" onPress={() => setRideDialog(false)} disabled={rideBusy}>
               Cancel
-            </Button>
-            <Button onPress={submitRide} loading={rideBusy}>
+            </AppButton>
+            <AppButton variant="text" onPress={submitRide} loading={rideBusy}>
               {editingRideId ? "Update" : "Request"}
-            </Button>
+            </AppButton>
           </Dialog.Actions>
         </Dialog>
       </Portal>

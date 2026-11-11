@@ -1,10 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { Button } from 'react-native-paper';
 import type { PickerSpec } from '../types';
-import { B, TAP } from '../theme';
 import { BottomSheet } from './BottomSheet';
 import { WHEEL_HEIGHT, WheelBand, WheelColumn } from './WheelPicker';
+import { AppButton } from '@/src/components/AppButton';
 
 /**
  * Bottom-sheet number picker. Opens on `value`, or `fallback` when empty.
@@ -58,19 +57,17 @@ export function PickerSheet({
       footer={
         <View style={styles.buttons}>
           {clearable ? (
-            <Button mode="outlined" style={styles.btn} contentStyle={styles.btnContent} onPress={() => onDone(null)}>
+            <AppButton variant="secondary" style={styles.btn} onPress={() => onDone(null)}>
               Clear
-            </Button>
+            </AppButton>
           ) : null}
-          <Button
-            mode="contained"
-            buttonColor={B.green}
+          <AppButton
             style={styles.btn}
-            contentStyle={styles.btnContent}
+           
             onPress={done}
           >
             Done
-          </Button>
+          </AppButton>
         </View>
       }
     >
@@ -95,5 +92,4 @@ const styles = StyleSheet.create({
   wheels: { flexDirection: 'row', height: WHEEL_HEIGHT, marginVertical: 12, gap: 8 },
   buttons: { flexDirection: 'row', gap: 12, marginTop: 8 },
   btn: { flex: 1 },
-  btnContent: { minHeight: TAP },
 });

@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { FlatList, View } from 'react-native';
-import { ActivityIndicator, Button, Dialog, IconButton, List, Menu, Portal, SegmentedButtons, Text } from 'react-native-paper';
+import { ActivityIndicator, Dialog, IconButton, List, Menu, Portal, SegmentedButtons, Text } from 'react-native-paper';
 import { format } from 'date-fns';
 import { useAuth } from '@/src/contexts/AuthContext';
 import { useMembers } from '@/src/hooks/useMembers';
@@ -9,6 +9,7 @@ import { BadgeList } from '@/src/components/BadgeList';
 import { palette } from '@/src/theme';
 import { RowDivider } from '@/src/components/RowDivider';
 import type { AppUser } from '@/src/types';
+import { AppButton } from '@/src/components/AppButton';
 
 type SortKey = 'name' | 'lastAttended';
 
@@ -162,6 +163,15 @@ export default function Members() {
               )}
               description={() => (
                 <View style={{ gap: 4, marginTop: 4 }}>
+                  {isAdmin && !!item.email && (
+                    <Text
+                      selectable
+                      numberOfLines={1}
+                      style={{ opacity: isEvicted ? 0.35 : 0.7, fontSize: 12 }}
+                    >
+                      {item.email}
+                    </Text>
+                  )}
                   {isAdmin && (
                     <Text style={{ opacity: isEvicted ? 0.35 : 0.7, fontSize: 12 }}>
                       {last ? `Last attended ${format(last, 'PP')}` : 'No attendance on record'}
@@ -252,12 +262,12 @@ export default function Members() {
             </Text>
           </Dialog.Content>
           <Dialog.Actions>
-            <Button onPress={() => setConfirm(null)} disabled={busy}>
+            <AppButton variant="text" onPress={() => setConfirm(null)} disabled={busy}>
               Cancel
-            </Button>
-            <Button onPress={remove} loading={busy} textColor={palette.danger}>
+            </AppButton>
+            <AppButton variant="text" onPress={remove} loading={busy} tone="danger">
               Remove
-            </Button>
+            </AppButton>
           </Dialog.Actions>
         </Dialog>
 
@@ -269,12 +279,12 @@ export default function Members() {
             </Text>
           </Dialog.Content>
           <Dialog.Actions>
-            <Button onPress={() => setReinstate(null)} disabled={busy}>
+            <AppButton variant="text" onPress={() => setReinstate(null)} disabled={busy}>
               Cancel
-            </Button>
-            <Button onPress={doReinstate} loading={busy}>
+            </AppButton>
+            <AppButton variant="text" onPress={doReinstate} loading={busy}>
               Reinstate
-            </Button>
+            </AppButton>
           </Dialog.Actions>
         </Dialog>
 
@@ -290,16 +300,17 @@ export default function Members() {
             </Text>
           </Dialog.Content>
           <Dialog.Actions>
-            <Button onPress={() => setAdminAction(null)} disabled={busy}>
+            <AppButton variant="text" onPress={() => setAdminAction(null)} disabled={busy}>
               Cancel
-            </Button>
-            <Button
+            </AppButton>
+            <AppButton
+              variant="text"
               onPress={doAdminAction}
               loading={busy}
-              textColor={adminAction?.type === 'demote' ? palette.danger : undefined}
+              tone={adminAction?.type === 'demote' ? 'danger' : 'default'}
             >
               {adminAction?.type === 'promote' ? 'Make admin' : 'Remove admin'}
-            </Button>
+            </AppButton>
           </Dialog.Actions>
         </Dialog>
       </Portal>

@@ -4,12 +4,11 @@ export default {
   expo: {
     name: IS_DEV ? "Tribe313 (Dev)" : "Tribe313",
     slug: "tribe313",
-    version: "1.1.0",
+    version: "1.2.0",
     orientation: "portrait",
     icon: "./assets/images/icon.png",
     scheme: "tribe313",
     userInterfaceStyle: "automatic",
-    newArchEnabled: true,
     updates: {
       url: `https://u.expo.dev/${process.env.EAS_PROJECT_ID || "2ca8a19b-c0b7-4bc3-bf92-ac0e0f970331"}`,
     },

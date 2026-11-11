@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { ActivityIndicator, Button, Text, TextInput } from 'react-native-paper';
+import { ActivityIndicator, Text, TextInput } from 'react-native-paper';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { useAuth } from '@/src/contexts/AuthContext';
 import { useMembers } from '@/src/hooks/useMembers';
@@ -14,6 +14,7 @@ import { LevelBadge } from '@/src/benchmark/components/Bits';
 import { ProgressTable } from '@/src/benchmark/components/ProgressTable';
 import { displayResult } from '@/src/benchmark/components/display';
 import { B, TAP } from '@/src/benchmark/theme';
+import { AppButton } from '@/src/components/AppButton';
 
 export default function MemberScreen() {
   return (
@@ -171,16 +172,14 @@ function Member() {
                   {a.note ? `${a.note} · ` : ''}by {a.addedByName}
                 </Text>
               </View>
-              <Button
+              <AppButton
                 compact
-                mode={confirmRemove === a.id ? 'contained' : 'text'}
-                buttonColor={confirmRemove === a.id ? B.danger : undefined}
-                textColor={confirmRemove === a.id ? '#fff' : B.danger}
+                variant={confirmRemove === a.id ? 'primary' : 'text'}
+                tone="danger"
                 onPress={() => remove(a.id)}
-                contentStyle={{ minHeight: TAP }}
               >
                 {confirmRemove === a.id ? 'Tap to confirm' : 'Remove'}
-              </Button>
+              </AppButton>
             </View>
           ))
         )}
@@ -217,16 +216,13 @@ function Member() {
           activeOutlineColor={B.green}
           maxLength={200}
         />
-        <Button
-          mode="contained"
-          buttonColor={B.green}
+        <AppButton
           onPress={add}
           loading={adding}
           disabled={!text.trim() || adding}
-          contentStyle={{ minHeight: TAP }}
         >
           Add
-        </Button>
+        </AppButton>
       </View>
     </ScrollView>
   );

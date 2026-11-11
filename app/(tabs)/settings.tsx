@@ -1,16 +1,6 @@
 import { useEffect, useState } from 'react';
 import { ScrollView, View } from 'react-native';
-import {
-  ActivityIndicator,
-  Button,
-  Dialog,
-  HelperText,
-  Portal,
-  Snackbar,
-  Switch,
-  Text,
-  TextInput,
-} from 'react-native-paper';
+import { ActivityIndicator, Dialog, HelperText, Portal, Snackbar, Switch, Text, TextInput } from 'react-native-paper';
 import {
   EmailAuthProvider,
   reauthenticateWithCredential,
@@ -22,6 +12,7 @@ import { auth, db } from '@/src/firebase/config';
 import { geocodeAddress, selfDeleteAccount } from '@/src/firebase/fn';
 import { AppVersion } from '@/src/components/AppVersion';
 import { DangerZone } from '@/src/components/DangerZone';
+import { AppButton } from '@/src/components/AppButton';
 
 export default function Settings() {
   const { appUser, firebaseUser } = useAuth();
@@ -140,19 +131,19 @@ export default function Settings() {
         <Switch value={share} onValueChange={setShare} />
       </View>
 
-      <Button mode="contained" onPress={save} loading={saving} style={{ marginTop: 8 }}>
+      <AppButton onPress={save} loading={saving} style={{ marginTop: 8 }}>
         Save
-      </Button>
+      </AppButton>
 
-      <Button onPress={() => signOut(auth)} style={{ marginTop: 8 }}>
+      <AppButton variant="text" onPress={() => signOut(auth)} style={{ marginTop: 8 }}>
         Sign out
-      </Button>
+      </AppButton>
 
       <DangerZone style={{ marginTop: 24 }}>
         <Text>Permanently delete your Tribe313 account and profile.</Text>
-        <Button mode="outlined" textColor="#D7263D" onPress={() => setConfirmDelete(true)}>
+        <AppButton variant="secondary" tone="danger" onPress={() => setConfirmDelete(true)}>
           Delete my account
-        </Button>
+        </AppButton>
       </DangerZone>
 
       <AppVersion />
@@ -166,12 +157,12 @@ export default function Settings() {
             {deleteErr ? <HelperText type="error">{deleteErr}</HelperText> : null}
           </Dialog.Content>
           <Dialog.Actions>
-            <Button onPress={() => setConfirmDelete(false)} disabled={deleting}>
+            <AppButton variant="text" onPress={() => setConfirmDelete(false)} disabled={deleting}>
               Cancel
-            </Button>
-            <Button onPress={performDelete} loading={deleting} textColor="#D7263D">
+            </AppButton>
+            <AppButton variant="text" onPress={performDelete} loading={deleting} tone="danger">
               Delete
-            </Button>
+            </AppButton>
           </Dialog.Actions>
         </Dialog>
       </Portal>

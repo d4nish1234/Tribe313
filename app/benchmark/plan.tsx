@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { ActivityIndicator, SegmentedButtons, Text } from 'react-native-paper';
+import { ActivityIndicator, Text } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/src/contexts/AuthContext';
 import { getVersion, latestVersion } from '@/src/benchmark/registry';
@@ -215,19 +215,7 @@ function TestCard({
               <Text style={styles.goalLabel}>Plan</Text>
               <InfoLink label="Which one?" onPress={() => explain(v.explainer('plans'))} />
             </View>
-            <SegmentedButtons
-              value={plan}
-              onValueChange={(val) => setPlan(val as PlanKey)}
-              density="small"
-              buttons={PLAN_KEYS.map((k) => ({
-                value: k,
-                label: PLAN_LABELS[k],
-                labelStyle: { fontSize: 12 },
-                style: { minHeight: TAP },
-                checkedColor: k === 'Hold Level 3' ? B.gold : B.green,
-              }))}
-              style={{ marginTop: 6 }}
-            />
+            <PlanPicker value={plan} onChange={setPlan} />
             {target ? <Text style={[styles.muted, { marginTop: 8 }]}>Target: {target}</Text> : null}
             {t.plans?.[plan].map((ex, i) => (
               <View key={ex} style={styles.exerciseRow}>
@@ -247,7 +235,60 @@ function TestCard({
   );
 }
 
+// Two short lines per option ("Reach" over "Level 1") instead of one
+// abbreviated line: four options don't fit one line each on a phone, and
+// Paper's SegmentedButtons truncates its labels to "Reach…".
+const PLAN_PARTS: Record<PlanKey, [string, string]> = {
+  'Foundation -> Level 1': ['Reach', 'Level 1'],
+  'Level 1 -> Level 2': ['Reach', 'Level 2'],
+  'Level 2 -> Level 3': ['Reach', 'Level 3'],
+  'Hold Level 3': ['Keep', 'Level 3'],
+};
+
+function PlanPicker({ value, onChange }: { value: PlanKey; onChange: (k: PlanKey) => void }) {
+  return (
+    <View style={styles.planRow} accessibilityRole="radiogroup">
+      {PLAN_KEYS.map((k, i) => {
+        const on = k === value;
+        const [verb, level] = PLAN_PARTS[k];
+        return (
+          <Pressable
+            key={k}
+            onPress={() => onChange(k)}
+            accessibilityRole="radio"
+            accessibilityState={{ selected: on }}
+            accessibilityLabel={`${verb} ${level}`}
+            style={[styles.planOption, i > 0 && styles.planDivider, on && styles.planOn]}
+          >
+            <Text style={[styles.planVerb, on && styles.planTextOn]} maxFontSizeMultiplier={1.4}>
+              {verb}
+            </Text>
+            <Text style={[styles.planLevel, on && styles.planTextOn]} maxFontSizeMultiplier={1.4}>
+              {level}
+            </Text>
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
+  planRow: {
+    flexDirection: 'row',
+    marginTop: 6,
+    borderWidth: 1,
+    borderColor: B.border,
+    borderRadius: 10,
+    overflow: 'hidden',
+  },
+  planOption: { flex: 1, minHeight: TAP, alignItems: 'center', justifyContent: 'center', paddingVertical: 6 },
+  planDivider: { borderLeftWidth: 1, borderLeftColor: B.border },
+  planOn: { backgroundColor: B.green },
+  planVerb: { fontSize: 12, color: B.muted, textAlign: 'center' },
+  planLevel: { fontSize: 14, fontWeight: '700', color: B.text, textAlign: 'center' },
+  planTextOn: { color: '#FFFFFF' },
+
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   content: { padding: 16, gap: 10, width: '100%', maxWidth: 560, alignSelf: 'center', paddingBottom: 40 },
   notice: { backgroundColor: B.goldSoft, borderRadius: 12, padding: 12 },

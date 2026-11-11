@@ -8,6 +8,8 @@ type State = {
   loading: boolean;
   firebaseUser: User | null;
   appUser: AppUser | null;
+  /** Use this, not firebaseUser.emailVerified: see reloadUser below. */
+  emailVerified: boolean;
   reloadUser: () => Promise<void>;
 };
 
@@ -15,18 +17,21 @@ export function useCurrentUser(): State {
   const [firebaseUser, setFirebaseUser] = useState<User | null>(auth.currentUser);
   const [appUser, setAppUser] = useState<AppUser | null>(null);
   const [loading, setLoading] = useState(true);
-  // reload() mutates the same User object (e.g. emailVerified), which React
-  // can't see. Bumping this re-renders so the auth gate re-evaluates.
-  const [, setUserVersion] = useState(0);
+  // reload() mutates the same User object in place, so a change to
+  // emailVerified is invisible to React: the React Compiler memoizes on the
+  // object identity, and onAuthStateChanged doesn't fire. Copy the flag into
+  // state so the auth gate re-runs and leaves the verify screen.
+  const [emailVerified, setEmailVerified] = useState(!!auth.currentUser?.emailVerified);
   const reloadUser = useCallback(async () => {
     if (!auth.currentUser) return;
     await reload(auth.currentUser);
-    setUserVersion((n) => n + 1);
+    setEmailVerified(!!auth.currentUser?.emailVerified);
   }, []);
 
   useEffect(() => {
     return onAuthStateChanged(auth, (u) => {
       setFirebaseUser(u);
+      setEmailVerified(!!u?.emailVerified);
       if (!u) {
         setAppUser(null);
         setLoading(false);
@@ -53,5 +58,5 @@ export function useCurrentUser(): State {
     return unsub;
   }, [firebaseUser?.uid]);
 
-  return { loading, firebaseUser, appUser, reloadUser };
+  return { loading, firebaseUser, appUser, emailVerified, reloadUser };
 }

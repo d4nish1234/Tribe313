@@ -7,6 +7,8 @@ type Ctx = {
   loading: boolean;
   firebaseUser: User | null;
   appUser: AppUser | null;
+  /** Kept in state; firebaseUser.emailVerified can change without a re-render. */
+  emailVerified: boolean;
   isAdmin: boolean;
   isApproved: boolean;
   /** Re-read the Firebase user (e.g. after verifying email) and re-render. */
@@ -16,7 +18,7 @@ type Ctx = {
 const AuthCtx = createContext<Ctx | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const { loading, firebaseUser, appUser, reloadUser } = useCurrentUser();
+  const { loading, firebaseUser, appUser, emailVerified, reloadUser } = useCurrentUser();
   const isAdmin = !!appUser?.isAdmin;
   const isApproved = appUser?.status === 'approved';
 
@@ -37,7 +39,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, [firebaseUser, isAdmin]);
   return (
-    <AuthCtx.Provider value={{ loading, firebaseUser, appUser, isAdmin, isApproved, reloadUser }}>
+    <AuthCtx.Provider value={{ loading, firebaseUser, appUser, emailVerified, isAdmin, isApproved, reloadUser }}>
       {children}
     </AuthCtx.Provider>
   );

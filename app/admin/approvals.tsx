@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { FlatList, View } from 'react-native';
-import { ActivityIndicator, Button, Divider, List, Text } from 'react-native-paper';
+import { ActivityIndicator, Divider, List, Text } from 'react-native-paper';
 import { Redirect } from 'expo-router';
 import { doc, updateDoc } from 'firebase/firestore';
 import { useAuth } from '@/src/contexts/AuthContext';
@@ -8,6 +8,7 @@ import { useMembers } from '@/src/hooks/useMembers';
 import { approveUser } from '@/src/firebase/fn';
 import { db } from '@/src/firebase/config';
 import { RowDivider } from '@/src/components/RowDivider';
+import { AppButton } from '@/src/components/AppButton';
 
 export default function Approvals() {
   const { isAdmin } = useAuth();
@@ -73,20 +74,20 @@ export default function Approvals() {
                   description={item.email}
                   right={() => (
                     <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
-                      <Button
+                      <AppButton
                         onPress={() => dismiss(item.uid)}
                         loading={busy === item.uid}
-                        mode="outlined"
+                        variant="secondary"
                       >
                         Dismiss
-                      </Button>
-                      <Button
+                      </AppButton>
+                      <AppButton
                         onPress={() => approve(item.uid)}
                         loading={busy === item.uid}
-                        mode="contained-tonal"
+                        variant="secondary"
                       >
                         Approve
-                      </Button>
+                      </AppButton>
                     </View>
                   )}
                 />
@@ -112,13 +113,13 @@ export default function Approvals() {
                     titleStyle={{ opacity: 0.5 }}
                     descriptionStyle={{ opacity: 0.5 }}
                     right={() => (
-                      <Button
+                      <AppButton
                         onPress={() => restore(item.uid)}
                         loading={busy === item.uid}
-                        mode="outlined"
+                        variant="secondary"
                       >
                         Restore
-                      </Button>
+                      </AppButton>
                     )}
                   />
                 </View>

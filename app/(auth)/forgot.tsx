@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { Button, HelperText, TextInput } from 'react-native-paper';
+import { HelperText, TextInput } from 'react-native-paper';
 import { router } from 'expo-router';
 import { sendPasswordResetEmail } from 'firebase/auth';
 import { auth } from '@/src/firebase/config';
 import { AuthScreen } from '@/src/components/AuthScreen';
 import { authErrorMessage } from '@/src/lib/authErrors';
+import { AppButton } from '@/src/components/AppButton';
 
 export default function Forgot() {
   const [email, setEmail] = useState('');
@@ -31,9 +32,9 @@ export default function Forgot() {
       title="Reset password"
       subtitle="We’ll email you a link to set a new one."
       footer={
-        <Button onPress={() => router.replace('/login')} textColor="#FFFFFF">
+        <AppButton variant="text" onPress={() => router.replace('/login')} tone="onDark">
           Back to log in
-        </Button>
+        </AppButton>
       }
     >
       <TextInput
@@ -50,9 +51,9 @@ export default function Forgot() {
       />
       {msg ? <HelperText type="info">{msg}</HelperText> : null}
       {err ? <HelperText type="error">{err}</HelperText> : null}
-      <Button mode="contained" onPress={submit} loading={busy} disabled={busy} contentStyle={{ minHeight: 48 }}>
+      <AppButton onPress={submit} loading={busy} disabled={busy}>
         Send reset email
-      </Button>
+      </AppButton>
     </AuthScreen>
   );
 }

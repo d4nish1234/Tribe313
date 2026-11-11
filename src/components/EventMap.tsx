@@ -81,12 +81,29 @@ export function EventMap({ event, rides, memberPins, carpoolPins, viewerUid }: P
   const role = useMemo(() => deriveRole(viewerUid, rides), [viewerUid, rides]);
 
   useEffect(() => {
+    let active = true;
     (async () => {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') return;
-      const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
-      setOrigin({ lat: loc.coords.latitude, lng: loc.coords.longitude });
+      // The location is only used to draw the route, so a failure just means
+      // no route. iOS can fail to get a fix (kCLErrorLocationUnknown: indoors,
+      // weak GPS, a simulator with no location), so fall back to the last
+      // known position and otherwise give up quietly.
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== 'granted') return;
+        let loc: Location.LocationObject | null = null;
+        try {
+          loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+        } catch {
+          loc = await Location.getLastKnownPositionAsync();
+        }
+        if (active && loc) setOrigin({ lat: loc.coords.latitude, lng: loc.coords.longitude });
+      } catch {
+        // No location available: the map still shows the event and pins.
+      }
     })();
+    return () => {
+      active = false;
+    };
   }, []);
 
   useEffect(() => {

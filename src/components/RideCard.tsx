@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { View } from 'react-native';
-import { Button, Card, Chip, IconButton, Menu, Text } from 'react-native-paper';
+import { Card, Chip, IconButton, Menu, Text } from 'react-native-paper';
 import type { Ride } from '../types';
+import { AppButton } from '@/src/components/AppButton';
 
 export function RideCard({
   ride,
@@ -65,7 +66,7 @@ export function RideCard({
 
         {!isOwner && ride.status === 'open' && canOffer && onOffer ? (
           <View style={{ marginTop: 4 }}>
-            <Button mode="contained" onPress={onOffer}>Offer ride</Button>
+            <AppButton onPress={onOffer}>Offer ride</AppButton>
           </View>
         ) : null}
       </Card.Content>

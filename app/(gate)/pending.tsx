@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { Button, Text } from 'react-native-paper';
+import { Text } from 'react-native-paper';
 import { signOut } from 'firebase/auth';
 import { auth } from '@/src/firebase/config';
 import { AuthScreen } from '@/src/components/AuthScreen';
+import { AppButton } from '@/src/components/AppButton';
 
 export default function Pending() {
   const [refreshing, setRefreshing] = useState(false);
@@ -22,9 +23,9 @@ export default function Pending() {
       refreshing={refreshing}
       onRefresh={onRefresh}
       footer={
-        <Button onPress={() => signOut(auth)} textColor="#FFFFFF">
+        <AppButton variant="text" onPress={() => signOut(auth)} tone="onDark">
           Sign out
-        </Button>
+        </AppButton>
       }
     >
       <Text>
