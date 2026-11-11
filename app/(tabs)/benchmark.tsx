@@ -1,10 +1,10 @@
-import { useLayoutEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { ActivityIndicator, IconButton, Text } from 'react-native-paper';
+import { ActivityIndicator, Text } from 'react-native-paper';
 import { AppFab } from '@/src/components/AppButton';
 import { CardBox, CardRow, SectionHeader } from '@/src/components/Cards';
 import { CoachExtras } from '@/src/benchmark/components/CoachExtras';
-import { router, useNavigation } from 'expo-router';
+import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/src/contexts/AuthContext';
@@ -28,9 +28,8 @@ export default function BenchmarkTab() {
 }
 
 function BenchmarkHome() {
-  const { firebaseUser, appUser, isAdmin } = useAuth();
+  const { firebaseUser, appUser } = useAuth();
   const uid = firebaseUser?.uid;
-  const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const explain = useExplain();
 
@@ -39,20 +38,6 @@ function BenchmarkHome() {
   const { assignments } = useAssignments(uid);
   const [editHeight, setEditHeight] = useState(false);
   const [exporting, setExporting] = useState(false);
-
-  useLayoutEffect(() => {
-    navigation.setOptions({
-      headerRight: isAdmin
-        ? () => (
-            <IconButton
-              icon="clipboard-account-outline"
-              accessibilityLabel="Coach"
-              onPress={() => router.push('/benchmark/coach')}
-            />
-          )
-        : undefined,
-    });
-  }, [navigation, isAdmin]);
 
   const latest = useMemo(() => knownSessions(sessions)[0] ?? null, [sessions]);
   const latestScore = latest ? scoreSession(latest) : null;

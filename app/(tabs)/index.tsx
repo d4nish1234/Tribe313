@@ -1,13 +1,10 @@
 import { useMemo } from 'react';
 import { ScrollView, View } from 'react-native';
 import { ActivityIndicator, Text } from 'react-native-paper';
-import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@/src/contexts/AuthContext';
 import { useEvents } from '@/src/hooks/useEvents';
-import { usePendingCount } from '@/src/hooks/usePendingCount';
 import { BrandLogo } from '@/src/components/BrandLogo';
-import { AppButton } from '@/src/components/AppButton';
 import { CardBox, SectionHeader, cardStyles } from '@/src/components/Cards';
 import { EventRow } from '@/src/components/EventRow';
 import { useAssignments, useBenchmarkSessions } from '@/src/benchmark/hooks';
@@ -28,8 +25,7 @@ export default function HomeTab() {
 
 function Home() {
   const { loading, upcoming } = useEvents();
-  const { isAdmin, appUser, firebaseUser } = useAuth();
-  const pendingCount = usePendingCount();
+  const { appUser, firebaseUser } = useAuth();
   const insets = useSafeAreaInsets();
   const explain = useExplain();
 
@@ -48,25 +44,6 @@ function Home() {
         <BrandLogo />
         <View style={cardStyles.content}>
           <Text variant="headlineSmall">Welcome{appUser ? `, ${appUser.firstName}` : ''}</Text>
-
-          {isAdmin && (
-            <View style={{ gap: 8 }}>
-              <AppButton
-                variant="secondary"
-                onPress={() => router.push('/admin/approvals')}
-                icon={pendingCount > 0 ? 'circle-medium' : undefined}
-              >
-                Admin · Pending approvals{pendingCount > 0 ? ` (${pendingCount})` : ''}
-              </AppButton>
-              <AppButton
-                variant="secondary"
-                onPress={() => router.push('/admin/carpool-addresses')}
-                icon="map-marker-multiple-outline"
-              >
-                Admin · Carpool locations
-              </AppButton>
-            </View>
-          )}
 
           {/* Only the next event; the rest are one tap away. */}
           <SectionHeader title="Up next" />

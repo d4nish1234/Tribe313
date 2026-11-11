@@ -16,7 +16,7 @@ import { splitEvents } from '../lib/events';
  * foreground, so lists that depend on "now" (Up next, upcoming vs past) move
  * on by themselves when an event starts.
  */
-function useNow(everyMs = 60_000): number {
+export function useNow(everyMs = 60_000): number {
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
     const tick = () => setNow(Date.now());

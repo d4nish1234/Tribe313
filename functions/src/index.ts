@@ -11,6 +11,8 @@ export { deactivateUser } from './users/deactivate';
 export { reinstateUser } from './users/reinstate';
 export { selfDeleteAccount } from './users/selfDelete';
 export { onEventCreate } from './events/onEventCreate';
+export { onSeriesWrite, extendSeries } from './events/series';
+export { remindTomorrow } from './events/reminders';
 export { onRideRequest } from './rides/onRideRequest';
 export { onRideAccept } from './rides/onRideAccept';
 export { onRsvpWrite } from './badges/onRsvpWrite';

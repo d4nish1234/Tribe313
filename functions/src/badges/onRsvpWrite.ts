@@ -23,7 +23,9 @@ export const onRsvpWrite = onDocumentWritten(
     if (!before && after?.status === 'yes') {
       const evSnap = await db.doc(`events/${eventId}`).get();
       const ev = evSnap.data();
-      if (ev?.createdAt && (after.updatedAt as Timestamp)?.toMillis) {
+      // Not for recurring events: they're made weeks ahead in the night, so
+      // "within an hour of it being posted" means nothing for them.
+      if (ev?.createdAt && !ev.seriesId && (after.updatedAt as Timestamp)?.toMillis) {
         const createdMs = (ev.createdAt as Timestamp).toMillis();
         const nowMs = (after.updatedAt as Timestamp).toMillis();
         if (nowMs - createdMs <= 60 * 60 * 1000) {

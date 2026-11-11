@@ -68,6 +68,13 @@ service cloud.firestore {
       allow create, update, delete: if isAdmin();
     }
 
+    // -------- RECURRING EVENT SERIES --------
+    // Admins define them; Cloud Functions (admin SDK) create the events.
+    match /eventSeries/{seriesId} {
+      allow read: if isApproved();
+      allow create, update, delete: if isAdmin();
+    }
+
     // -------- EVENTS --------
     match /events/{eventId} {
       allow read: if isApproved();

@@ -2,20 +2,18 @@ import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthGate } from '@/src/hooks/useAuthGate';
 import { usePushRegistration } from '@/src/hooks/usePushRegistration';
-import { usePendingCount } from '@/src/hooks/usePendingCount';
+import { HeaderMenu } from '@/src/components/HeaderMenu';
 
 export default function TabsLayout() {
   useAuthGate();
   usePushRegistration();
-  const pendingCount = usePendingCount();
   return (
-    <Tabs screenOptions={{ headerShown: true }}>
+    <Tabs screenOptions={{ headerShown: true, headerRight: () => <HeaderMenu /> }}>
       <Tabs.Screen
         name="index"
         options={{
           title: 'Home',
           tabBarIcon: ({ color, size }) => <Ionicons name="home" color={color as string} size={size} />,
-          tabBarBadge: pendingCount > 0 ? pendingCount : undefined,
         }}
       />
       <Tabs.Screen
@@ -37,13 +35,6 @@ export default function TabsLayout() {
         options={{
           title: 'Benchmark',
           tabBarIcon: ({ color, size }) => <Ionicons name="barbell" color={color as string} size={size} />,
-        }}
-      />
-      <Tabs.Screen
-        name="settings"
-        options={{
-          title: 'Settings',
-          tabBarIcon: ({ color, size }) => <Ionicons name="settings" color={color as string} size={size} />,
         }}
       />
     </Tabs>

@@ -7,6 +7,10 @@ exports.onEventCreate = (0, firestore_1.onDocumentCreated)('events/{eventId}', a
     const data = event.data?.data();
     if (!data)
         return;
+    // Events made by a recurring series don't announce themselves one by one:
+    // the series was announced once when created (events/series.ts).
+    if (data.seriesId)
+        return;
     const targets = await (0, push_1.targetsForAllApproved)();
     await (0, push_1.sendPushes)(targets, {
         title: 'New event',

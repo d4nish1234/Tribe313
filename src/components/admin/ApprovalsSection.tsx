@@ -1,21 +1,17 @@
 import { useState } from 'react';
-import { Alert, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, StyleSheet, View } from 'react-native';
 import { ActivityIndicator, Text } from 'react-native-paper';
-import { Redirect } from 'expo-router';
 import { doc, updateDoc } from 'firebase/firestore';
-import { useAuth } from '@/src/contexts/AuthContext';
 import { useMembers } from '@/src/hooks/useMembers';
 import { approveUser } from '@/src/firebase/fn';
 import { db } from '@/src/firebase/config';
 import { CardBox, CardRow, SectionHeader, cardStyles } from '@/src/components/Cards';
 import { AppButton } from '@/src/components/AppButton';
 
-export default function Approvals() {
-  const { isAdmin } = useAuth();
+/** People waiting to join, and the ones not approved (with Restore). Part of the Admin screen. */
+export function ApprovalsSection() {
   const { loading, members } = useMembers(true);
   const [busy, setBusy] = useState<string | null>(null);
-
-  if (!isAdmin) return <Redirect href="/" />;
 
   const pending = members.filter((m) => m.status === 'pending' && m.emailVerified === true);
   const dismissed = members.filter((m) => m.status === 'dismissed');
@@ -53,18 +49,14 @@ export default function Approvals() {
     }
   }
 
-  if (loading) {
-    return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-        <ActivityIndicator />
-      </View>
-    );
-  }
-
   return (
-    <ScrollView contentContainerStyle={[cardStyles.content, { paddingBottom: 40 }]}>
-      <SectionHeader title="Waiting for approval" />
-      {pending.length === 0 ? (
+    <>
+      <SectionHeader
+        title={pending.length ? `Waiting for approval · ${pending.length}` : 'Waiting for approval'}
+      />
+      {loading ? (
+        <ActivityIndicator style={{ marginVertical: 12 }} />
+      ) : pending.length === 0 ? (
         <Text style={cardStyles.muted}>No pending members.</Text>
       ) : (
         <CardBox>
@@ -87,7 +79,11 @@ export default function Approvals() {
                     >
                       Dismiss
                     </AppButton>
-                    <AppButton style={styles.action} onPress={() => approve(item.uid)} loading={busy === item.uid}>
+                    <AppButton
+                      style={styles.action}
+                      onPress={() => approve(item.uid)}
+                      loading={busy === item.uid}
+                    >
                       Approve
                     </AppButton>
                   </View>
@@ -110,11 +106,7 @@ export default function Approvals() {
                 title={`${item.firstName} ${item.lastName}`}
                 subtitle={item.email}
                 right={
-                  <AppButton
-                    variant="text"
-                    onPress={() => restore(item.uid)}
-                    loading={busy === item.uid}
-                  >
+                  <AppButton variant="text" onPress={() => restore(item.uid)} loading={busy === item.uid}>
                     Restore
                   </AppButton>
                 }
@@ -123,7 +115,7 @@ export default function Approvals() {
           </CardBox>
         </>
       )}
-    </ScrollView>
+    </>
   );
 }
 

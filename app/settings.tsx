@@ -13,9 +13,11 @@ import { geocodeAddress, selfDeleteAccount } from '@/src/firebase/fn';
 import { AppVersion } from '@/src/components/AppVersion';
 import { DangerZone } from '@/src/components/DangerZone';
 import { AppButton } from '@/src/components/AppButton';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function Settings() {
   const { appUser, firebaseUser } = useAuth();
+  const insets = useSafeAreaInsets();
   const [first, setFirst] = useState('');
   const [last, setLast] = useState('');
   const [phone, setPhone] = useState('');
@@ -100,7 +102,7 @@ export default function Settings() {
   }
 
   return (
-    <ScrollView contentContainerStyle={{ padding: 16, gap: 12 }}>
+    <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 24 + insets.bottom, gap: 12 }}>
       <Text variant="titleMedium">Profile</Text>
       <TextInput
         label="Email"

@@ -31,12 +31,14 @@ Expo SDK 54 · expo-router 6 (typed routes) · React Native 0.81 · react-native
   - Rules read the `admin` token claim. `promoteAdmin` sets both.
   - `AuthContext` force-refreshes the ID token when the two disagree.
 - Live listeners: Firestore closes an `onSnapshot` listener for good after an error. Never call `onSnapshot` directly. Use `listenQuery` or `listenDoc` (or `resilient()` for custom cases) from `src/lib/live.ts`, which re-subscribe with backoff so a screen can't freeze until the app restarts.
+- Recurring events: admins save an `eventSeries` doc; `functions/src/events/series.ts` keeps its next 5 weeks as ordinary `events` (ids `<seriesId>_<YYYY-MM-DD>`, plus `seriesId`/`seriesDate`/`seriesLabel`). Dates and times are Toronto wall-clock. The date logic lives once in `functions/src/shared/recurrence.ts` (no imports) and the app re-exports it from `src/lib/recurrence.ts`; tests are in `src/lib/__tests__/recurrence.test.ts`. Deleting one date of a series adds it to `skipDates` so it isn't recreated. Series events don't send "New event" pushes or award early-bird; `remindTomorrow` (18:00 Toronto) reminds for every event.
 - Compiled Cloud Functions in `functions/lib` are committed. Rebuild them with `npm --prefix functions run build`, and don't hand-edit them.
 
 ## Shared UI (use these, don't restyle per screen)
 - Buttons: `AppButton` (`variant` primary/secondary/text, `tone` danger/onDark) and `AppFab`, in `src/components/AppButton.tsx`. Don't use Paper's `Button` or `FAB` directly.
 - Lists: `SectionHeader`, `CardBox`, `CardRow` and `ExpandableCard` in `src/components/Cards.tsx`, plus `cardStyles.content` for screen padding. Don't use Paper's `Card` or `List.Item` for lists.
   - A `CardRow` with `onPress` is a single VoiceOver element, so don't put other buttons inside it. Leave `onPress` off when the row has its own buttons.
+- Header menu: `HeaderMenu` (`src/components/HeaderMenu.tsx`) is the ☰ on every tab's header. A full-width panel that drops from under the header: Settings for everyone; Admin (carpool locations + approvals, `app/admin/index.tsx`, with a pending-count bubble) and Coach for admins only. New app-wide or admin screens go there, not as Home buttons or per-tab header icons.
 - Search: `matchesWords` in `src/lib/search.ts` is the one search rule: every word must match, in any order, ignoring case and accents.
 - Choosing from a list: `await pickOne({...})` or `await pickMany({...})` from `src/lib/picker.ts`. It opens `app/pick.tsx`, a search field over card rows, and returns the chosen ids, or null on Back. Use it instead of building a new picker screen. Its options (`allowCustom`, `selected`, `keywords`, …) are documented at the top of the file.
 

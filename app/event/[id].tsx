@@ -14,6 +14,7 @@ import { format } from "date-fns";
 import { router, useLocalSearchParams } from "expo-router";
 import {
   addDoc,
+  arrayUnion,
   collection,
   deleteDoc,
   deleteField,
@@ -330,8 +331,21 @@ export default function EventDetail() {
 
   async function deleteEvent() {
     if (!event) return;
-    await deleteDoc(doc(db, "events", event.id));
-    router.back();
+    try {
+      // One date of a recurring event: mark it skipped first, so the nightly
+      // sync doesn't make it again. The series may already be gone.
+      if (event.seriesId && event.seriesDate) {
+        await updateDoc(doc(db, "eventSeries", event.seriesId), {
+          skipDates: arrayUnion(event.seriesDate),
+        }).catch((e) => {
+          if (e?.code !== "not-found") throw e;
+        });
+      }
+      await deleteDoc(doc(db, "events", event.id));
+      router.back();
+    } catch (e: any) {
+      setSnack(e?.message ?? "Failed to delete event");
+    }
   }
 
   async function toggleAttended(uid: string, next: boolean) {
@@ -353,6 +367,9 @@ export default function EventDetail() {
           {format(event.startsAt.toDate(), "PPPPp")}
         </Text>
         <Text style={{ opacity: 0.75 }}>{event.location?.label}</Text>
+        {event.seriesLabel ? (
+          <Text style={{ opacity: 0.75 }}>Repeats: {event.seriesLabel}</Text>
+        ) : null}
         {event.description ? (
           <Text style={{ marginTop: 8 }}>{event.description}</Text>
         ) : null}
@@ -529,6 +546,9 @@ export default function EventDetail() {
           <Dialog.Content>
             <Text>
               This will permanently delete "{event.title}" and all its data.
+              {event.seriesId
+                ? " Only this date is removed; the rest of the recurring event stays."
+                : ""}
             </Text>
           </Dialog.Content>
           <Dialog.Actions>
