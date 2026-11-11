@@ -14,6 +14,7 @@ import { format } from "date-fns";
 import { router, useLocalSearchParams } from "expo-router";
 import {
   addDoc,
+  arrayUnion,
   collection,
   deleteDoc,
   deleteField,
@@ -26,17 +27,18 @@ import { useMemo, useState } from "react";
 import { ScrollView, View } from "react-native";
 import {
   ActivityIndicator,
-  Button,
-  Card,
   Dialog,
   Divider,
-  IconButton,
+  Icon,
   Portal,
   RadioButton,
   Snackbar,
   Text,
   TextInput,
 } from "react-native-paper";
+import { AppButton } from '@/src/components/AppButton';
+import { palette } from '@/src/theme';
+import { CardBox, CardRow, SectionHeader } from '@/src/components/Cards';
 
 // pickupMode is 'home', 'custom', or a carpoolLocation ID
 function resolveMode(
@@ -329,8 +331,21 @@ export default function EventDetail() {
 
   async function deleteEvent() {
     if (!event) return;
-    await deleteDoc(doc(db, "events", event.id));
-    router.back();
+    try {
+      // One date of a recurring event: mark it skipped first, so the nightly
+      // sync doesn't make it again. The series may already be gone.
+      if (event.seriesId && event.seriesDate) {
+        await updateDoc(doc(db, "eventSeries", event.seriesId), {
+          skipDates: arrayUnion(event.seriesDate),
+        }).catch((e) => {
+          if (e?.code !== "not-found") throw e;
+        });
+      }
+      await deleteDoc(doc(db, "events", event.id));
+      router.back();
+    } catch (e: any) {
+      setSnack(e?.message ?? "Failed to delete event");
+    }
   }
 
   async function toggleAttended(uid: string, next: boolean) {
@@ -352,6 +367,9 @@ export default function EventDetail() {
           {format(event.startsAt.toDate(), "PPPPp")}
         </Text>
         <Text style={{ opacity: 0.75 }}>{event.location?.label}</Text>
+        {event.seriesLabel ? (
+          <Text style={{ opacity: 0.75 }}>Repeats: {event.seriesLabel}</Text>
+        ) : null}
         {event.description ? (
           <Text style={{ marginTop: 8 }}>{event.description}</Text>
         ) : null}
@@ -389,9 +407,9 @@ export default function EventDetail() {
       >
         <Text variant="titleMedium">Rides</Text>
         {!myActiveRide && !iAmDriving && (
-          <Button mode="contained-tonal" onPress={() => openRideDialog()}>
+          <AppButton variant="secondary" onPress={() => openRideDialog()}>
             I need a ride
-          </Button>
+          </AppButton>
         )}
       </View>
 
@@ -401,14 +419,14 @@ export default function EventDetail() {
         <>
           {rideGroups.driverSections.map((section) => (
             <View key={section.uid} style={{ gap: 8 }}>
-              <Text variant="titleSmall" style={{ marginTop: 4 }}>
-                {section.title}
-              </Text>
-              {section.rides.map((r) => {
+              <SectionHeader title={section.title} />
+              <CardBox>
+              {section.rides.map((r, i) => {
                 const isOwner = r.requesterUid === firebaseUser.uid;
                 return (
                   <RideCard
                     key={r.id}
+                    first={i === 0}
                     ride={r}
                     requesterName={nameFor(r.requesterUid)}
                     driverName={r.driverUid ? nameFor(r.driverUid) : undefined}
@@ -421,19 +439,20 @@ export default function EventDetail() {
                   />
                 );
               })}
+              </CardBox>
             </View>
           ))}
           {rideGroups.unassigned.length > 0 && (
             <View style={{ gap: 8 }}>
-              <Text variant="titleSmall" style={{ marginTop: 4 }}>
-                Needs a ride
-              </Text>
-              {rideGroups.unassigned.map((r) => {
+              <SectionHeader title="Needs a ride" />
+              <CardBox>
+              {rideGroups.unassigned.map((r, i) => {
                 const isOwner = r.requesterUid === firebaseUser.uid;
                 const canOffer = !isOwner && !myActiveRide;
                 return (
                   <RideCard
                     key={r.id}
+                    first={i === 0}
                     ride={r}
                     requesterName={nameFor(r.requesterUid)}
                     driverName={undefined}
@@ -447,6 +466,7 @@ export default function EventDetail() {
                   />
                 );
               })}
+              </CardBox>
             </View>
           )}
         </>
@@ -456,28 +476,40 @@ export default function EventDetail() {
         <>
           <Divider />
           <Text variant="titleMedium">Admin · Attendance</Text>
-          {rsvps
-            .filter((r) => r.status === "yes")
-            .map((r) => (
-              <Card key={r.uid} style={{ marginBottom: 8 }}>
-                <Card.Title
-                  title={nameFor(r.uid)}
-                  right={() => (
-                    <IconButton
-                      icon={r.attended ? "check-circle" : "circle-outline"}
-                      onPress={() => toggleAttended(r.uid, !r.attended)}
-                    />
-                  )}
-                />
-              </Card>
-            ))}
-          <Button
-            mode="outlined"
-            textColor="#D7263D"
+          {yesCount > 0 ? (
+            <CardBox>
+              {rsvps
+                .filter((r) => r.status === "yes")
+                .map((r, i) => (
+                  <CardRow
+                    key={r.uid}
+                    first={i === 0}
+                    title={nameFor(r.uid)}
+                    subtitle={r.attended ? "Attended" : "Not marked"}
+                    onPress={() => toggleAttended(r.uid, !r.attended)}
+                    chevron={null}
+                    accessibilityRole="checkbox"
+                    accessibilityState={{ checked: !!r.attended }}
+                    right={
+                      <Icon
+                        source={r.attended ? "check-circle" : "circle-outline"}
+                        color={r.attended ? palette.primary : palette.muted}
+                        size={24}
+                      />
+                    }
+                  />
+                ))}
+            </CardBox>
+          ) : (
+            <Text style={{ opacity: 0.7 }}>No one has said they’re going yet.</Text>
+          )}
+          <AppButton
+            variant="secondary"
+            tone="danger"
             onPress={() => setDeleteConfirm(true)}
           >
             Delete event
-          </Button>
+          </AppButton>
         </>
       )}
 
@@ -499,10 +531,10 @@ export default function EventDetail() {
             </Text>
           </Dialog.Content>
           <Dialog.Actions>
-            <Button onPress={() => setPendingRsvpNo(false)}>No</Button>
-            <Button onPress={confirmRsvpNoCancelRide} textColor="#D7263D">
+            <AppButton variant="text" onPress={() => setPendingRsvpNo(false)}>No</AppButton>
+            <AppButton variant="text" onPress={confirmRsvpNoCancelRide} tone="danger">
               Yes
-            </Button>
+            </AppButton>
           </Dialog.Actions>
         </Dialog>
 
@@ -514,13 +546,16 @@ export default function EventDetail() {
           <Dialog.Content>
             <Text>
               This will permanently delete "{event.title}" and all its data.
+              {event.seriesId
+                ? " Only this date is removed; the rest of the recurring event stays."
+                : ""}
             </Text>
           </Dialog.Content>
           <Dialog.Actions>
-            <Button onPress={() => setDeleteConfirm(false)}>Cancel</Button>
-            <Button onPress={deleteEvent} textColor="#D7263D">
+            <AppButton variant="text" onPress={() => setDeleteConfirm(false)}>Cancel</AppButton>
+            <AppButton variant="text" onPress={deleteEvent} tone="danger">
               Delete
-            </Button>
+            </AppButton>
           </Dialog.Actions>
         </Dialog>
 
@@ -558,12 +593,12 @@ export default function EventDetail() {
             )}
           </Dialog.Content>
           <Dialog.Actions>
-            <Button onPress={() => setRideDialog(false)} disabled={rideBusy}>
+            <AppButton variant="text" onPress={() => setRideDialog(false)} disabled={rideBusy}>
               Cancel
-            </Button>
-            <Button onPress={submitRide} loading={rideBusy}>
+            </AppButton>
+            <AppButton variant="text" onPress={submitRide} loading={rideBusy}>
               {editingRideId ? "Update" : "Request"}
-            </Button>
+            </AppButton>
           </Dialog.Actions>
         </Dialog>
       </Portal>

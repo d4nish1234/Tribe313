@@ -37,6 +37,9 @@ export function usePushRegistration() {
         if (Platform.OS === 'android') {
           await Notifications.setNotificationChannelAsync('default', {
             name: 'default',
+            // It is exported (index re-exports NotificationChannelManager.types); the
+            // import plugin can't follow the compiled enum in expo-notifications 58.
+            // eslint-disable-next-line import/namespace
             importance: Notifications.AndroidImportance.DEFAULT,
           });
         }

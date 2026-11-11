@@ -1,11 +1,12 @@
 import { useRef, useState } from 'react';
-import { View, type TextInput as RNTextInput } from 'react-native';
-import { Button, HelperText, TextInput } from 'react-native-paper';
+import { View, type TextInputInstance } from 'react-native';
+import { HelperText, TextInput } from 'react-native-paper';
 import { router } from 'expo-router';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '@/src/firebase/config';
 import { AuthScreen } from '@/src/components/AuthScreen';
 import { authErrorMessage } from '@/src/lib/authErrors';
+import { AppButton } from '@/src/components/AppButton';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -13,7 +14,7 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const passwordRef = useRef<RNTextInput>(null);
+  const passwordRef = useRef<TextInputInstance>(null);
 
   async function submit() {
     setErr(null);
@@ -32,9 +33,9 @@ export default function Login() {
       title="Welcome back"
       subtitle="Log in to your account."
       footer={
-        <Button onPress={() => router.push('/signup')} textColor="#FFFFFF">
+        <AppButton variant="text" onPress={() => router.push('/signup')} tone="onDark">
           New here? Create an account
-        </Button>
+        </AppButton>
       }
     >
       <TextInput
@@ -70,13 +71,13 @@ export default function Login() {
         }
       />
       {err ? <HelperText type="error">{err}</HelperText> : null}
-      <Button mode="contained" onPress={submit} loading={busy} disabled={busy} contentStyle={{ minHeight: 48 }}>
+      <AppButton onPress={submit} loading={busy} disabled={busy}>
         Log in
-      </Button>
+      </AppButton>
       <View style={{ alignItems: 'center' }}>
-        <Button compact onPress={() => router.push('/forgot')}>
+        <AppButton variant="text" compact onPress={() => router.push('/forgot')}>
           Forgot password?
-        </Button>
+        </AppButton>
       </View>
     </AuthScreen>
   );

@@ -1,13 +1,14 @@
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
 import { Platform, StyleSheet, View, type TextStyle } from 'react-native';
-import { Button, Text } from 'react-native-paper';
+import { Text } from 'react-native-paper';
 import { Image } from 'expo-image';
 import { tokenize } from '../engine/explain';
 import { photoSource } from '../photos';
-import { B, TAP } from '../theme';
+import { B } from '../theme';
 import type { GlossaryEntry } from '../types';
 import { BottomSheet } from './BottomSheet';
 import { WallSitFigure } from './WallSitFigure';
+import { AppButton } from '@/src/components/AppButton';
 
 export interface ExplainContent {
   title: string;
@@ -35,15 +36,12 @@ export function ExplainProvider({ children }: { children: ReactNode }) {
         onClose={close}
         title={content?.title}
         footer={
-          <Button
-            mode="contained"
-            buttonColor={B.green}
-            contentStyle={{ minHeight: TAP }}
+          <AppButton
             style={{ marginTop: 8 }}
             onPress={close}
           >
             Got it
-          </Button>
+          </AppButton>
         }
       >
         {content ? <ExplainBody c={content} /> : null}

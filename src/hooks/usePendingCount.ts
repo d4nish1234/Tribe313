@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { collection, onSnapshot, query, where } from 'firebase/firestore';
+import { collection, query, where } from 'firebase/firestore';
+import { listenQuery } from '../lib/live';
 import { db } from '../firebase/config';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -10,9 +11,7 @@ export function usePendingCount(): number {
   useEffect(() => {
     if (!isAdmin) return;
     const q = query(collection(db, 'users'), where('status', '==', 'pending'));
-    return onSnapshot(q, (snap) =>
-      setCount(snap.docs.filter((d) => d.data().emailVerified === true).length),
-    );
+    return listenQuery(q, (snap) => setCount(snap.docs.filter((d) => d.data().emailVerified === true).length));
   }, [isAdmin]);
 
   return count;

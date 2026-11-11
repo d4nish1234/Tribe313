@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { View } from 'react-native';
-import { Button, HelperText, TextInput } from 'react-native-paper';
+import { HelperText, TextInput } from 'react-native-paper';
 import { router } from 'expo-router';
 import { createUserWithEmailAndPassword, sendEmailVerification, updateProfile } from 'firebase/auth';
 import { doc, serverTimestamp, setDoc } from 'firebase/firestore';
 import { auth, db } from '@/src/firebase/config';
 import { AuthScreen } from '@/src/components/AuthScreen';
 import { authErrorMessage } from '@/src/lib/authErrors';
+import { AppButton } from '@/src/components/AppButton';
 
 export default function Signup() {
   const [firstName, setFirst] = useState('');
@@ -61,9 +62,9 @@ export default function Signup() {
       title="Create account"
       subtitle="An admin approves every new member."
       footer={
-        <Button onPress={() => router.replace('/login')} textColor="#FFFFFF">
+        <AppButton variant="text" onPress={() => router.replace('/login')} tone="onDark">
           Already a member? Log in
-        </Button>
+        </AppButton>
       }
     >
       <View style={{ flexDirection: 'row', gap: 12 }}>
@@ -116,9 +117,9 @@ export default function Signup() {
         <HelperText type="info">At least 6 characters.</HelperText>
       </View>
       {err ? <HelperText type="error">{err}</HelperText> : null}
-      <Button mode="contained" onPress={submit} loading={busy} disabled={busy} contentStyle={{ minHeight: 48 }}>
+      <AppButton onPress={submit} loading={busy} disabled={busy}>
         Sign up
-      </Button>
+      </AppButton>
     </AuthScreen>
   );
 }

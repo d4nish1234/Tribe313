@@ -1,5 +1,4 @@
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
-import fetch from 'node-fetch';
 import { GOOGLE_MAPS_KEY } from '../lib/config';
 
 export const geocodeAddress = onCall<{ address: string }>(

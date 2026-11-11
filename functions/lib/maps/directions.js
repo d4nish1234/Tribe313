@@ -1,11 +1,7 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getDirections = void 0;
 const https_1 = require("firebase-functions/v2/https");
-const node_fetch_1 = __importDefault(require("node-fetch"));
 const config_1 = require("../lib/config");
 const encode = (p) => `${p.lat},${p.lng}`;
 exports.getDirections = (0, https_1.onCall)({ secrets: [config_1.GOOGLE_MAPS_KEY] }, async (req) => {
@@ -22,7 +18,7 @@ exports.getDirections = (0, https_1.onCall)({ secrets: [config_1.GOOGLE_MAPS_KEY
         url.searchParams.set('waypoints', wp);
     }
     url.searchParams.set('key', config_1.GOOGLE_MAPS_KEY.value());
-    const res = await (0, node_fetch_1.default)(url.toString());
+    const res = await fetch(url.toString());
     const body = (await res.json());
     if (body.status !== 'OK' || !body.routes?.length) {
         throw new https_1.HttpsError('not-found', `Directions failed: ${body.status}`);

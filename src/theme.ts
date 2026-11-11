@@ -12,6 +12,7 @@ const brand = {
   secondary: '#C9A961', // gold
   secondarySoft: '#F6EFDD',
   gold: '#D8C38A', // wordmark gold on green
+  goldText: '#8A6F2E', // gold for text and links on light backgrounds (readable on white)
   background: '#F6F6F4',
   surface: '#FFFFFF',
   text: '#1A1A1A',
@@ -30,7 +31,7 @@ export const lightTheme = {
     onPrimary: '#FFFFFF',
     primaryContainer: brand.primarySoft,
     onPrimaryContainer: brand.primary,
-    secondary: '#8A6F2E', // darker gold so text/icons on white stay readable
+    secondary: brand.goldText, // darker gold so text/icons on white stay readable
     onSecondary: '#FFFFFF',
     secondaryContainer: '#E6CF8F', // chips + tonal buttons: a gold that stands out on white cards
     onSecondaryContainer: '#2E2408',

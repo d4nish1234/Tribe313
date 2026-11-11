@@ -2,7 +2,6 @@ import { useMemo, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { ActivityIndicator, IconButton, SegmentedButtons, Text } from 'react-native-paper';
 import { Stack, router } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/src/contexts/AuthContext';
 import { useMembers } from '@/src/hooks/useMembers';
 import { latestVersion, getVersion } from '@/src/benchmark/registry';
@@ -15,8 +14,10 @@ import { displayResult } from '@/src/benchmark/components/display';
 import { shareBenchmarkPdf } from '@/src/benchmark/pdf';
 import { B } from '@/src/benchmark/theme';
 import type { Session } from '@/src/benchmark/types';
-import { rowDivider } from '@/src/components/RowDivider';
 import { palette } from '@/src/theme';
+import { CardBox, CardRow } from '@/src/components/Cards';
+import { ProgressView } from '@/src/benchmark/components/ProgressView';
+import { pickOne } from '@/src/lib/picker';
 
 export default function CoachScreen() {
   return (
@@ -41,7 +42,8 @@ function Coach() {
   const { loading: sLoading, byUid } = useAllBenchmarkSessions(isAdmin);
   const counts = useAssignmentCounts(isAdmin);
   const profiles = useAllBenchmarkProfiles(isAdmin);
-  const [view, setView] = useState<'list' | 'grid'>('list');
+  const [view, setView] = useState<CoachView>('list');
+  const [progressUid, setProgressUid] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
   const v = latestVersion();
 
@@ -122,21 +124,90 @@ function Coach() {
       <View style={styles.toolbar}>
         <SegmentedButtons
           value={view}
-          onValueChange={(x) => setView(x as 'list' | 'grid')}
+          onValueChange={(x) => setView(x as CoachView)}
           buttons={[
-            { value: 'list', label: 'Members', icon: 'account-multiple' },
-            { value: 'grid', label: 'Grid', icon: 'table' },
+            { value: 'list', label: 'Members' },
+            { value: 'grid', label: 'Grid' },
+            { value: 'progress', label: 'Progress' },
           ]}
         />
-        <View style={styles.links}>
-          <InfoLink
-            label={view === 'grid' ? 'Reading the grid' : 'Assigning exercises'}
-            onPress={() => explain(v.explainer(view === 'grid' ? 'coachgrid' : 'coachhow'))}
-          />
-        </View>
+        {view !== 'progress' ? (
+          <View style={styles.links}>
+            <InfoLink
+              label={view === 'grid' ? 'Reading the grid' : 'Assigning exercises'}
+              onPress={() => explain(v.explainer(view === 'grid' ? 'coachgrid' : 'coachhow'))}
+            />
+          </View>
+        ) : null}
       </View>
-      {view === 'list' ? <MemberList rows={rows} /> : <Grid rows={rows} />}
+      {view === 'list' ? (
+        <MemberList rows={rows} />
+      ) : view === 'grid' ? (
+        <Grid rows={rows} />
+      ) : (
+        <MemberProgress
+          rows={rows}
+          uid={progressUid}
+          onChoose={setProgressUid}
+          heightIn={progressUid ? (profiles[progressUid]?.heightIn ?? null) : null}
+        />
+      )}
     </View>
+  );
+}
+
+type CoachView = 'list' | 'grid' | 'progress';
+
+/**
+ * One member's progress, the same view they see on Benchmark → Progress.
+ * Choose the member first (search by name).
+ */
+function MemberProgress({
+  rows,
+  uid,
+  onChoose,
+  heightIn,
+}: {
+  rows: Row[];
+  uid: string | null;
+  onChoose: (uid: string) => void;
+  heightIn: number | null;
+}) {
+  const row = uid ? rows.find((r) => r.uid === uid) : undefined;
+  const choose = async () => {
+    const picked = await pickOne({
+      title: 'Choose member',
+      items: rows.map((r) => ({
+        id: r.uid,
+        title: r.name,
+        subtitle: r.latest ? `Last benchmark ${formatDate(r.latest.date)}` : 'No benchmarks yet',
+      })),
+      selected: uid ? [uid] : [],
+      searchPlaceholder: 'Search members',
+    });
+    if (picked) onChoose(picked);
+  };
+  return (
+    <ScrollView contentContainerStyle={[styles.content, { gap: 12, paddingBottom: 40 }]}>
+      <CardBox>
+        <CardRow
+          first
+          title="Member"
+          onPress={choose}
+          accessibilityHint="Opens the member list to choose whose progress to see"
+          right={
+            <Text style={[styles.pickValue, !row && { color: B.muted }]} numberOfLines={1}>
+              {row?.name ?? 'Choose'}
+            </Text>
+          }
+        />
+      </CardBox>
+      {row ? (
+        <ProgressView key={row.uid} sessions={newestFirst(row.sessions)} name={row.name} heightIn={heightIn} self={false} />
+      ) : (
+        <Text style={styles.muted}>Choose a member to see their scores and tests over time.</Text>
+      )}
+    </ScrollView>
   );
 }
 
@@ -147,35 +218,34 @@ function open(uid: string) {
 function MemberList({ rows }: { rows: Row[] }) {
   return (
     <ScrollView contentContainerStyle={styles.content}>
-      <View style={styles.card}>
-        {rows.map((r, i) => {
-          const sc = r.latest ? scoreSession(r.latest) : null;
-          return (
-            <Pressable
-              key={r.uid}
-              style={[styles.memberRow, i > 0 && styles.rowBorder]}
-              onPress={() => open(r.uid)}
-              accessibilityRole="button"
-            >
-              <View style={{ flex: 1 }}>
-                <Text style={styles.name}>{r.name}</Text>
-                <Text style={styles.muted}>
-                  {r.latest ? formatDate(r.latest.date) : 'No benchmarks yet'}
-                  {r.assigned ? ` · ${r.assigned} assigned` : ''}
-                </Text>
-              </View>
-              {sc ? (
-                <Text style={styles.score}>
-                  {sc.score}
-                  <Text style={styles.muted}>/{sc.maxScore}</Text>
-                </Text>
-              ) : null}
-              <Ionicons name="chevron-forward" size={18} color={B.muted} />
-            </Pressable>
-          );
-        })}
-        {rows.length === 0 ? <Text style={[styles.muted, { padding: 12 }]}>No members.</Text> : null}
-      </View>
+      {rows.length === 0 ? (
+        <Text style={styles.muted}>No members.</Text>
+      ) : (
+        <CardBox>
+          {rows.map((r, i) => {
+            const sc = r.latest ? scoreSession(r.latest) : null;
+            return (
+              <CardRow
+                key={r.uid}
+                first={i === 0}
+                onPress={() => open(r.uid)}
+                title={r.name}
+                subtitle={`${r.latest ? formatDate(r.latest.date) : 'No benchmarks yet'}${
+                  r.assigned ? ` · ${r.assigned} assigned` : ''
+                }`}
+                right={
+                  sc ? (
+                    <Text style={styles.score}>
+                      {sc.score}
+                      <Text style={styles.muted}>/{sc.maxScore}</Text>
+                    </Text>
+                  ) : null
+                }
+              />
+            );
+          })}
+        </CardBox>
+      )}
     </ScrollView>
   );
 }
@@ -247,13 +317,11 @@ const styles = StyleSheet.create({
   toolbar: { padding: 16, paddingBottom: 0, gap: 4, width: '100%', maxWidth: 560, alignSelf: 'center' },
   links: { alignItems: 'flex-end' },
   content: { padding: 16, width: '100%', maxWidth: 560, alignSelf: 'center' },
-  card: { backgroundColor: B.surface, borderRadius: 12, paddingHorizontal: 12 },
-  memberRow: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 60, paddingVertical: 8 },
-  rowBorder: rowDivider,
   name: { fontSize: 16, fontWeight: '600', color: B.text },
   link: { color: B.green },
   muted: { color: B.muted, fontSize: 13 },
   score: { fontSize: 20, fontWeight: '700', color: B.green },
+  pickValue: { flexShrink: 1, maxWidth: '60%', textAlign: 'right', fontSize: 16, color: B.text },
   grid: { flexDirection: 'row', marginTop: 12, backgroundColor: B.surface },
   gridHead: { justifyContent: 'center', borderBottomWidth: 1, borderBottomColor: B.border },
   gridName: {

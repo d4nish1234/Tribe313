@@ -1,9 +1,9 @@
-import * as admin from 'firebase-admin';
+import { getApps, initializeApp } from 'firebase-admin/app';
+import { getAuth } from 'firebase-admin/auth';
+import { getFirestore } from 'firebase-admin/firestore';
 
-if (!admin.apps.length) {
-  admin.initializeApp();
-}
+// firebase-admin 13+ dropped the namespaced API (admin.apps, admin.firestore()).
+if (!getApps().length) initializeApp();
 
-export const db = admin.firestore();
-export const authAdmin = admin.auth();
-export { admin };
+export const db = getFirestore();
+export const authAdmin = getAuth();

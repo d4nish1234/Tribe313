@@ -232,7 +232,12 @@ function explainer(key: string, ctx?: { coachName?: string }): Explainer {
     case 'howlog':
       return {
         title: 'Doing a benchmark',
-        text: 'Pick the date and enter your bodyweight. Weigh in at the gym. Do the tests in any order. After each one, tap its box and scroll to your result. Skipped a test? Leave it. Entered one by mistake? Tap it and choose Clear. Tap Save at the bottom. You can save as often as you like and it updates this benchmark. Not sure how a test works? Tap its picture.',
+        text: 'Pick the date and enter your bodyweight. Weigh in at the gym. A new benchmark starts with your last results, marked “Same as” and greyed out. Do the tests in any order. After each one, tap its box and scroll to your result. Did the test and got the same result? Tap it and press Done to keep it. Skipped a test? Leave it, or tap it and choose Clear. Tap Save at the bottom. You can save as often as you like and it updates this benchmark. Not sure how a test works? Tap its picture.',
+      };
+    case 'height':
+      return {
+        title: 'Why height?',
+        text: 'The broad jump target is based on your height. Level 1 is jumping your own height. It’s filled in from last time, so only change it if it’s wrong.',
       };
     case 'levels':
       return {
@@ -262,17 +267,17 @@ function explainer(key: string, ctx?: { coachName?: string }): Explainer {
     case 'coachhow':
       return {
         title: 'Assigning exercises',
-        text: 'Type an exercise. Start typing to pick from the app’s exercise list, or write your own. Add a note if it helps, like “every morning” or “before Leg Day”. Tap Add. It shows up on his Benchmark screen right away. Only coaches can see this screen. Each brother only sees his own exercises.',
+        text: 'Type an exercise. Start typing to pick from the app’s exercise list, or write your own. Add a note if it helps, like “every morning” or “before Leg Day”. Tap Add. It shows up on his Training tab right away. Only coaches can see this screen. Each brother only sees his own exercises.',
       };
     case 'coachgrid':
       return {
         title: 'Reading the group table',
-        text: 'One row per brother, showing his latest benchmark. F = Foundation (not at Level 1 yet). L1, L2, L3 = level reached. — = skipped that test. Swipe sideways to see every test. Tap a name to see his progress and assign him exercises. Export PDF shares every benchmark from every brother.',
+        text: 'One row per brother, showing his latest benchmark. F = Foundation (not at Level 1 yet). L1, L2, L3 = level reached. — = skipped that test. Swipe sideways to see every test. Tap a name to assign him exercises. Progress shows one brother’s results over time. Export PDF shares every benchmark from every brother.',
       };
     case 'faults':
       return {
         title: 'What stopped you?',
-        text: 'If you couldn’t get closer to the wall, pick what went wrong. Your plan adds drills to fix it.',
+        text: 'If you couldn’t get closer to the wall, pick what went wrong. The Training tab adds drills to fix it.',
       };
     case 'sets':
       return {

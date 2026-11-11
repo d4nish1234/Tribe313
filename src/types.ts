@@ -35,6 +35,33 @@ export type EventDoc = {
   startsAt: Timestamp;
   createdBy: string;
   createdAt: Timestamp;
+  /** Set on events a recurring series made (functions/src/events/series.ts). */
+  seriesId?: string;
+  /** The series date this event is for, 'YYYY-MM-DD' in Toronto. */
+  seriesDate?: string;
+  /** e.g. "Every Saturday". */
+  seriesLabel?: string;
+};
+
+/** A recurring event. The Cloud Functions keep its next 5 weeks as real events. */
+export type EventSeries = {
+  id: string;
+  title: string;
+  description: string;
+  location: { label: string; address: string; lat: number; lng: number };
+  repeat: 'weekly' | 'biweekly' | 'monthly';
+  /** First date, 'YYYY-MM-DD' in Toronto; also fixes the weekday. */
+  startDate: string;
+  /** 'HH:mm', Toronto time. */
+  timeOfDay: string;
+  /** Monthly: 1–4, or -1 for the last weekday of the month. */
+  monthlyWeek: number | null;
+  endDate: string | null;
+  /** Dates removed one at a time; never recreated. */
+  skipDates: string[];
+  createdBy: string;
+  createdAt?: Timestamp;
+  updatedAt?: Timestamp;
 };
 
 export type RsvpStatus = 'yes' | 'no' | 'maybe';

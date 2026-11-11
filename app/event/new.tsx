@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { Platform, ScrollView, View } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { Button, HelperText, Text, TextInput } from 'react-native-paper';
+import { HelperText, Text, TextInput } from 'react-native-paper';
 import { router } from 'expo-router';
 import { Timestamp, addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { useAuth } from '@/src/contexts/AuthContext';
 import { db } from '@/src/firebase/config';
 import { geocodeAddress } from '@/src/firebase/fn';
+import { AppButton } from '@/src/components/AppButton';
 
 export default function NewEvent() {
   const { firebaseUser, isAdmin } = useAuth();
@@ -71,9 +72,9 @@ export default function NewEvent() {
 
       <Text variant="titleSmall">Date & time</Text>
       {Platform.OS === 'android' ? (
-        <Button mode="outlined" onPress={() => setShowPicker(true)}>
+        <AppButton variant="secondary" onPress={() => setShowPicker(true)}>
           {when.toLocaleString()}
-        </Button>
+        </AppButton>
       ) : null}
       {showPicker && (
         <DateTimePicker
@@ -87,9 +88,9 @@ export default function NewEvent() {
       )}
 
       {err ? <HelperText type="error">{err}</HelperText> : null}
-      <Button mode="contained" onPress={submit} loading={busy}>
+      <AppButton onPress={submit} loading={busy}>
         Create event
-      </Button>
+      </AppButton>
     </ScrollView>
   );
 }

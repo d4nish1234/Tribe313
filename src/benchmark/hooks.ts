@@ -5,52 +5,13 @@ import {
   onSnapshot,
   orderBy,
   query,
-  type FirestoreError,
-  type Unsubscribe,
 } from 'firebase/firestore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { db } from '../firebase/config';
+import { resilient } from '../lib/live';
 import { assignmentsCol, profileRef, sessionsCol } from './data';
 import { toIsoDate } from './engine/format';
 import type { Assignment, BenchmarkProfile, Session } from './types';
-
-/**
- * Keeps a Firestore listener alive. Firestore closes a listener for good after
- * an error (e.g. permission-denied while rules or the user's approval are
- * still propagating), which left screens frozen until the app restarted.
- * This re-subscribes with backoff (1s, 2s, 4s… up to 30s) until it succeeds.
- */
-function resilient(
-  subscribe: (ok: () => void, fail: (e: FirestoreError) => void) => Unsubscribe,
-  onFail: () => void,
-): Unsubscribe {
-  let unsub: Unsubscribe | null = null;
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  let stopped = false;
-  let attempt = 0;
-  const start = () => {
-    unsub = subscribe(
-      () => {
-        attempt = 0;
-      },
-      (e) => {
-        if (__DEV__) console.warn('[benchmark] listener error, retrying:', e.code);
-        // Keep whatever was already on screen; only end a first load.
-        onFail();
-        unsub?.();
-        unsub = null;
-        if (stopped) return;
-        timer = setTimeout(start, Math.min(30000, 1000 * 2 ** attempt++));
-      },
-    );
-  };
-  start();
-  return () => {
-    stopped = true;
-    clearTimeout(timer);
-    unsub?.();
-  };
-}
 
 export function useBenchmarkProfile(uid: string | undefined) {
   const [profile, setProfile] = useState<BenchmarkProfile | null | undefined>(undefined);
@@ -200,6 +161,11 @@ export interface EntryDraft {
   heightIn: number | null;
   results: Record<string, number | null>;
   wallSquatFaults: string[];
+  /**
+   * New benchmarks: tests still showing last time's result, by key, with the
+   * date it came from. A test leaves this once it's changed or confirmed.
+   */
+  carried?: Record<string, string>;
   /** Day the draft was last written (YYYY-MM-DD). Set by `write`. */
   writtenOn?: string;
 }

@@ -1,5 +1,13 @@
 import { useEffect, useRef } from 'react';
-import { ScrollView, StyleSheet, Text, View, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
+import {
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
+  type ScrollViewInstance,
+} from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { B } from '../theme';
 
@@ -22,7 +30,7 @@ export function WheelColumn({
   label: string;
   onChange: (v: number) => void;
 }) {
-  const ref = useRef<ScrollView>(null);
+  const ref = useRef<ScrollViewInstance>(null);
   const idx = Math.max(0, values.indexOf(value));
   const lastTick = useRef(idx);
 

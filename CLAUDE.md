@@ -3,8 +3,11 @@
 Expo SDK 54 · expo-router 6 (typed routes) · React Native 0.81 · react-native-paper (MD3, light only) · Firebase JS SDK v12 (Auth, Firestore) · Cloud Functions v2 in `functions/`.
 
 ## Checks before calling something done
+- After every feature, review your own diff before calling it done, and report what you found. Look for bugs and edge cases, VoiceOver access (no buttons inside a tappable row), stale or frozen data, dev-mode double effects, dead code and missing tests. Fix what's clearly wrong and list what's left as a known trade-off.
+- Pure logic goes in `src/lib/` or `src/benchmark/engine/` with tests in `__tests__/`, so it can be tested without rendering screens.
 - `npm test`: jest-expo unit tests (`src/**/__tests__/*.test.ts`).
 - `npm run tsc` and `npx expo lint`. Two tsc errors and two lint errors in `app/event/[id].tsx` already exist and aren't caused by your change. Anything else is yours to fix.
+- `expo lint` caches results in `.expo/cache/eslint` and can report stale errors, or hide real ones, after files change. Run `rm -rf .expo/cache/eslint` first when the result looks wrong.
 - Typed routes are stale after adding a screen: run `CI=1 timeout 60 npx expo start --offline` once to regenerate them.
 - There's no Prettier config. Don't run `prettier` with its defaults, because it switches the code to double quotes and 80 columns. If you must format, use `npx prettier --single-quote --print-width 110 --trailing-comma all`.
 
@@ -27,10 +30,24 @@ Expo SDK 54 · expo-router 6 (typed routes) · React Native 0.81 · react-native
   - The UI reads `appUser.isAdmin` from the user doc.
   - Rules read the `admin` token claim. `promoteAdmin` sets both.
   - `AuthContext` force-refreshes the ID token when the two disagree.
-- Live listeners: Firestore closes an `onSnapshot` listener for good after an error. Use the `resilient()` re-subscribe wrapper in `src/benchmark/hooks.ts` (or the same pattern) so a screen can't freeze until the app restarts.
+- Live listeners: Firestore closes an `onSnapshot` listener for good after an error. Never call `onSnapshot` directly. Use `listenQuery` or `listenDoc` (or `resilient()` for custom cases) from `src/lib/live.ts`, which re-subscribe with backoff so a screen can't freeze until the app restarts.
+- Recurring events: admins save an `eventSeries` doc; `functions/src/events/series.ts` keeps its next 5 weeks as ordinary `events` (ids `<seriesId>_<YYYY-MM-DD>`, plus `seriesId`/`seriesDate`/`seriesLabel`). Dates and times are Toronto wall-clock. The date logic lives once in `functions/src/shared/recurrence.ts` (no imports) and the app re-exports it from `src/lib/recurrence.ts`; tests are in `src/lib/__tests__/recurrence.test.ts`. Deleting one date of a series adds it to `skipDates` so it isn't recreated. Series events don't send "New event" pushes or award early-bird; `remindTomorrow` (18:00 Toronto) reminds for every event.
 - Compiled Cloud Functions in `functions/lib` are committed. Rebuild them with `npm --prefix functions run build`, and don't hand-edit them.
 
-## Benchmark feature (`src/benchmark/`, `app/benchmark/`, `app/(tabs)/benchmark.tsx`)
+## Shared UI (use these, don't restyle per screen)
+- Buttons: `AppButton` (`variant` primary/secondary/text, `tone` danger/onDark) and `AppFab`, in `src/components/AppButton.tsx`. Don't use Paper's `Button` or `FAB` directly.
+- Lists: `SectionHeader`, `CardBox`, `CardRow` and `ExpandableCard` in `src/components/Cards.tsx`, plus `cardStyles.content` for screen padding. Don't use Paper's `Card` or `List.Item` for lists.
+  - A `CardRow` with `onPress` is a single VoiceOver element, so don't put other buttons inside it. Leave `onPress` off when the row has its own buttons.
+- Header menu: `HeaderMenu` (`src/components/HeaderMenu.tsx`) is the ☰ on every tab's header. A full-width panel that drops from under the header: Settings for everyone; Admin (carpool locations + approvals, `app/admin/index.tsx`, with a pending-count bubble) and Coach for admins only. New app-wide or admin screens go there, not as Home buttons or per-tab header icons.
+- Search: `matchesWords` in `src/lib/search.ts` is the one search rule: every word must match, in any order, ignoring case and accents.
+- Choosing from a list: `await pickOne({...})` or `await pickMany({...})` from `src/lib/picker.ts`. It opens `app/pick.tsx`, a search field over card rows, and returns the chosen ids, or null on Back. Use it instead of building a new picker screen. Its options (`allowCustom`, `selected`, `keywords`, …) are documented at the top of the file.
+
+## Benchmark feature (`src/benchmark/`, `app/benchmark/`, `app/(tabs)/benchmark.tsx`, `app/(tabs)/training.tsx`)
+- Screens:
+  - The Benchmark tab is for logging only: the summary, New benchmark and Progress. Keep it that way.
+  - The Training tab holds the workouts, coach extras, test plans and tips.
+  - `ProgressView` (charts, past benchmarks, PDF) is shared by `app/benchmark/progress.tsx` and the coach screen's Progress segment.
+- A new benchmark is pre-filled with each test's last result, marked "Same as <date>" until it's changed or confirmed. Saving needs at least one result entered that day. The pre-fill logic is in `engine/progress.ts`.
 - Every saved benchmark stores `version` and is always scored and rendered with that version (`registry.ts`).
 - `versions/v1/data.json` must never be edited. Changing the tests, scoring or test order means adding `versions/v2/` and bumping `LATEST_VERSION`.
 - Rewrite outdated wording in the help text at display time, in the version's `index.ts`, not in the data.

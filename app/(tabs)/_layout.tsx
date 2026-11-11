@@ -2,41 +2,46 @@ import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthGate } from '@/src/hooks/useAuthGate';
 import { usePushRegistration } from '@/src/hooks/usePushRegistration';
-import { usePendingCount } from '@/src/hooks/usePendingCount';
+import { HeaderMenu } from '@/src/components/HeaderMenu';
 
 export default function TabsLayout() {
   useAuthGate();
   usePushRegistration();
-  const pendingCount = usePendingCount();
   return (
-    <Tabs screenOptions={{ headerShown: true }}>
+    <Tabs screenOptions={{ headerShown: true, headerRight: () => <HeaderMenu /> }}>
       <Tabs.Screen
         name="index"
         options={{
           title: 'Home',
-          tabBarIcon: ({ color, size }) => <Ionicons name="home" color={color} size={size} />,
-          tabBarBadge: pendingCount > 0 ? pendingCount : undefined,
+          tabBarIcon: ({ color, size }) => <Ionicons name="home" color={color as string} size={size} />,
+        }}
+      />
+      <Tabs.Screen
+        name="events"
+        options={{
+          title: 'Sunday Runs',
+          tabBarIcon: ({ color, size }) => <Ionicons name="calendar" color={color as string} size={size} />,
         }}
       />
       <Tabs.Screen
         name="members"
         options={{
           title: 'Members',
-          tabBarIcon: ({ color, size }) => <Ionicons name="people" color={color} size={size} />,
+          tabBarIcon: ({ color, size }) => <Ionicons name="people" color={color as string} size={size} />,
+        }}
+      />
+      <Tabs.Screen
+        name="training"
+        options={{
+          title: 'Training',
+          tabBarIcon: ({ color, size }) => <Ionicons name="barbell" color={color as string} size={size} />,
         }}
       />
       <Tabs.Screen
         name="benchmark"
         options={{
           title: 'Benchmark',
-          tabBarIcon: ({ color, size }) => <Ionicons name="barbell" color={color} size={size} />,
-        }}
-      />
-      <Tabs.Screen
-        name="settings"
-        options={{
-          title: 'Settings',
-          tabBarIcon: ({ color, size }) => <Ionicons name="settings" color={color} size={size} />,
+          tabBarIcon: ({ color, size }) => <Ionicons name="stopwatch" color={color as string} size={size} />,
         }}
       />
     </Tabs>

@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { ActivityIndicator, Button, Text, TextInput } from 'react-native-paper';
-import { Stack, useLocalSearchParams } from 'expo-router';
+import { Alert, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Text, TextInput } from 'react-native-paper';
+import { Stack, router, useLocalSearchParams } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/src/contexts/AuthContext';
 import { useMembers } from '@/src/hooks/useMembers';
 import { getVersion, latestVersion } from '@/src/benchmark/registry';
@@ -11,9 +12,11 @@ import { knownSessions, scoreSession, weakestFirst } from '@/src/benchmark/engin
 import { LEVEL_LONG, formatDate } from '@/src/benchmark/engine/format';
 import { ExplainProvider, ExplainText, InfoLink, useExplain } from '@/src/benchmark/components/Explain';
 import { LevelBadge } from '@/src/benchmark/components/Bits';
-import { ProgressTable } from '@/src/benchmark/components/ProgressTable';
 import { displayResult } from '@/src/benchmark/components/display';
-import { B, TAP } from '@/src/benchmark/theme';
+import { B } from '@/src/benchmark/theme';
+import { CardRow, rowDivider } from '@/src/components/Cards';
+import { pickOne, toPickItem } from '@/src/lib/picker';
+import { AppButton } from '@/src/components/AppButton';
 
 export default function MemberScreen() {
   return (
@@ -35,7 +38,6 @@ function Member() {
 
   const known = useMemo(() => knownSessions(sessions), [sessions]);
   const latest = known[0] ?? null;
-  const first = known.length > 1 ? known[known.length - 1] : null;
   const v = latest ? getVersion(latest.version)! : latestVersion();
   const sc = latest ? scoreSession(latest) : null;
   const weakest = latest ? weakestFirst(latest).filter((k) => v.levelFor(k, latest) !== null).slice(0, 3) : [];
@@ -44,14 +46,18 @@ function Member() {
   const [note, setNote] = useState('');
   const [adding, setAdding] = useState(false);
   const [confirmRemove, setConfirmRemove] = useState<string | null>(null);
-  const [focused, setFocused] = useState(false);
 
-  const exercises = useMemo(() => latestVersion().allExercises(), []);
-  const suggestions = useMemo(() => {
-    const q = text.trim().toLowerCase();
-    if (q.length < 2) return [];
-    return exercises.filter((e) => e.toLowerCase().includes(q) && e.toLowerCase() !== q).slice(0, 6);
-  }, [text, exercises]);
+  // Pick from the plan's exercises, or type a new one (allowCustom).
+  const chooseExercise = async () => {
+    const picked = await pickOne({
+      title: 'Choose exercise',
+      items: latestVersion().allExercises().map(toPickItem),
+      selected: text ? [text] : [],
+      allowCustom: true,
+      searchPlaceholder: 'Search or type an exercise',
+    });
+    if (picked) setText(picked.slice(0, 200));
+  };
 
   if (!isAdmin) {
     return (
@@ -130,23 +136,15 @@ function Member() {
             ))}
           </View>
 
-          <Text style={styles.group}>{first ? 'First vs latest' : 'Latest benchmark'}</Text>
-          <View style={[styles.card, { paddingVertical: 8 }]}>
-            <ProgressTable v={v} latest={latest} first={first} />
-          </View>
-
-          <Text style={styles.group}>Benchmarks</Text>
           <View style={styles.card}>
-            {sessions.map((s, i) => {
-              const ss = scoreSession(s);
-              return (
-                <View key={s.date} style={[styles.row, i > 0 && styles.rowBorder]}>
-                  <Text style={[styles.body, { flex: 1 }]}>{formatDate(s.date)}</Text>
-                  <Text style={styles.muted}>{s.bodyweight} lb</Text>
-                  <Text style={styles.score}>{ss ? `${ss.score}/${ss.maxScore}` : `v${s.version}`}</Text>
-                </View>
-              );
-            })}
+            <CardRow
+              first
+              title="Progress"
+              subtitle={`${sessions.length} benchmark${sessions.length === 1 ? '' : 's'} · last ${formatDate(latest.date)}`}
+              left={<Ionicons name="trending-up" size={20} color={B.green} />}
+              onPress={() => router.push({ pathname: '/benchmark/progress', params: { uid } })}
+              accessibilityHint="Opens charts of their score and tests over time"
+            />
           </View>
         </>
       ) : (
@@ -171,16 +169,14 @@ function Member() {
                   {a.note ? `${a.note} · ` : ''}by {a.addedByName}
                 </Text>
               </View>
-              <Button
+              <AppButton
                 compact
-                mode={confirmRemove === a.id ? 'contained' : 'text'}
-                buttonColor={confirmRemove === a.id ? B.danger : undefined}
-                textColor={confirmRemove === a.id ? '#fff' : B.danger}
+                variant={confirmRemove === a.id ? 'primary' : 'text'}
+                tone="danger"
                 onPress={() => remove(a.id)}
-                contentStyle={{ minHeight: TAP }}
               >
                 {confirmRemove === a.id ? 'Tap to confirm' : 'Remove'}
-              </Button>
+              </AppButton>
             </View>
           ))
         )}
@@ -188,26 +184,19 @@ function Member() {
 
       <Text style={styles.group}>Assign an exercise</Text>
       <View style={[styles.card, { paddingVertical: 12, gap: 8 }]}>
-        <TextInput
-          mode="outlined"
-          label="Exercise"
-          value={text}
-          onChangeText={setText}
-          onFocus={() => setFocused(true)}
-          onBlur={() => setFocused(false)}
-          placeholder="e.g. Goblet squat 3×8"
-          activeOutlineColor={B.green}
-          maxLength={200}
-        />
-        {focused && suggestions.length > 0 ? (
-          <View style={styles.suggestions}>
-            {suggestions.map((s) => (
-              <Pressable key={s} style={styles.suggestion} onPress={() => setText(s)} accessibilityRole="button">
-                <Text style={styles.body}>{s}</Text>
-              </Pressable>
-            ))}
-          </View>
-        ) : null}
+        <View style={styles.pickRow}>
+          <CardRow
+            first
+            title="Exercise"
+            onPress={chooseExercise}
+            accessibilityHint="Opens the list of exercises to choose from"
+            right={
+              <Text style={[styles.pickValue, !text && { color: B.muted }]} numberOfLines={2}>
+                {text || 'Choose'}
+              </Text>
+            }
+          />
+        </View>
         <TextInput
           mode="outlined"
           label="Note (optional)"
@@ -217,16 +206,13 @@ function Member() {
           activeOutlineColor={B.green}
           maxLength={200}
         />
-        <Button
-          mode="contained"
-          buttonColor={B.green}
+        <AppButton
           onPress={add}
           loading={adding}
           disabled={!text.trim() || adding}
-          contentStyle={{ minHeight: TAP }}
         >
           Add
-        </Button>
+        </AppButton>
       </View>
     </ScrollView>
   );
@@ -240,12 +226,12 @@ const styles = StyleSheet.create({
   summaryValue: { color: '#fff', fontSize: 24, fontWeight: '700', marginTop: 2 },
   group: { fontSize: 13, fontWeight: '700', color: B.muted, textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 6 },
   rowBetween: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  card: { backgroundColor: B.surface, borderRadius: 12, paddingHorizontal: 12 },
+  card: { backgroundColor: B.surface, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 4 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 48, paddingVertical: 4 },
-  rowBorder: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: B.border },
+  rowBorder: rowDivider,
+  pickRow: { borderWidth: 1, borderColor: B.border, borderRadius: 10, paddingHorizontal: 12 },
+  pickValue: { flexShrink: 1, maxWidth: '60%', textAlign: 'right', fontSize: 16, color: B.text },
   body: { fontSize: 15, color: B.text },
   muted: { color: B.muted, fontSize: 13 },
   score: { fontWeight: '700', color: B.green, minWidth: 48, textAlign: 'right' },
-  suggestions: { borderWidth: 1, borderColor: B.border, borderRadius: 8, overflow: 'hidden' },
-  suggestion: { paddingHorizontal: 12, minHeight: TAP, justifyContent: 'center', borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: B.border },
 });

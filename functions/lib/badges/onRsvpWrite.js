@@ -21,7 +21,9 @@ exports.onRsvpWrite = (0, firestore_1.onDocumentWritten)('events/{eventId}/rsvps
     if (!before && after?.status === 'yes') {
         const evSnap = await admin_1.db.doc(`events/${eventId}`).get();
         const ev = evSnap.data();
-        if (ev?.createdAt && after.updatedAt?.toMillis) {
+        // Not for recurring events: they're made weeks ahead in the night, so
+        // "within an hour of it being posted" means nothing for them.
+        if (ev?.createdAt && !ev.seriesId && after.updatedAt?.toMillis) {
             const createdMs = ev.createdAt.toMillis();
             const nowMs = after.updatedAt.toMillis();
             if (nowMs - createdMs <= 60 * 60 * 1000) {
