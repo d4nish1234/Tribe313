@@ -1,4 +1,4 @@
-import { splitEvents } from '../events';
+import { eventHasPassed, splitEvents } from '../events';
 import type { EventDoc } from '../../types';
 
 const ev = (id: string, ms: number) => ({ id, title: id, startsAt: { toMillis: () => ms } }) as unknown as EventDoc;
@@ -17,5 +17,13 @@ describe('splitEvents', () => {
 
   it('handles no events', () => {
     expect(splitEvents([], now)).toEqual({ upcoming: [], past: [] });
+  });
+});
+
+describe('eventHasPassed', () => {
+  it('is past from its start time on, matching the Past list', () => {
+    expect(eventHasPassed(999, 1_000)).toBe(true);
+    expect(eventHasPassed(1_000, 1_000)).toBe(false);
+    expect(eventHasPassed(2_000, 1_000)).toBe(false);
   });
 });

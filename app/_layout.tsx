@@ -38,6 +38,7 @@ export default function RootLayout() {
                 <Stack.Screen name="pick" dangerouslySingular options={{ headerShown: true, title: 'Choose', headerBackTitle: 'Back' }} />
                 <Stack.Screen name="event/[id]" dangerouslySingular options={{ headerShown: true, title: 'Event' }} />
                 <Stack.Screen name="event/new" dangerouslySingular options={{ headerShown: true, title: 'New event', presentation: 'modal' }} />
+                <Stack.Screen name="event/edit/[id]" dangerouslySingular options={{ headerShown: true, title: 'Edit event', presentation: 'modal' }} />
                 <Stack.Screen name="settings" dangerouslySingular options={{ headerShown: true, title: 'Settings', headerBackTitle: 'Back' }} />
                 <Stack.Screen name="admin/index" dangerouslySingular options={{ headerShown: true, title: 'Admin', headerBackTitle: 'Back' }} />
                 <Stack.Screen name="admin/series/[id]" dangerouslySingular options={{ headerShown: true, title: 'Recurring event', headerBackTitle: 'Back' }} />

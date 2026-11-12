@@ -5,7 +5,10 @@ import { useAuth } from "@/src/contexts/AuthContext";
 import { db } from "@/src/firebase/config";
 import { geocodeAddress } from "@/src/firebase/fn";
 import { useCarpoolLocations } from "@/src/hooks/useCarpoolLocations";
-import { useEvent } from "@/src/hooks/useEvents";
+import { useEvent, useNow } from "@/src/hooks/useEvents";
+import { useEventSeries } from "@/src/hooks/useEventSeries";
+import { editTarget } from "@/src/lib/eventForm";
+import { eventHasPassed } from "@/src/lib/events";
 import { useMembers } from "@/src/hooks/useMembers";
 import { useRides } from "@/src/hooks/useRides";
 import { useRsvps } from "@/src/hooks/useRsvps";
@@ -60,6 +63,9 @@ export default function EventDetail() {
   const { rides } = useRides(id);
   const { members } = useMembers();
   const { locations: carpoolLocations } = useCarpoolLocations();
+  // Admins only: whether a recurring date's series still exists decides where Edit goes.
+  const { series, loading: seriesLoading } = useEventSeries(isAdmin ? event?.seriesId : undefined);
+  const now = useNow();
 
   const [rideDialog, setRideDialog] = useState(false);
   const [editingRideId, setEditingRideId] = useState<string | null>(null);
@@ -318,6 +324,21 @@ export default function EventDetail() {
     }
   }
 
+  /** The driver gives one ride back: it's open again for someone else (the requester and admins get a push). */
+  async function stopDriving(rideId: string) {
+    if (!event) return;
+    try {
+      await updateDoc(doc(db, "events", event.id, "rides", rideId), {
+        status: "open",
+        driverUid: deleteField(),
+        matchedAt: deleteField(),
+      });
+      setSnack("Back in Needs a ride for someone else");
+    } catch (e: any) {
+      setSnack(e?.message ?? "Failed to stop driving");
+    }
+  }
+
   async function cancelRide(rideId: string) {
     if (!event) return;
     try {
@@ -358,6 +379,10 @@ export default function EventDetail() {
   }
 
   const yesCount = rsvps.filter((r) => r.status === "yes").length;
+  // Once an event has started it's read-only: no RSVP, ride or edit changes.
+  // Admins can still mark attendance and delete it.
+  const passed = eventHasPassed(event.startsAt.toMillis(), now);
+  const rsvpWords = { yes: "Going", maybe: "Maybe", no: "Not going" } as const;
 
   return (
     <ScrollView contentContainerStyle={{ padding: 16, gap: 16 }}>
@@ -393,8 +418,15 @@ export default function EventDetail() {
       <Divider />
 
       <Text variant="titleMedium">Your RSVP</Text>
-      <RsvpPicker value={myRsvp?.status} onChange={setRsvp} />
-      <Text style={{ opacity: 0.7 }}>{yesCount} going</Text>
+      {passed ? (
+        <Text>
+          {myRsvp?.status ? rsvpWords[myRsvp.status] : "You didn’t RSVP"}
+          <Text style={{ opacity: 0.7 }}> · This event has passed.</Text>
+        </Text>
+      ) : (
+        <RsvpPicker value={myRsvp?.status} onChange={setRsvp} />
+      )}
+      <Text style={{ opacity: 0.7 }}>{yesCount} {passed ? "said they’d go" : "going"}</Text>
 
       <Divider />
 
@@ -406,7 +438,7 @@ export default function EventDetail() {
         }}
       >
         <Text variant="titleMedium">Rides</Text>
-        {!myActiveRide && !iAmDriving && (
+        {!passed && !myActiveRide && !iAmDriving && (
           <AppButton variant="secondary" onPress={() => openRideDialog()}>
             I need a ride
           </AppButton>
@@ -414,7 +446,9 @@ export default function EventDetail() {
       </View>
 
       {visibleRides.length === 0 ? (
-        <Text style={{ opacity: 0.7 }}>No ride requests yet.</Text>
+        <Text style={{ opacity: 0.7 }}>
+          {passed ? "No rides were requested." : "No ride requests yet."}
+        </Text>
       ) : (
         <>
           {rideGroups.driverSections.map((section) => (
@@ -429,12 +463,16 @@ export default function EventDetail() {
                     first={i === 0}
                     ride={r}
                     requesterName={nameFor(r.requesterUid)}
-                    driverName={r.driverUid ? nameFor(r.driverUid) : undefined}
                     canOffer={false}
                     isOwner={isOwner}
-                    onEdit={isOwner ? () => openRideDialog(r.id) : undefined}
+                    onEdit={isOwner && !passed ? () => openRideDialog(r.id) : undefined}
                     onCancel={
-                      isOwner || isAdmin ? () => cancelRide(r.id) : undefined
+                      (isOwner || isAdmin) && !passed ? () => cancelRide(r.id) : undefined
+                    }
+                    onStopDriving={
+                      !passed && r.status === "matched" && r.driverUid === firebaseUser.uid
+                        ? () => stopDriving(r.id)
+                        : undefined
                     }
                   />
                 );
@@ -448,20 +486,19 @@ export default function EventDetail() {
               <CardBox>
               {rideGroups.unassigned.map((r, i) => {
                 const isOwner = r.requesterUid === firebaseUser.uid;
-                const canOffer = !isOwner && !myActiveRide;
+                const canOffer = !passed && !isOwner && !myActiveRide;
                 return (
                   <RideCard
                     key={r.id}
                     first={i === 0}
                     ride={r}
                     requesterName={nameFor(r.requesterUid)}
-                    driverName={undefined}
                     canOffer={canOffer}
                     isOwner={isOwner}
                     onOffer={canOffer ? () => offerRide(r.id) : undefined}
-                    onEdit={isOwner ? () => openRideDialog(r.id) : undefined}
+                    onEdit={isOwner && !passed ? () => openRideDialog(r.id) : undefined}
                     onCancel={
-                      isOwner || isAdmin ? () => cancelRide(r.id) : undefined
+                      (isOwner || isAdmin) && !passed ? () => cancelRide(r.id) : undefined
                     }
                   />
                 );
@@ -502,6 +539,38 @@ export default function EventDetail() {
             </CardBox>
           ) : (
             <Text style={{ opacity: 0.7 }}>No one has said they’re going yet.</Text>
+          )}
+          {seriesLoading || passed ? null : editTarget(event, !!series) === "series" ? (
+            <>
+              <AppButton
+                variant="secondary"
+                icon="pencil"
+                onPress={() =>
+                  router.push({
+                    pathname: "/admin/series/[id]",
+                    params: { id: event.seriesId! },
+                  })
+                }
+              >
+                Edit recurring event
+              </AppButton>
+              <Text style={{ opacity: 0.7, marginTop: -8 }}>
+                Changes apply to every upcoming date of “{series?.title}”.
+              </Text>
+            </>
+          ) : (
+            <AppButton
+              variant="secondary"
+              icon="pencil"
+              onPress={() =>
+                router.push({
+                  pathname: "/event/edit/[id]",
+                  params: { id: event.id },
+                })
+              }
+            >
+              Edit event
+            </AppButton>
           )}
           <AppButton
             variant="secondary"
