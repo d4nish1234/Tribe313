@@ -1,6 +1,7 @@
 import { getVersion } from '../registry';
 import type { Session } from '../types';
-import { LEVEL_SHORT, formatDate, formatFtIn, formatValue } from './format';
+import { displayResult } from '../components/display';
+import { LEVEL_SHORT, formatDate, formatFtIn } from './format';
 import { newestFirst, scoreSession } from './score';
 
 export interface ReportMember {
@@ -41,17 +42,7 @@ function sessionCells(s: Session, keys: string[]): string {
     .map((key) => {
       if (!v || !v.tests[key]) return '<td class="muted">—</td>';
       const level = v.levelFor(key, s);
-      let value = '';
-      if (key === 'ws') {
-        const both = s.results.ws2;
-        const one = s.results.ws1;
-        value = [both != null ? `2L ${formatValue('time', both)}` : '', one != null ? `1L ${formatValue('time', one)}` : '']
-          .filter(Boolean)
-          .join(' · ');
-      } else {
-        const raw = s.results[key];
-        value = raw == null ? '' : formatValue(v.tests[key].input, raw);
-      }
+      const value = displayResult(v, key, s) ?? '';
       return `<td>${badge(level)}${value ? `<span class="val">${esc(value)}</span>` : ''}</td>`;
     })
     .join('');

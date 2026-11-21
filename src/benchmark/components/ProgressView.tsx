@@ -1,12 +1,12 @@
 import { useMemo, useState, type ReactNode } from 'react';
-import { Alert, StyleSheet, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, View } from 'react-native';
 import { Text } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { CardBox, CardRow, SectionHeader, rowDivider } from '@/src/components/Cards';
 import { getVersion, LATEST_VERSION, latestVersion } from '../registry';
 import { knownSessions, scoreSession } from '../engine/score';
-import { formatDate, formatValue } from '../engine/format';
+import { LEVEL_LONG, formatDate, formatValue } from '../engine/format';
 import {
   bodyweightPoints,
   changeSinceFirst,
@@ -18,14 +18,20 @@ import {
 import { shareBenchmarkPdf } from '../pdf';
 import { B } from '../theme';
 import type { BenchmarkVersion, Session } from '../types';
+import { AppButton } from '@/src/components/AppButton';
 import { LevelBadge } from './Bits';
-import { InfoLink, useExplain } from './Explain';
+import { BottomSheet } from './BottomSheet';
+import { displayResult } from './display';
+import { ExplainProvider, InfoLink, useExplain } from './Explain';
+import { TestPlanBody } from './TestPlan';
 import { ScoreChart, Sparkline, shortDate } from './Charts';
 
 /**
  * A member's progress: score over time, each test's trend since their first
  * result, bodyweight, their benchmarks, and a PDF to share. The member sees
  * it from Benchmark → Progress; coaches see the same view per member.
+ * Tapping a test opens a sheet with that test's plan, exactly as the Training
+ * tab shows it (built from this member's latest benchmark).
  * Needs an ExplainProvider above it.
  *
  * `self`: the member's own view. Their benchmarks open for editing; a coach's
@@ -44,6 +50,9 @@ export function ProgressView({
 }) {
   const explain = useExplain();
   const [exporting, setExporting] = useState(false);
+  // The sheet keeps its test while it slides closed, so it doesn't go blank.
+  const [planKey, setPlanKey] = useState<string | null>(null);
+  const [planOpen, setPlanOpen] = useState(false);
   const known = useMemo(() => knownSessions(sessions), [sessions]);
   const latest = known[0] ?? null;
   const v = latest ? getVersion(latest.version)! : latestVersion();
@@ -109,7 +118,18 @@ export function ProgressView({
       <SectionHeader title="Tests" />
       <CardBox>
         {withData.map((r, i) => (
-          <TestTrendRow key={r.key} first={i === 0} v={v} testKey={r.key} points={r.points} known={known} />
+          <TestTrendRow
+            key={r.key}
+            first={i === 0}
+            v={v}
+            testKey={r.key}
+            points={r.points}
+            known={known}
+            onPress={(scored) => {
+              setPlanKey(scored);
+              setPlanOpen(true);
+            }}
+          />
         ))}
       </CardBox>
       {untested.length ? (
@@ -152,8 +172,35 @@ export function ProgressView({
           dim={exporting}
         />
       </CardBox>
+
+      <BottomSheet
+        visible={planOpen}
+        onClose={() => setPlanOpen(false)}
+        title={planKey ? v.tests[planKey]?.name : undefined}
+        subtitle={planKey ? planSubtitle(v, planKey, latest) : null}
+        footer={
+          <AppButton style={{ marginTop: 8 }} onPress={() => setPlanOpen(false)}>
+            Done
+          </AppButton>
+        }
+      >
+        {planKey ? (
+          // Its own provider, so "Test rules" and underlined words open on top of this sheet.
+          <ExplainProvider>
+            <TestPlanBody key={`${planKey}:${latest.date}`} v={v} testKey={planKey} latest={latest} />
+          </ExplainProvider>
+        ) : null}
+      </BottomSheet>
     </>
   );
+}
+
+/** "6 reps · Foundation", or a note that the latest benchmark skipped this test. */
+function planSubtitle(v: BenchmarkVersion, key: string, latest: Session): string {
+  const result = displayResult(v, key, latest);
+  const level = v.levelFor(key, latest);
+  if (!result) return 'Not in the latest benchmark';
+  return level === null ? result : `${result} · ${LEVEL_LONG[level]}`;
 }
 
 function TestTrendRow({
@@ -162,21 +209,26 @@ function TestTrendRow({
   points,
   known,
   first,
+  onPress,
 }: {
   v: BenchmarkVersion;
   testKey: string;
   points: Point[];
   known: Session[];
   first: boolean;
+  /** Opens the plan for the scored test this row belongs to. */
+  onPress: (scoredKey: string) => void;
 }) {
   const t = v.tests[testKey];
-  // The level of the benchmark this latest result came from. Both wall sit
-  // results feed the one "Wall sit" level.
+  // The level of the benchmark this latest result came from. Each leg of the
+  // one-leg wall sit feeds that test's one level.
   const from = known.find((s) => s.date === points[points.length - 1].date)!;
-  const scoredKey = testKey === 'ws1' || testKey === 'ws2' ? 'ws' : testKey;
-  const level = v.tests[scoredKey]?.scored ? getVersion(from.version)!.levelFor(scoredKey, from) : null;
+  const scoredKey = t.partOf ?? testKey;
+  const scored = !!v.tests[scoredKey]?.scored;
+  const level = scored ? getVersion(from.version)!.levelFor(scoredKey, from) : null;
   return (
     <TrendRow
+      onPress={scored && v.tests[scoredKey].plans ? () => onPress(scoredKey) : undefined}
       first={first}
       title={t.name}
       value={formatValue(t.input, points[points.length - 1].value)}
@@ -197,6 +249,7 @@ function TrendRow({
   changeText,
   badge,
   first,
+  onPress,
 }: {
   title: string;
   value?: string;
@@ -205,14 +258,23 @@ function TrendRow({
   changeText: (diff: number) => string;
   badge?: ReactNode;
   first: boolean;
+  onPress?: () => void;
 }) {
   const since = shortDate(points[0].date);
   const word = change?.direction === 'better' ? ' · better' : change?.direction === 'worse' ? ' · worse' : '';
   const color =
     change?.direction === 'better' ? B.green : change?.direction === 'worse' ? B.danger : B.muted;
   const icon = !change || change.diff === 0 ? 'remove' : change.diff > 0 ? 'arrow-up' : 'arrow-down';
+  // One VoiceOver element either way; with onPress it's a button that opens the plan.
+  const Row = onPress ? Pressable : View;
   return (
-    <View style={[styles.row, !first && styles.rowBorder]} accessible>
+    <Row
+      style={[styles.row, !first && styles.rowBorder]}
+      accessible
+      onPress={onPress}
+      accessibilityRole={onPress ? 'button' : undefined}
+      accessibilityHint={onPress ? 'Shows the plan for this test' : undefined}
+    >
       <View style={{ flex: 1, gap: 2 }}>
         <Text style={styles.title}>{title}</Text>
         {value ? <Text style={styles.value}>{value}</Text> : null}
@@ -229,7 +291,8 @@ function TrendRow({
       </View>
       <Sparkline points={points} />
       {badge ?? null}
-    </View>
+      {onPress ? <Ionicons name="chevron-forward" size={18} color={B.muted} /> : null}
+    </Row>
   );
 }
 

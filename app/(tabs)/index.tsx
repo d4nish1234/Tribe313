@@ -14,6 +14,8 @@ import { buildWorkouts } from '@/src/benchmark/engine/workouts';
 import { ExplainProvider, InfoLink, useExplain } from '@/src/benchmark/components/Explain';
 import { WeekWorkouts } from '@/src/benchmark/components/WeekWorkouts';
 import { CoachExtras } from '@/src/benchmark/components/CoachExtras';
+import { WeightNote } from '@/src/benchmark/components/TestPlan';
+import { showRuns } from '@/src/lib/features';
 
 export default function HomeTab() {
   return (
@@ -24,8 +26,8 @@ export default function HomeTab() {
 }
 
 function Home() {
-  const { loading, upcoming } = useEvents();
-  const { appUser, firebaseUser } = useAuth();
+  const { appUser, firebaseUser, isAdmin } = useAuth();
+  const { loading, upcoming } = useEvents(showRuns(isAdmin));
   const insets = useSafeAreaInsets();
   const explain = useExplain();
 
@@ -45,30 +47,35 @@ function Home() {
         <View style={cardStyles.content}>
           <Text variant="headlineSmall">Welcome{appUser ? `, ${appUser.firstName}` : ''}</Text>
 
-          {/* Only the next event; the rest are one tap away. */}
-          <SectionHeader title="Up next" />
-          {loading ? (
-            <ActivityIndicator style={{ marginVertical: 12 }} />
-          ) : next ? (
-            <CardBox>
-              <EventRow event={next} first />
-            </CardBox>
-          ) : (
-            <Text style={cardStyles.muted}>No upcoming events.</Text>
-          )}
+          {/* Only the next event; the rest are one tap away. Hidden until runs are released. */}
+          {showRuns(isAdmin) ? (
+            <>
+              <SectionHeader title="Up next" />
+              {loading ? (
+                <ActivityIndicator style={{ marginVertical: 12 }} />
+              ) : next ? (
+                <CardBox>
+                  <EventRow event={next} first />
+                </CardBox>
+              ) : (
+                <Text style={cardStyles.muted}>No upcoming events.</Text>
+              )}
+            </>
+          ) : null}
 
           <SectionHeader
             title="Your workouts this week"
             right={<InfoLink label="How?" onPress={() => explain(v.explainer('week'))} />}
           />
-          <WeekWorkouts v={v} workouts={workouts} />
+          <WeightNote latest={latest} />
+          <WeekWorkouts v={v} workouts={workouts} bodyweight={latest?.bodyweight ?? null} />
           {!latest ? (
             <Text style={cardStyles.muted}>
               Do your first benchmark and these will be built around your results.
             </Text>
           ) : null}
 
-          <CoachExtras v={v} assignments={assignments} />
+          <CoachExtras v={v} assignments={assignments} bodyweight={latest?.bodyweight ?? null} />
         </View>
       </ScrollView>
     </View>

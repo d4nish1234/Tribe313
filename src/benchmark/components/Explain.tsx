@@ -3,11 +3,12 @@ import { Platform, StyleSheet, View, type TextStyle } from 'react-native';
 import { Text } from 'react-native-paper';
 import { Image } from 'expo-image';
 import { tokenize } from '../engine/explain';
+import { withWeights } from '../engine/weights';
 import { photoSource } from '../photos';
 import { B } from '../theme';
-import type { GlossaryEntry } from '../types';
+import type { FigureKind, GlossaryEntry } from '../types';
 import { BottomSheet } from './BottomSheet';
-import { WallSitFigure } from './WallSitFigure';
+import { TestFigure } from './TestFigure';
 import { AppButton } from '@/src/components/AppButton';
 
 export interface ExplainContent {
@@ -16,7 +17,7 @@ export interface ExplainContent {
   steps?: string[];
   standards?: string[] | null;
   photos?: string[] | null;
-  figure?: 'wallsit' | 'wallsit1';
+  figure?: FigureKind;
 }
 
 const Ctx = createContext<(c: ExplainContent) => void>(() => {});
@@ -68,7 +69,7 @@ function ExplainBody({ c }: { c: ExplainContent }) {
         </View>
       ) : c.figure ? (
         <View style={{ alignItems: 'center' }}>
-          <WallSitFigure size={120} oneLeg={c.figure === 'wallsit1'} />
+          <TestFigure kind={c.figure} size={120} />
         </View>
       ) : null}
       {c.text ? <Text style={styles.body}>{c.text}</Text> : null}
@@ -101,19 +102,22 @@ const underline: TextStyle = {
 
 /**
  * Plan text with tappable glossary terms and N×M prescriptions
- * (dotted underline; tap to open a plain-English explanation).
+ * (dotted underline; tap to open a plain-English explanation). With a
+ * `bodyweight`, weights like "80% of bodyweight" get their pounds added.
  */
 export function ExplainText({
   text,
   glossary,
   style,
+  bodyweight,
 }: {
   text: string;
   glossary: GlossaryEntry[];
   style?: TextStyle;
+  bodyweight?: number | null;
 }) {
   const show = useExplain();
-  const spans = useMemo(() => tokenize(text, glossary), [text, glossary]);
+  const spans = useMemo(() => tokenize(withWeights(text, bodyweight), glossary), [text, glossary, bodyweight]);
   return (
     <Text style={[styles.body, style]}>
       {spans.map((s, i) => {

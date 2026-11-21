@@ -1,12 +1,12 @@
 {
   "app": "313 Tribe Benchmark",
-  "testDayOrder": ["splat", "bj", "dl", "bench", "pull", "carry", "hang", "hrp", "plank", "ws2", "ws1", "sledpush", "sledpull", "run", "bike"],
+  "testDayOrder": ["splat", "bj", "farmer", "sled", "dl", "bench", "pull", "hrp", "hang", "plank", "ws2", "ws1l", "ws1r", "run", "bike"],
   "levels": ["Foundation", "Level 1", "Level 2", "Level 3"],
   "maxScore": 42,
   "workouts": {
-    "Leg Day": { "exampleDay": "Monday", "tests": ["splat", "bj", "dl", "ws", "sledpush"] },
+    "Leg Day": { "exampleDay": "Monday", "tests": ["splat", "bj", "dl", "ws2", "ws1", "sled"] },
     "Upper Body Day": { "exampleDay": "Wednesday", "tests": ["bench", "pull", "hrp"] },
-    "Grip & Cardio Day": { "exampleDay": "Friday", "tests": ["carry", "hang", "plank", "run", "bike", "sledpull"] }
+    "Grip & Cardio Day": { "exampleDay": "Friday", "tests": ["farmer", "hang", "plank", "run", "bike"] }
   },
   "tests": [
     {
@@ -33,7 +33,62 @@
         "Level 2 -> Level 3": ["Face-the-wall squat 3×5, slow", "Cossack squat 3×6 each", "Foam roller upper-back extension 2×10"],
         "Hold Level 3": ["One hard attempt at the test every 2 weeks", "Keep its main exercise in your week, with fewer sets", "Spend the extra time on your weakest test"]
       },
-      "photos": ["img/Overhead_Squat-0.jpg", "img/Overhead_Squat-1.jpg"]
+      "photos": null,
+      "figure": "wallsquat"
+    },
+    {
+      "key": "farmer",
+      "name": "Farmer's carry",
+      "input": "lb",
+      "unit": "lb",
+      "better": "higher",
+      "scored": true,
+      "logged": true,
+      "workout": "Grip & Cardio Day",
+      "note": "Total of both dumbbells, carried 200 ft (60 m)",
+      "standards": ["75% of your bodyweight", "100% of your bodyweight", "150% of your bodyweight"],
+      "thresholds": "total lb carried 200 ft, higher is better: L1>=0.75*bodyweight, L2>=1*bodyweight, L3>=1.5*bodyweight",
+      "howToTest": [
+        "Mark out 200 ft (60 m). The lane is marked every 50 ft.",
+        "Pick two dumbbells of the same weight, half the total in each hand.",
+        "Stand tall and walk the full 200 ft at a steady pace without putting them down.",
+        "Made it? Rest, go heavier and try again. Log the heaviest total (both hands added up) you carried the whole way."
+      ],
+      "plans": {
+        "Foundation -> Level 1": ["Farmer’s carry at 50% of bodyweight 4×100 ft", "Suitcase carry 4×50 ft each side", "Dead hang 3×30 sec"],
+        "Level 1 -> Level 2": ["Farmer’s carry at 80% of bodyweight 4×100 ft", "Shrugs 3×12", "Towel hang 3×20 sec"],
+        "Level 2 -> Level 3": ["Farmer’s carry at 120% of bodyweight 4×100 ft", "Farmer holds at 150% of bodyweight 3×20 sec", "Plate pinch 3×30 sec"],
+        "Hold Level 3": ["One hard attempt at the test every 2 weeks", "Keep its main exercise in your week, with fewer sets", "Spend the extra time on your weakest test"]
+      },
+      "photos": ["img/Farmers_Walk-0.jpg", "img/Farmers_Walk-1.jpg"]
+    },
+    {
+      "key": "sled",
+      "name": "Sled push & pull",
+      "input": "loops",
+      "unit": "loops",
+      "better": "higher",
+      "scored": true,
+      "logged": true,
+      "workout": "Leg Day",
+      "note": "Loops in 1 min, 50 ft each way",
+      "standards": ["1–2 loops", "3–4 loops", "5 or more loops"],
+      "thresholds": { "L1": 1, "L2": 3, "L3": 5 },
+      "howToTest": [
+        "Set two cones 50 ft apart. Load the sled so sled plus plates weigh about your bodyweight.",
+        "Start the clock. Push the sled from the first cone to the second, hands on the tall handles.",
+        "Grab the straps, walk backward and drag it back to the first cone. That’s 1 loop.",
+        "Keep going until 1 minute is up. Log the loops you finished. A half loop doesn’t count.",
+        "Enter the sled weight you used. It’s for your records and doesn’t change your level."
+      ],
+      "plans": {
+        "Foundation -> Level 1": ["Light sled push 6×50 ft", "Light backward sled drag 6×50 ft", "Split squat 3×8 each leg"],
+        "Level 1 -> Level 2": ["Sled push at 75% of bodyweight 6×50 ft", "Backward sled drag at 50% of bodyweight 6×50 ft", "Goblet squat 3×8"],
+        "Level 2 -> Level 3": ["Sled loops 4×30 sec, 90 sec rest", "Sled push at bodyweight 5×50 ft, 90 sec rest", "Sled row 4×10"],
+        "Hold Level 3": ["One hard attempt at the test every 2 weeks", "Keep its main exercise in your week, with fewer sets", "Spend the extra time on your weakest test"]
+      },
+      "photos": null,
+      "figure": "sled"
     },
     {
       "key": "bj",
@@ -63,15 +118,15 @@
     },
     {
       "key": "dl",
-      "name": "Trap bar deadlift",
+      "name": "Trap bar deadlift ×5",
       "input": "lb",
       "unit": "lb",
       "better": "higher",
       "scored": true,
       "logged": true,
       "workout": "Leg Day",
-      "note": "Heaviest weight lifted 5 times",
-      "standards": ["1.5× your bodyweight, 5 reps", "2× your bodyweight, 5 reps", "2.5× your bodyweight, 5 reps"],
+      "note": null,
+      "standards": ["1.5× your bodyweight", "2× your bodyweight", "2.5× your bodyweight"],
       "thresholds": "lb for 5 reps, higher is better: L1>=1.5*bodyweight, L2>=2*bodyweight, L3>=2.5*bodyweight",
       "howToTest": [
         "Stand inside the trap bar, grab the handles, chest up, back flat.",
@@ -88,29 +143,60 @@
       "photos": ["img/Trap_Bar_Deadlift-0.jpg", "img/Trap_Bar_Deadlift-1.jpg"]
     },
     {
-      "key": "ws",
-      "name": "Wall sit",
-      "input": "derived from ws2 + ws1",
+      "key": "ws2",
+      "name": "Wall sit, both legs",
+      "input": "time",
+      "unit": "seconds",
+      "better": "higher",
+      "scored": true,
+      "logged": true,
+      "workout": "Leg Day",
+      "note": null,
+      "standards": ["1 min", "1 min 30 sec", "2 min"],
+      "thresholds": { "L1": 60, "L2": 90, "L3": 120 },
+      "howToTest": [
+        "Back flat on a wall, slide down until thighs are level with the floor and knees are over ankles.",
+        "Hands off your legs.",
+        "Time stops when you stand up or slide down."
+      ],
+      "plans": {
+        "Foundation -> Level 1": ["Bodyweight squats 3×15", "Wall sit 4×30 sec", "Spanish squat 3×30 sec"],
+        "Level 1 -> Level 2": ["Wall sit 3×75 sec", "Goblet squat hold 3×30 sec", "Step-ups 3×8 each leg"],
+        "Level 2 -> Level 3": ["Wall sit 3×100 sec", "Weighted wall sit 3×45 sec", "Split-squat hold 3×30 sec each leg"],
+        "Hold Level 3": ["One hard attempt at the test every 2 weeks", "Keep its main exercise in your week, with fewer sets", "Spend the extra time on your weakest test"]
+      },
+      "photos": null,
+      "figure": "wallsit"
+    },
+    {
+      "key": "ws1",
+      "name": "Wall sit, one leg",
+      "input": "derived from ws1l + ws1r",
       "unit": null,
       "better": null,
       "scored": true,
       "logged": false,
       "workout": "Leg Day",
       "note": null,
-      "standards": ["60 sec on both legs", "30 sec on each leg", "60 sec on each leg"],
-      "thresholds": "seconds: L1 = both-leg hold>=60; L2 = single-leg hold>=30; L3 = single-leg hold>=60 (single-leg uses weaker leg)",
-      "howToTest": ["Logged as two parts: both legs, then one leg.", "See the ⓘ on each part for how it’s done."],
+      "standards": ["1 min on each leg", "1 min 30 sec on each leg", "2 min on each leg"],
+      "thresholds": "seconds, weaker leg: L1>=60, L2>=90, L3>=120",
+      "howToTest": [
+        "Same wall sit position, then lift one foot off the floor.",
+        "Time each leg, resting in between. Log both.",
+        "Your level comes from your weaker leg."
+      ],
       "plans": {
-        "Foundation -> Level 1": ["Bodyweight squats 3×15", "Wall sit 4×30 sec", "Spanish squat 3×30 sec"],
-        "Level 1 -> Level 2": ["Single-leg box squat 3×6 each", "Split-squat hold 3×30 sec each", "Wall sit 3×75 sec"],
-        "Level 2 -> Level 3": ["Single-leg wall sit 4×40 sec each", "Pistol to box 3×5 each", "Step-ups 3×8 each"],
+        "Foundation -> Level 1": ["Single-leg wall sit 4×20 sec each leg", "Split-squat hold 3×30 sec each leg", "Single-leg box squat 3×6 each leg"],
+        "Level 1 -> Level 2": ["Single-leg wall sit 4×40 sec each leg", "Pistol to box 3×5 each leg", "Step-ups 3×8 each leg"],
+        "Level 2 -> Level 3": ["Single-leg wall sit 3×75 sec each leg", "Bulgarian split squat 3×8 each leg", "Pistol to box 3×6 each leg"],
         "Hold Level 3": ["One hard attempt at the test every 2 weeks", "Keep its main exercise in your week, with fewer sets", "Spend the extra time on your weakest test"]
       },
-      "photos": null
+      "photos": null,
+      "figure": "wallsit1"
     },
     {
-      "key": "ws2",
-      "name": "Wall sit, both legs",
+      "key": "ws1l",
+      "name": "Wall sit, left leg",
       "input": "time",
       "unit": "seconds",
       "better": "higher",
@@ -120,48 +206,50 @@
       "note": null,
       "standards": null,
       "thresholds": null,
+      "partOf": "ws1",
       "howToTest": [
-        "Back flat on a wall, slide down until thighs are level with the floor and knees are over ankles.",
-        "Hands off your legs.",
-        "Time stops when you stand up or slide down."
+        "Same wall sit position, then lift your right foot off the floor, so you’re holding on your left leg.",
+        "Time stops when the lifted foot touches down, or you stand up or slide down."
       ],
       "plans": null,
-      "photos": null
+      "photos": null,
+      "figure": "wallsit1"
     },
     {
-      "key": "ws1",
-      "name": "Wall sit, one leg",
+      "key": "ws1r",
+      "name": "Wall sit, right leg",
       "input": "time",
       "unit": "seconds",
       "better": "higher",
       "scored": false,
       "logged": true,
       "workout": null,
-      "note": "Log your weaker leg",
+      "note": null,
       "standards": null,
       "thresholds": null,
+      "partOf": "ws1",
       "howToTest": [
-        "Same wall sit position, then lift one foot off the floor.",
-        "Time it on each leg, resting in between.",
-        "Log the shorter of the two times."
+        "Same wall sit position, then lift your left foot off the floor, so you’re holding on your right leg.",
+        "Time stops when the lifted foot touches down, or you stand up or slide down."
       ],
       "plans": null,
-      "photos": null
+      "photos": null,
+      "figure": "wallsit1"
     },
     {
       "key": "bench",
-      "name": "Bench press",
+      "name": "Bench press at bodyweight",
       "input": "reps",
       "unit": "reps",
       "better": "higher",
       "scored": true,
       "logged": true,
       "workout": "Upper Body Day",
-      "note": "Reps with bar at your bodyweight",
-      "standards": ["10 reps at your bodyweight", "15 reps at your bodyweight", "20 reps at your bodyweight"],
-      "thresholds": { "L1": 10, "L2": 15, "L3": 20 },
+      "note": "Reps with the bar at your bodyweight",
+      "standards": ["5 reps", "10 reps", "15 reps"],
+      "thresholds": { "L1": 5, "L2": 10, "L3": 15 },
       "howToTest": [
-        "Load the bar to your bodyweight (round down to the nearest 5 lb).",
+        "Load the bar to your bodyweight, rounded down to the nearest 5 lb.",
         "Lower to your chest, press to straight arms. No bouncing.",
         "A spotter must stand behind you every set.",
         "Log how many clean reps you did without racking the bar."
@@ -225,32 +313,6 @@
         "Hold Level 3": ["One hard attempt at the test every 2 weeks", "Keep its main exercise in your week, with fewer sets", "Spend the extra time on your weakest test"]
       },
       "photos": ["img/Pushups-0.jpg", "img/Pushups-1.jpg"]
-    },
-    {
-      "key": "carry",
-      "name": "Farmer's carry",
-      "input": "ft",
-      "unit": "ft",
-      "better": "higher",
-      "scored": true,
-      "logged": true,
-      "workout": "Grip & Cardio Day",
-      "note": "Dumbbells adding up to your bodyweight",
-      "standards": ["200 ft", "250 ft", "300 ft"],
-      "thresholds": { "L1": 200, "L2": 250, "L3": 300 },
-      "howToTest": [
-        "Pick two dumbbells that add up to your bodyweight. A 220 lb man uses 110 lb in each hand.",
-        "Stand tall and walk at a steady pace.",
-        "Stop when you put them down.",
-        "Log the distance in feet. The lane is marked every 50 ft."
-      ],
-      "plans": {
-        "Foundation -> Level 1": ["Suitcase carry 4×50 ft each side", "Dumbbell rows 3×10", "Dead hang 3×30 sec"],
-        "Level 1 -> Level 2": ["Farmer’s carry at 80% of bodyweight 4×100 ft", "Shrugs 3×12", "Towel hang 3×20 sec"],
-        "Level 2 -> Level 3": ["Farmer’s carry at 110% of bodyweight 5×50 ft", "Farmer’s carry at bodyweight 2×200 ft", "Plate pinch 3×30 sec"],
-        "Hold Level 3": ["One hard attempt at the test every 2 weeks", "Keep its main exercise in your week, with fewer sets", "Spend the extra time on your weakest test"]
-      },
-      "photos": ["img/Farmers_Walk-0.jpg", "img/Farmers_Walk-1.jpg"]
     },
     {
       "key": "hang",
@@ -351,58 +413,6 @@
         "Hold Level 3": ["One hard attempt at the test every 2 weeks", "Keep its main exercise in your week, with fewer sets", "Spend the extra time on your weakest test"]
       },
       "photos": ["img/Bicycling_Stationary-0.jpg", "img/Bicycling_Stationary-1.jpg"]
-    },
-    {
-      "key": "sledpush",
-      "name": "Sled push",
-      "input": "time",
-      "unit": "seconds",
-      "better": "lower",
-      "scored": true,
-      "logged": true,
-      "workout": "Leg Day",
-      "note": "Bodyweight on the sled, 50 ft",
-      "standards": ["25 sec or faster", "20 sec or faster", "15 sec or faster"],
-      "thresholds": { "L1": 25, "L2": 20, "L3": 15 },
-      "howToTest": [
-        "Load the sled so plates plus sled weigh about your bodyweight. A 200 lb man uses about 200 lb total.",
-        "Hands on the tall handles, arms straight, body leaning forward.",
-        "On “go”, drive the sled 50 ft with short, fast steps.",
-        "Log your time. Same sled and same floor every test day, so times are fair."
-      ],
-      "plans": {
-        "Foundation -> Level 1": ["Light sled push 6×40 ft", "Split squat 3×8 each leg", "Step-ups 3×8 each"],
-        "Level 1 -> Level 2": ["Sled push at 75% of bodyweight 6×50 ft", "Heavy sled push 5×30 ft", "Goblet squat 3×8"],
-        "Level 2 -> Level 3": ["Sled push at bodyweight 5×50 ft, 90 sec rest", "Sled sprint 6×25 ft, light", "Broad jump 5×3, full rest"],
-        "Hold Level 3": ["One hard attempt at the test every 2 weeks", "Keep its main exercise in your week, with fewer sets", "Spend the extra time on your weakest test"]
-      },
-      "photos": ["img/Sled_Push-0.jpg", "img/Sled_Push-1.jpg"]
-    },
-    {
-      "key": "sledpull",
-      "name": "Sled pull",
-      "input": "time",
-      "unit": "seconds",
-      "better": "lower",
-      "scored": true,
-      "logged": true,
-      "workout": "Grip & Cardio Day",
-      "note": "Half bodyweight on the sled, 50 ft",
-      "standards": ["30 sec or faster", "24 sec or faster", "18 sec or faster"],
-      "thresholds": { "L1": 30, "L2": 24, "L3": 18 },
-      "howToTest": [
-        "Load the sled to about half your bodyweight. A 200 lb man uses about 100 lb total.",
-        "Hold the straps or rope handles in front of you, arms straight. Sit back into a half squat.",
-        "On “go”, walk backward and drag the sled 50 ft. Keep your arms straight and chest up.",
-        "Log your time."
-      ],
-      "plans": {
-        "Foundation -> Level 1": ["Light backward sled drag 6×40 ft", "Inverted rows 3×10", "Farmer holds 3×20 sec"],
-        "Level 1 -> Level 2": ["Backward sled drag at 40% of bodyweight 6×50 ft", "Sled row 4×10", "Dumbbell rows 3×10"],
-        "Level 2 -> Level 3": ["Backward sled drag at half bodyweight 5×50 ft, 90 sec rest", "Hand-over-hand rope pull 4×50 ft", "Towel hang 3×20 sec"],
-        "Hold Level 3": ["One hard attempt at the test every 2 weeks", "Keep its main exercise in your week, with fewer sets", "Spend the extra time on your weakest test"]
-      },
-      "photos": ["img/Backward_Drag-0.jpg", "img/Backward_Drag-1.jpg"]
     }
   ],
   "wallSquatFaults": {
@@ -431,7 +441,7 @@
     { "term": "Goal pace", "matches": ["goal pace"], "explanation": "The speed you need to hit your next level’s time. For the 800m Level 1 (3:15), that’s 200 m in about 49 sec.", "photos": null },
     { "term": "85%", "matches": ["at 85%", "85%"], "explanation": "85% of the heaviest weight you can lift 5 times. If your best is 300 lb, use about 255 lb.", "photos": null },
     { "term": "85–90% of bodyweight", "matches": ["85–90% of bodyweight"], "explanation": "A little under your bodyweight. A 200 lb man would use 170–180 lb on the bar.", "photos": null },
-    { "term": "% of bodyweight", "matches": ["80% of bodyweight", "110% of bodyweight", "40% of bodyweight", "at half bodyweight", "at bodyweight", "at your bodyweight"], "explanation": "The total weight compared to what you weigh. For a 200 lb man, 80% is 160 lb. On a carry, split it between both hands (80 lb each). On a sled, count the sled plus plates.", "photos": null },
+    { "term": "% of bodyweight", "matches": ["50% of bodyweight", "80% of bodyweight", "110% of bodyweight", "120% of bodyweight", "150% of bodyweight", "40% of bodyweight", "at half bodyweight", "at bodyweight", "at your bodyweight"], "explanation": "The total weight compared to what you weigh. The pounds in brackets are worked out from your latest bodyweight. On a carry, split it between both hands. On a sled, count the sled plus plates.", "photos": null },
     { "term": "Goblet squat", "matches": ["Goblet squat hold", "Goblet squat"], "explanation": "Hold one dumbbell or kettlebell against your chest. Sit down between your knees, chest up, then stand.", "photos": ["img/Goblet_Squat-0.jpg", "img/Goblet_Squat-1.jpg"] },
     { "term": "Glute bridge", "matches": ["Glute bridge"], "explanation": "Lie on your back, knees bent, feet flat. Push through your heels to lift your hips until your body is straight from knees to shoulders. Lower slowly.", "photos": ["img/Barbell_Glute_Bridge-0.jpg", "img/Barbell_Glute_Bridge-1.jpg"] },
     { "term": "Box jump", "matches": ["Box jump"], "explanation": "Jump onto a sturdy box (12–20 in high), land softly. Step down, don’t jump down.", "photos": ["img/Front_Box_Jump-0.jpg", "img/Front_Box_Jump-1.jpg"] },
@@ -484,6 +494,8 @@
     { "term": "Plank", "matches": ["Plank"], "explanation": "Forearms and toes, body straight from head to heels. Squeeze your glutes and stomach.", "photos": ["img/Plank-0.jpg", "img/Plank-1.jpg"] },
     { "term": "Bodyweight squats", "matches": ["Bodyweight squats"], "explanation": "Squat down as low as you comfortably can with no weight, then stand.", "photos": ["img/Bodyweight_Squat-0.jpg", "img/Bodyweight_Squat-1.jpg"] },
     { "term": "Single-leg wall sit", "matches": ["Single-leg wall sit"], "explanation": "A wall sit with one foot lifted off the floor.", "photos": null },
+    { "term": "Weighted wall sit", "matches": ["Weighted wall sit"], "explanation": "A wall sit with a weight plate resting on your thighs. Start with 25 lb.", "photos": null },
+    { "term": "Bulgarian split squat", "matches": ["Bulgarian split squat"], "explanation": "Back foot up on a bench behind you, front foot forward. Lower your back knee toward the floor, then stand up on the front leg.", "photos": null },
     { "term": "Wall sit", "matches": ["Wall sit"], "explanation": "Back flat against a wall, thighs level with the floor, knees over ankles. Hold.", "photos": null },
     { "term": "Spanish squat", "matches": ["Spanish squat"], "explanation": "Loop a heavy band around something solid and behind your knees. Lean back into the band and sit into a squat. Easy on the knees.", "photos": null },
     { "term": "Single-leg box squat", "matches": ["Single-leg box squat"], "explanation": "Stand on one leg in front of a box. Sit back until you touch the box, stand up on the same leg.", "photos": ["img/Single-Leg_High_Box_Squat-0.jpg", "img/Single-Leg_High_Box_Squat-1.jpg"] },
@@ -493,6 +505,7 @@
     { "term": "Backward sled drag", "matches": ["Backward sled drag", "Light backward sled drag"], "explanation": "Hold the sled straps with straight arms, sit back into a half squat, and walk backward with small steps. Easy on the knees.", "photos": null },
     { "term": "Sled row", "matches": ["Sled row"], "explanation": "Stand facing the sled, holding the straps. Row your hands to your ribs to pull the sled toward you, then walk back and repeat.", "photos": ["img/Sled_Row-0.jpg", "img/Sled_Row-1.jpg"] },
     { "term": "Rope pull", "matches": ["Hand-over-hand rope pull"], "explanation": "Tie a rope to the sled and walk it out. Stand still and pull it in toward you, one hand over the other.", "photos": null },
+    { "term": "Sled loops", "matches": ["Sled loops"], "explanation": "The test itself, practised. Push the sled 50 ft, drag it back walking backward, and keep going without stopping for the time given.", "photos": null },
     { "term": "Sled sprint", "matches": ["Sled sprint"], "explanation": "Push a light sled as fast as you can. Fast feet, low body.", "photos": null },
     { "term": "Sled push", "matches": ["Light sled push", "75% of bodyweight"], "explanation": "Lean into the sled handles with straight arms and drive it forward with short, powerful steps. Use the weight written.", "photos": ["img/Sled_Push-0.jpg", "img/Sled_Push-1.jpg"] },
     { "term": "Sled push", "matches": ["Sled push", "Heavy sled push"], "explanation": "Lean into the sled handles with straight arms and drive it forward with short, powerful steps.", "photos": ["img/Sled_Push-0.jpg", "img/Sled_Push-1.jpg"] },
@@ -518,7 +531,7 @@
   ],
   "explainers": {
     "howlog": { "title": "Logging on test day", "text": "Enter today’s date and your bodyweight. Weigh in at the gym. Do the tests in any order. After each one, tap its box and scroll to your result. Skipped a test? Leave it. Entered one by mistake? Tap it and choose Clear. Tap Save results at the bottom when you’re done. You can save more than once on the same day and it updates that day’s results. Not sure how a test works? Tap the i next to it." },
-    "bw": { "title": "Why bodyweight?", "text": "Three tests are set by what you weigh: bench press, deadlift and farmer’s carry. Weigh in on test day so your targets are accurate." },
+    "bw": { "title": "Why bodyweight?", "text": "Three tests are set by what you weigh: farmer’s carry, deadlift and bench press. The sled starts at your bodyweight too, and the weights in your workouts are worked out from it. Weigh in on test day so your targets are accurate." },
     "height": { "title": "Why height?", "text": "The broad jump target is based on your height. Level 1 is jumping your own height. You only enter it once." },
     "levels": { "title": "How levels work", "text": "Every test has three levels. Each level is harder than the one before. Foundation: not at Level 1 yet. Everyone starts somewhere. Level 1, 2, 3: you passed that standard. The bars next to each test show your level: means Level 2. Gold bars mean Level 3." },
     "overall": { "title": "Your overall level", "text": "Your overall level is your lowest test. Example: Level 2 on everything except pull-ups at Level 1 means you’re Level 1 overall. This keeps you balanced. Fix your weakest test and your overall level goes up. It shows “In progress” until you’ve done all 14 tests." },
@@ -537,15 +550,17 @@
     "time": "minutes 0-9, seconds 0-59",
     "reps": "0-100",
     "deadlift_lb": "45-800 step 5",
-    "carry_ft": "0-600 step 10",
+    "farmer_lb": "20-800 step 5",
+    "sled_loops": "0-20",
+    "sled_lb": "50-800 step 5",
     "wall_squat_in": "0-24",
     "broad_jump": "feet 0-12, inches 0-11",
     "bodyweight_lb": "100-400",
     "height": "feet 4-7, inches 0-11"
   },
   "pickerDefaults": {
-    "splat": 12, "bj": 66, "dl": 225, "bench": 10, "pull": 8, "carry": 200, "hang": 60, "hrp": 20,
-    "plank": 120, "ws2": 60, "ws1": 30, "sledpush": 25, "sledpull": 30, "run": 210, "bike": 75,
-    "bw": 185, "height": 70
+    "splat": 12, "bj": 66, "farmer": 140, "sled": 2, "dl": 225, "bench": 5, "pull": 8, "hrp": 20,
+    "hang": 60, "plank": 120, "ws2": 60, "ws1l": 45, "ws1r": 45, "run": 210, "bike": 75,
+    "bw": 185, "height": 70, "sledlb": 185
   }
 }

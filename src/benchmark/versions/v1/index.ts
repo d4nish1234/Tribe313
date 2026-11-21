@@ -1,9 +1,10 @@
 /**
- * Benchmark v1: the original 313 Tribe spec (14 scored tests, 42 points).
+ * Benchmark v1: 14 scored tests, 42 points.
  *
- * `data.json` is a verbatim copy of 313-benchmark-data.json and must never be
- * edited after release. Benchmarks saved as v1 are scored with these rules
- * forever. To change tests, thresholds or plans, add versions/v2 instead.
+ * Until the app launches, v1 is still being refined and `data.json` may be
+ * edited. Once members have saved real benchmarks it is frozen: benchmarks
+ * saved as v1 are scored with these rules forever, and changing tests,
+ * thresholds or plans means adding versions/v2.
  */
 import type {
   BenchmarkVersion,
@@ -15,7 +16,8 @@ import type {
   Session,
   TestDef,
 } from '../../types';
-import { formatDuration, formatFtIn, formatTime } from '../../engine/format';
+import { LEVEL_SHORT, formatDuration, formatFtIn, formatTime } from '../../engine/format';
+import { ceilTo5, floorTo5, perHand } from '../../engine/weights';
 import raw from './data.json';
 
 const data = raw as unknown as {
@@ -30,7 +32,18 @@ const data = raw as unknown as {
 };
 
 const tests: Record<string, TestDef> = Object.fromEntries(data.tests.map((t) => [t.key, t]));
-const scoredKeys = data.tests.filter((t) => t.scored).map((t) => t.key);
+// Scored tests in logging order; a logged part (each wall sit leg) stands for its scored test.
+const scoredKeys = [
+  ...new Set(data.testDayOrder.map((k) => tests[k]?.partOf ?? k).filter((k) => tests[k]?.scored)),
+];
+for (const t of data.tests) if (t.scored && !scoredKeys.includes(t.key)) scoredKeys.push(t.key);
+
+/** Sled plus plates, saved with the benchmark for the member's records. Not scored. */
+const SLED_WEIGHT = 'sledlb';
+
+/** Farmer's carry: total weight carried 200 ft, as a share of bodyweight per level. */
+const FARMER = [0.75, 1, 1.5] as const;
+const DEADLIFT = [1.5, 2, 2.5] as const;
 
 type Thresholds = [number, number, number];
 
@@ -51,13 +64,23 @@ function has(v: number | null | undefined): v is number {
   return typeof v === 'number' && !Number.isNaN(v);
 }
 
+function hasBw(bw: number | null | undefined): bw is number {
+  return has(bw) && bw > 0;
+}
+
+function times(m: readonly [number, number, number], bw: number): Thresholds {
+  return [m[0] * bw, m[1] * bw, m[2] * bw];
+}
+
 /** Absolute thresholds for a test in this benchmark, or null if they can't be computed. */
-function thresholdsFor(key: string, s: Session): Thresholds | null {
+function thresholdsFor(key: string, s: Pick<Session, 'bodyweight' | 'heightIn'>): Thresholds | null {
   switch (key) {
     case 'splat':
       return [12, 6, 2];
     case 'dl':
-      return has(s.bodyweight) ? [1.5 * s.bodyweight, 2 * s.bodyweight, 2.5 * s.bodyweight] : null;
+      return hasBw(s.bodyweight) ? times(DEADLIFT, s.bodyweight) : null;
+    case 'farmer':
+      return hasBw(s.bodyweight) ? times(FARMER, s.bodyweight) : null;
     case 'bj':
       return has(s.heightIn) ? [s.heightIn, s.heightIn + 12, s.heightIn + 24] : null;
     default: {
@@ -71,15 +94,19 @@ function thresholdsFor(key: string, s: Session): Thresholds | null {
   }
 }
 
+/** The one-leg wall sit is scored on the weaker leg, so it needs both legs. */
+function weakerLeg(s: Session): number | null {
+  const l = s.results.ws1l;
+  const r = s.results.ws1r;
+  return has(l) && has(r) ? Math.min(l, r) : null;
+}
+
+const WS1: Thresholds = [60, 90, 120];
+
 function levelFor(key: string, s: Session): Level | null {
-  if (key === 'ws') {
-    const both = s.results.ws2;
-    const one = s.results.ws1;
-    if (!has(both) && !has(one)) return null;
-    if (has(one) && one >= 60) return 3;
-    if (has(one) && one >= 30) return 2;
-    if (has(both) && both >= 60) return 1;
-    return 0;
+  if (key === 'ws1') {
+    const weaker = weakerLeg(s);
+    return weaker === null ? null : levelFromThresholds(weaker, WS1, 'higher');
   }
   const v = s.results[key];
   if (!has(v)) return null;
@@ -89,22 +116,25 @@ function levelFor(key: string, s: Session): Level | null {
   return levelFromThresholds(v, th, t.better);
 }
 
+const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
+
 function goal(key: string, s: Session): string | null {
+  if (key === 'ws1') {
+    const l = s.results.ws1l;
+    const r = s.results.ws1r;
+    if (!has(l) || !has(r)) {
+      return has(l) || has(r) ? 'Log both legs to see your level.' : 'Do this test to see your goal.';
+    }
+  }
   const level = levelFor(key, s);
   if (level === null) return 'Do this test to see your goal.';
   if (level === 3) return 'You’re at Level 3. Keep it there.';
 
-  if (key === 'ws') {
-    const both = s.results.ws2 ?? 0;
-    const one = s.results.ws1 ?? 0;
-    if (level === 0) {
-      const gap = 60 - both;
-      return `Hold the wall sit for 1 min on both legs.${both > 0 ? ` That’s ${formatDuration(gap)} more.` : ''}`;
-    }
-    const target = level === 1 ? 30 : 60;
-    return `Hold the wall sit for ${formatDuration(target)} on one leg (your weaker leg).${
-      one > 0 ? ` That’s ${formatDuration(target - one)} more.` : ''
-    }`;
+  if (key === 'ws1') {
+    const weaker = weakerLeg(s)!;
+    const target = WS1[level];
+    const which = s.results.ws1l === s.results.ws1r ? 'each leg' : `your ${weaker === s.results.ws1l ? 'left' : 'right'} leg`;
+    return `Hold for ${formatDuration(target)} on each leg. That’s ${formatDuration(target - weaker)} more on ${which}.`;
   }
 
   const v = s.results[key] as number;
@@ -116,30 +146,78 @@ function goal(key: string, s: Session): string | null {
       return `Pass with your toes ${raw} in from the wall. That’s ${v - raw} in closer.`;
     }
     case 'dl': {
-      const target = Math.ceil(raw / 5) * 5;
+      const target = ceilTo5(raw);
       return `Lift ${target} lb for 5 reps. That’s ${target - v} lb more.`;
+    }
+    case 'farmer': {
+      const hand = perHand(raw);
+      return `Carry ${hand * 2} lb for 200 ft (${hand} lb in each hand). That’s ${hand * 2 - v} lb more.`;
     }
     case 'bj': {
       const target = Math.ceil(raw);
       return `Jump ${formatFtIn(target)}. That’s ${target - v} in further.`;
     }
     case 'bench':
-      return `Do ${raw} reps with the bar at your bodyweight. That’s ${raw - v} more.`;
+      return `Do ${raw} reps with ${floorTo5(s.bodyweight)} lb on the bar. That’s ${raw - v} more.`;
     case 'pull':
     case 'hrp':
       return `Do ${raw} reps. That’s ${raw - v} more.`;
-    case 'carry':
-      return `Carry for ${raw} ft. That’s ${raw - v} ft more.`;
+    case 'sled':
+      return `Do ${plural(raw, 'loop')} in 1 minute. That’s ${raw - v} more.`;
     case 'hang':
     case 'plank':
+    case 'ws2':
       return `Hold for ${formatDuration(raw)}. That’s ${formatDuration(raw - v)} more.`;
     case 'run':
     case 'bike':
-    case 'sledpush':
-    case 'sledpull':
       return `Finish in ${formatTime(raw)} or less. That’s ${formatDuration(v - raw)} faster.`;
     default:
       return null;
+  }
+}
+
+/** Level standards with this member's numbers filled in where they depend on bodyweight or height. */
+function standardsFor(key: string, ctx: { bodyweight: number | null; heightIn?: number | null }): string[] | null {
+  const plain = tests[key]?.standards ?? (tests[key]?.partOf ? tests[tests[key].partOf!]?.standards : null) ?? null;
+  const bw = ctx.bodyweight;
+  switch (key) {
+    case 'dl':
+      return hasBw(bw) ? DEADLIFT.map((m) => `${ceilTo5(m * bw)} lb (${m}× your bodyweight)`) : plain;
+    case 'farmer':
+      return hasBw(bw)
+        ? FARMER.map((m, i) => {
+            const hand = perHand(m * bw);
+            return `${hand * 2} lb in total, ${hand} lb in each hand (${plain?.[i] ?? ''})`;
+          })
+        : plain;
+    case 'bench':
+      return hasBw(bw) && plain ? plain.map((s) => `${s} at ${floorTo5(bw)} lb`) : plain;
+    case 'bj':
+      return has(ctx.heightIn)
+        ? [0, 12, 24].map((extra, i) => `${formatFtIn(ctx.heightIn! + extra)} (${plain?.[i] ?? ''})`)
+        : plain;
+    default:
+      return plain;
+  }
+}
+
+/** The grey line under each test on the New benchmark screen. */
+function entryNote(key: string, bodyweight: number | null): string | null {
+  const t = tests[key];
+  if (!t) return null;
+  switch (key) {
+    case 'dl':
+      return hasBw(bodyweight)
+        ? `Heaviest for 5 reps · ${DEADLIFT.map((m, i) => `${LEVEL_SHORT[i + 1]} ${ceilTo5(m * bodyweight)}`).join(' · ')} lb`
+        : 'Heaviest for 5 reps. Add your bodyweight to see your targets.';
+    case 'farmer':
+      return hasBw(bodyweight)
+        ? `Total of both hands, 200 ft · ${FARMER.map((m, i) => `${LEVEL_SHORT[i + 1]} ${perHand(m * bodyweight) * 2}`).join(' · ')} lb`
+        : `${t.note}. Add your bodyweight to see your targets.`;
+    case 'bench':
+      return hasBw(bodyweight) ? `Reps with ${floorTo5(bodyweight)} lb on the bar (your bodyweight)` : t.note;
+    default:
+      return t.note;
   }
 }
 
@@ -186,9 +264,10 @@ function feetInches(title: string, feet: number[], subtitle?: string): PickerSpe
 function picker(key: string): PickerSpec {
   if (key === 'bw') return single('Bodyweight', range(100, 400), 'lb', 'Weigh in at the gym');
   if (key === 'height') return feetInches('Height', range(4, 7), 'Used for the broad jump');
+  if (key === SLED_WEIGHT) return single('Sled weight', range(50, 800, 5), 'lb', 'Sled plus plates');
   const t = tests[key];
   const title = t?.name ?? key;
-  const subtitle = t?.note ?? undefined;
+  const subtitle = (key === 'dl' ? 'Heaviest weight lifted 5 times' : t?.note) ?? undefined;
   switch (t?.input) {
     case 'time': {
       const mins = range(0, 9);
@@ -208,7 +287,9 @@ function picker(key: string): PickerSpec {
     case 'reps':
       return single(title, range(0, 100), 'reps', subtitle);
     case 'lb':
-      return single(title, range(45, 800, 5), 'lb', subtitle);
+      return single(title, range(key === 'farmer' ? 20 : 45, 800, 5), 'lb', subtitle);
+    case 'loops':
+      return single(title, range(0, 20), 'loops', subtitle);
     case 'ft':
       return single(title, range(0, 600, 10), 'ft', subtitle);
     case 'in':
@@ -221,9 +302,8 @@ function picker(key: string): PickerSpec {
 }
 
 /**
- * Display-time copy fixes. data.json stays verbatim; these replace explainers
- * whose wording assumed a single coach, a fixed test-day schedule or the old
- * web layout.
+ * Display-time copy fixes for explainers whose wording assumed a single coach,
+ * a fixed test-day schedule or the old web layout.
  */
 function explainer(key: string, ctx?: { coachName?: string }): Explainer {
   const coach = ctx?.coachName || 'your coach';
@@ -305,6 +385,7 @@ function allExercises(): string[] {
 export const v1: BenchmarkVersion = {
   version: 1,
   logOrder: data.testDayOrder,
+  extraKeys: [SLED_WEIGHT],
   scoredKeys,
   tests,
   workouts: Object.entries(data.workouts).map(([name, w]) => ({ name, tests: w.tests })),
@@ -313,6 +394,8 @@ export const v1: BenchmarkVersion = {
   maxScore: data.maxScore,
   levelFor,
   goal,
+  standardsFor,
+  entryNote,
   picker,
   pickerDefault: (key) => data.pickerDefaults[key] ?? 0,
   explainer,

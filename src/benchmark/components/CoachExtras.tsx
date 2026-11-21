@@ -10,7 +10,15 @@ import { ExplainText, InfoLink, useExplain } from './Explain';
  * Renders nothing when there are none. Shown on Home and on Benchmark.
  * Needs an ExplainProvider above it.
  */
-export function CoachExtras({ v, assignments }: { v: BenchmarkVersion; assignments: Assignment[] }) {
+export function CoachExtras({
+  v,
+  assignments,
+  bodyweight,
+}: {
+  v: BenchmarkVersion;
+  assignments: Assignment[];
+  bodyweight: number | null;
+}) {
   const explain = useExplain();
   if (assignments.length === 0) return null;
   const coachNames = [...new Set(assignments.map((a) => a.addedByName).filter(Boolean))];
@@ -30,7 +38,7 @@ export function CoachExtras({ v, assignments }: { v: BenchmarkVersion; assignmen
       <CardBox>
         {assignments.map((a, i) => (
           <View key={a.id} style={[styles.row, i > 0 && styles.rowBorder]}>
-            <ExplainText text={a.text} glossary={v.glossary} style={{ fontWeight: '600' }} />
+            <ExplainText text={a.text} glossary={v.glossary} bodyweight={bodyweight} style={{ fontWeight: '600' }} />
             {a.note ? <Text style={styles.muted}>{a.note}</Text> : null}
           </View>
         ))}

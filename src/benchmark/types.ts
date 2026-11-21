@@ -22,7 +22,10 @@ export const PLAN_LABELS: Record<PlanKey, string> = {
   'Hold Level 3': 'Keep L3',
 };
 
-export type InputKind = 'in' | 'ftin' | 'lb' | 'reps' | 'ft' | 'time';
+export type InputKind = 'in' | 'ftin' | 'lb' | 'reps' | 'ft' | 'time' | 'loops';
+
+/** A drawn picture for tests the photo library has nothing for. */
+export type FigureKind = 'wallsit' | 'wallsit1' | 'wallsquat' | 'sled';
 
 export interface TestDef {
   key: string;
@@ -40,6 +43,10 @@ export interface TestDef {
   howToTest: string[];
   plans: Record<PlanKey, string[]> | null;
   photos: string[] | null;
+  /** Drawn picture, used when there are no photos. */
+  figure?: FigureKind;
+  /** A logged part of a scored test (each leg of the one-leg wall sit): the scored test's key. */
+  partOf?: string;
 }
 
 export interface GlossaryEntry {
@@ -81,6 +88,8 @@ export interface Session {
 export interface BenchmarkProfile {
   name: string;
   heightIn: number | null;
+  /** The 3 weekdays the member trains (`Date.getDay()`: 0 = Sunday). See src/lib/schedule.ts. */
+  workoutDays?: number[];
 }
 
 export interface Assignment {
@@ -111,6 +120,11 @@ export interface BenchmarkVersion {
   version: number;
   /** Logged test keys, in the order they appear on the entry screen. */
   logOrder: string[];
+  /**
+   * Extra numbers saved with a benchmark that aren't results: not scored,
+   * charted or pre-filled (the sled weight).
+   */
+  extraKeys: string[];
   /** Scored test keys (14 in v1). */
   scoredKeys: string[];
   tests: Record<string, TestDef>;
@@ -122,6 +136,13 @@ export interface BenchmarkVersion {
   levelFor: (key: string, s: Session) => Level | null;
   /** "Your next goal" text, or null if there's nothing to say. */
   goal: (key: string, s: Session) => string | null;
+  /**
+   * The three level standards for a test, with weights worked out from this
+   * bodyweight and the broad jump from this height (plain wording when unknown).
+   */
+  standardsFor: (key: string, ctx: { bodyweight: number | null; heightIn?: number | null }) => string[] | null;
+  /** The grey line under a test on the New benchmark screen, or null. */
+  entryNote: (key: string, bodyweight: number | null) => string | null;
   /** Picker for a logged test key, or 'bw' / 'height'. */
   picker: (key: string) => PickerSpec;
   pickerDefault: (key: string) => number;

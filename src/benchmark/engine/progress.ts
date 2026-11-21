@@ -76,6 +76,8 @@ export function formatChange(input: TestDef['input'], diff: number): string {
       return `${sign}${formatDuration(n)}`;
     case 'reps':
       return `${sign}${n} rep${n === 1 ? '' : 's'}`;
+    case 'loops':
+      return `${sign}${n} loop${n === 1 ? '' : 's'}`;
     case 'lb':
       return `${sign}${n} lb`;
     case 'ft':

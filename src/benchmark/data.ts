@@ -85,6 +85,11 @@ export async function saveHeight(uid: string, name: string, heightIn: number): P
   await setDoc(profileRef(uid), { name, heightIn, updatedAt: serverTimestamp() }, { merge: true });
 }
 
+/** The weekdays the member trains on (see src/lib/schedule.ts). */
+export async function saveWorkoutDays(uid: string, name: string, workoutDays: number[]): Promise<void> {
+  await setDoc(profileRef(uid), { name, workoutDays, updatedAt: serverTimestamp() }, { merge: true });
+}
+
 export async function addAssignment(opts: {
   memberUid: string;
   text: string;

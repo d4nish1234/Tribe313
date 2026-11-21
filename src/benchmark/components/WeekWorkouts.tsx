@@ -9,18 +9,24 @@ import { ExplainText, useExplain } from './Explain';
 
 /**
  * The member's three workouts for the week, each a card that opens to its
- * exercises. Shown on Home and on the Training tab. Needs an ExplainProvider above it.
+ * exercises. Shown on Home and on the Training tab. `bodyweight` fills in the
+ * pounds for "% of bodyweight". Needs an ExplainProvider above it.
  */
-export function WeekWorkouts({ v, workouts }: { v: BenchmarkVersion; workouts: Workout[] }) {
-  const explain = useExplain();
+export function WeekWorkouts({
+  v,
+  workouts,
+  bodyweight,
+}: {
+  v: BenchmarkVersion;
+  workouts: Workout[];
+  bodyweight: number | null;
+}) {
   const [openName, setOpenName] = useState<string | null>(null);
 
   return (
     <>
       {workouts.map((w) => {
         const open = openName === w.name;
-        // Exercise numbers carry on across blocks; 1 is the warm-up.
-        const starts = w.blocks.map((_, i) => 2 + w.blocks.slice(0, i).reduce((t, b) => t + b.exercises.length, 0));
         return (
           <ExpandableCard
             key={w.name}
@@ -29,31 +35,54 @@ export function WeekWorkouts({ v, workouts }: { v: BenchmarkVersion; workouts: W
             open={open}
             onToggle={() => setOpenName(open ? null : w.name)}
           >
-            <Text style={styles.exercise}>
-              1.{' '}
-              <RNText style={styles.link} onPress={() => explain(v.explainer('warmup'))}>
-                10 min warm-up
-              </RNText>
-            </Text>
-            {w.blocks.map((b, bi) => (
-              <View key={b.testKey} style={{ marginTop: 10 }}>
-                <View style={styles.blockHeader}>
-                  <Text style={styles.blockTitle}>For {b.testName.toLowerCase()}</Text>
-                  <Text style={styles.muted}>{PLAN_LABELS[b.plan]}</Text>
-                </View>
-                {b.exercises.map((ex, ei) => {
-                  return (
-                    <View key={ex} style={styles.exerciseRow}>
-                      <Text style={styles.exerciseNum}>{starts[bi] + ei}.</Text>
-                      <ExplainText text={ex} glossary={v.glossary} style={{ flex: 1 }} />
-                    </View>
-                  );
-                })}
-              </View>
-            ))}
+            <WorkoutExercises v={v} workout={w} bodyweight={bodyweight} />
           </ExpandableCard>
         );
       })}
+    </>
+  );
+}
+
+/**
+ * One workout's exercises: the warm-up, then a block per test. Used inside the
+ * workout cards and, already open, on the Calendar. Needs an ExplainProvider above it.
+ */
+export function WorkoutExercises({
+  v,
+  workout,
+  bodyweight,
+}: {
+  v: BenchmarkVersion;
+  workout: Workout;
+  bodyweight: number | null;
+}) {
+  const explain = useExplain();
+  // Exercise numbers carry on across blocks; 1 is the warm-up.
+  const starts = workout.blocks.map(
+    (_, i) => 2 + workout.blocks.slice(0, i).reduce((t, b) => t + b.exercises.length, 0),
+  );
+  return (
+    <>
+      <Text style={styles.exercise}>
+        1.{' '}
+        <RNText style={styles.link} onPress={() => explain(v.explainer('warmup'))}>
+          10 min warm-up
+        </RNText>
+      </Text>
+      {workout.blocks.map((b, bi) => (
+        <View key={b.testKey} style={{ marginTop: 10 }}>
+          <View style={styles.blockHeader}>
+            <Text style={styles.blockTitle}>For {b.testName.toLowerCase()}</Text>
+            <Text style={styles.muted}>{PLAN_LABELS[b.plan]}</Text>
+          </View>
+          {b.exercises.map((ex, ei) => (
+            <View key={ex} style={styles.exerciseRow}>
+              <Text style={styles.exerciseNum}>{starts[bi] + ei}.</Text>
+              <ExplainText text={ex} glossary={v.glossary} bodyweight={bodyweight} style={{ flex: 1 }} />
+            </View>
+          ))}
+        </View>
+      ))}
     </>
   );
 }

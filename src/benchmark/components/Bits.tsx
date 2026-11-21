@@ -13,23 +13,29 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { LEVEL_SHORT } from '../engine/format';
+import { withWeights } from '../engine/weights';
 import { photoSource } from '../photos';
 import { B } from '../theme';
-import type { BenchmarkVersion, Level } from '../types';
+import type { BenchmarkVersion, FigureKind, Level } from '../types';
 import type { ExplainContent } from './Explain';
-import { WallSitFigure } from './WallSitFigure';
+import { TestFigure } from './TestFigure';
 
-/** How-to-test pop-up content for a logged or scored test. */
-export function testExplainContent(v: BenchmarkVersion, key: string): ExplainContent {
+/**
+ * How-to-test pop-up content for a logged or scored test, with weights and
+ * targets worked out from this bodyweight and height when they're known.
+ */
+export function testExplainContent(
+  v: BenchmarkVersion,
+  key: string,
+  ctx: { bodyweight: number | null; heightIn?: number | null } = { bodyweight: null },
+): ExplainContent {
   const t = v.tests[key];
-  // ws1/ws2 have no standards of their own; show the combined wall sit standards.
-  const standards = t.standards ?? (key === 'ws1' || key === 'ws2' ? v.tests.ws?.standards : null);
   return {
     title: t.name,
-    steps: key === 'ws' ? [...(v.tests.ws2?.howToTest ?? []), ...(v.tests.ws1?.howToTest ?? [])] : t.howToTest,
-    standards,
+    steps: t.howToTest.map((s) => withWeights(s, ctx.bodyweight)),
+    standards: v.standardsFor(key, ctx),
     photos: t.photos,
-    figure: t.photos ? undefined : key === 'ws1' ? 'wallsit1' : 'wallsit',
+    figure: t.photos ? undefined : t.figure,
   };
 }
 
@@ -43,7 +49,7 @@ export function CrossfadeThumb({
   label,
 }: {
   photos: string[] | null;
-  figure?: 'wallsit' | 'wallsit1';
+  figure?: FigureKind;
   onPress: () => void;
   label: string;
 }) {
@@ -83,9 +89,9 @@ export function CrossfadeThumb({
             </Animated.View>
           ) : null}
         </>
-      ) : (
-        <WallSitFigure size={THUMB} oneLeg={figure === 'wallsit1'} />
-      )}
+      ) : figure ? (
+        <TestFigure kind={figure} size={THUMB} />
+      ) : null}
       <View style={styles.badge}>
         <Text style={styles.badgeText}>i</Text>
       </View>

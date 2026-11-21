@@ -29,6 +29,8 @@ export function formatValue(input: TestDef['input'], value: number | null | unde
       return formatTime(value);
     case 'reps':
       return `${value} rep${value === 1 ? '' : 's'}`;
+    case 'loops':
+      return `${value} loop${value === 1 ? '' : 's'}`;
     case 'lb':
       return `${value} lb`;
     case 'ft':

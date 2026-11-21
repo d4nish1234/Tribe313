@@ -9,7 +9,9 @@
     "web": "expo start --web",
     "lint": "expo lint",
     "tsc": "tsc --noEmit",
-    "test": "jest"
+    "test": "jest",
+    "emulators": "cp firestore.rules scripts/emulator/firestore.rules && cd scripts/emulator && firebase emulators:start --only auth,firestore --project demo-tribe313",
+    "emulators:seed": "node scripts/emulator/seed.mjs"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",

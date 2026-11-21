@@ -5,6 +5,7 @@ import { buildWorkouts } from '../engine/workouts';
 import { explainSets, tokenize } from '../engine/explain';
 import { formatFtIn, formatTime, formatValue } from '../engine/format';
 import { buildReportHtml } from '../engine/report';
+import { displayResult } from '../components/display';
 import type { Session } from '../types';
 
 const base = (results: Session['results'], extra: Partial<Session> = {}): Session => ({
@@ -60,28 +61,55 @@ describe('v1 scoring', () => {
     expect(lvl('bj', { bj: 94 }, { heightIn: null })).toBeNull();
   });
 
-  it('reps / distance / hold: higher is better', () => {
-    expect(lvl('bench', { bench: 9 })).toBe(0);
-    expect(lvl('bench', { bench: 15 })).toBe(2);
+  it('reps / hold: higher is better', () => {
+    expect(lvl('bench', { bench: 4 })).toBe(0);
+    expect(lvl('bench', { bench: 5 })).toBe(1);
+    expect(lvl('bench', { bench: 10 })).toBe(2);
+    expect(lvl('bench', { bench: 15 })).toBe(3);
+    expect(lvl('pull', { pull: 0 })).toBe(0);
+    expect(lvl('pull', { pull: 9 })).toBe(0);
     expect(lvl('pull', { pull: 20 })).toBe(3);
-    expect(lvl('carry', { carry: 250 })).toBe(2);
     expect(lvl('plank', { plank: 179 })).toBe(2);
+  });
+
+  it('farmer’s carry: total weight for 200 ft, set by that benchmark’s bodyweight', () => {
+    // 200 lb: 150 / 200 / 300 lb total.
+    expect(lvl('farmer', { farmer: 145 })).toBe(0);
+    expect(lvl('farmer', { farmer: 150 })).toBe(1);
+    expect(lvl('farmer', { farmer: 200 })).toBe(2);
+    expect(lvl('farmer', { farmer: 300 })).toBe(3);
+    expect(lvl('farmer', { farmer: 200 }, { bodyweight: 250 })).toBe(1);
+  });
+
+  it('sled: loops in 1 minute, 0 is Foundation', () => {
+    expect(lvl('sled', { sled: 0 })).toBe(0);
+    expect(lvl('sled', { sled: 1 })).toBe(1);
+    expect(lvl('sled', { sled: 2 })).toBe(1);
+    expect(lvl('sled', { sled: 3 })).toBe(2);
+    expect(lvl('sled', { sled: 4 })).toBe(2);
+    expect(lvl('sled', { sled: 5 })).toBe(3);
+    expect(lvl('sled', { sled: 9 })).toBe(3);
+    // The sled weight is kept for the record and never changes the level.
+    expect(lvl('sled', { sled: 3, sledlb: 50 })).toBe(2);
   });
 
   it('timed races: lower is better', () => {
     expect(lvl('run', { run: 196 })).toBe(0);
     expect(lvl('run', { run: 195 })).toBe(1);
     expect(lvl('bike', { bike: 50 })).toBe(3);
-    expect(lvl('sledpull', { sledpull: 24 })).toBe(2);
   });
 
-  it('wall sit combines both entries', () => {
-    expect(lvl('ws', {})).toBeNull();
-    expect(lvl('ws', { ws2: 45 })).toBe(0);
-    expect(lvl('ws', { ws2: 60 })).toBe(1);
-    expect(lvl('ws', { ws2: 60, ws1: 30 })).toBe(2);
-    expect(lvl('ws', { ws1: 60 })).toBe(3);
-    expect(lvl('ws', { ws2: 90, ws1: 20 })).toBe(1);
+  it('wall sits: both legs, and one leg scored on the weaker leg', () => {
+    expect(lvl('ws2', { ws2: 59 })).toBe(0);
+    expect(lvl('ws2', { ws2: 60 })).toBe(1);
+    expect(lvl('ws2', { ws2: 90 })).toBe(2);
+    expect(lvl('ws2', { ws2: 120 })).toBe(3);
+    expect(lvl('ws1', {})).toBeNull();
+    expect(lvl('ws1', { ws1l: 120 })).toBeNull(); // needs both legs
+    expect(lvl('ws1', { ws1l: 120, ws1r: 89 })).toBe(1);
+    expect(lvl('ws1', { ws1l: 95, ws1r: 120 })).toBe(2);
+    expect(lvl('ws1', { ws1l: 120, ws1r: 120 })).toBe(3);
+    expect(lvl('ws1', { ws1l: 30, ws1r: 120 })).toBe(0);
   });
 
   it('skipped tests have no level', () => {
@@ -92,7 +120,7 @@ describe('v1 scoring', () => {
 
 describe('scoreSession', () => {
   it('is "In progress" until all 14 tests are done', () => {
-    const s = scoreSession(base({ bench: 15, pull: 10 }))!;
+    const s = scoreSession(base({ bench: 10, pull: 10 }))!;
     expect(s.score).toBe(3);
     expect(s.tested).toBe(2);
     expect(s.overall).toBeNull();
@@ -100,8 +128,8 @@ describe('scoreSession', () => {
 
   it('overall = lowest level when complete', () => {
     const all = {
-      splat: 2, bj: 94, dl: 500, bench: 20, pull: 20, carry: 300, hang: 120, hrp: 40,
-      plank: 180, ws2: 90, ws1: 60, sledpush: 15, sledpull: 18, run: 165, bike: 50,
+      splat: 2, bj: 94, farmer: 300, sled: 5, dl: 500, bench: 15, pull: 20, hrp: 40,
+      hang: 120, plank: 180, ws2: 120, ws1l: 120, ws1r: 125, run: 165, bike: 50,
     };
     const full = scoreSession(base(all))!;
     expect(full.score).toBe(42);
@@ -127,9 +155,28 @@ describe('goals', () => {
     expect(v1.goal('run', base({ run: 210 }))).toBe('Finish in 3:15 or less. That’s 15 sec faster.');
   });
 
-  it('wall sit goals step through both-leg then one-leg', () => {
-    expect(v1.goal('ws', base({ ws2: 45 }))).toContain('1 min on both legs. That’s 15 sec more.');
-    expect(v1.goal('ws', base({ ws2: 60, ws1: 20 }))).toContain('30 sec on one leg');
+  it('wall sit goals', () => {
+    expect(v1.goal('ws2', base({ ws2: 45 }))).toBe('Hold for 1 min. That’s 15 sec more.');
+    expect(v1.goal('ws1', base({ ws1l: 70, ws1r: 50 }))).toBe(
+      'Hold for 1 min on each leg. That’s 10 sec more on your right leg.',
+    );
+    expect(v1.goal('ws1', base({ ws1l: 70 }))).toBe('Log both legs to see your level.');
+    expect(v1.goal('ws1', base({}))).toBe('Do this test to see your goal.');
+  });
+
+  it('weight goals use this benchmark’s bodyweight', () => {
+    // 200 lb: Level 2 is 200 lb in total, 100 lb in each hand.
+    expect(v1.goal('farmer', base({ farmer: 160 }))).toBe(
+      'Carry 200 lb for 200 ft (100 lb in each hand). That’s 40 lb more.',
+    );
+    // 183 lb: Level 1 is 137.25 lb, so 70 lb in each hand.
+    expect(v1.goal('farmer', base({ farmer: 100 }, { bodyweight: 183 }))).toBe(
+      'Carry 140 lb for 200 ft (70 lb in each hand). That’s 40 lb more.',
+    );
+    expect(v1.goal('bench', base({ bench: 3 }, { bodyweight: 187 }))).toBe(
+      'Do 5 reps with 185 lb on the bar. That’s 2 more.',
+    );
+    expect(v1.goal('sled', base({ sled: 1 }))).toBe('Do 3 loops in 1 minute. That’s 2 more.');
   });
 
   it('level 3 and untested', () => {
@@ -159,8 +206,7 @@ describe('workouts', () => {
   });
 
   it('removes duplicate exercises within a workout', () => {
-    // At Level 1, both broad jump (L1→L2) and sled push (L2→L3) plans include "Broad jump 5×3, full rest".
-    const s = base({ bj: 82, sledpush: 20, splat: 2, dl: 500, ws1: 60 });
+    const s = base({ bj: 82, sled: 3, splat: 2, dl: 500, ws2: 120, ws1l: 60, ws1r: 60 });
     const leg = buildWorkouts(v1, s).find((w) => w.name === 'Leg Day')!;
     const all = leg.blocks.flatMap((b) => b.exercises.map((e) => e.toLowerCase()));
     const nonHold = leg.blocks.filter((b) => b.plan !== 'Hold Level 3').flatMap((b) => b.exercises);
@@ -210,8 +256,38 @@ describe('explain', () => {
   });
 });
 
+describe('standards and notes', () => {
+  it('fills in weights and height when known', () => {
+    expect(v1.standardsFor('dl', { bodyweight: 185 })).toEqual([
+      '280 lb (1.5× your bodyweight)',
+      '370 lb (2× your bodyweight)',
+      '465 lb (2.5× your bodyweight)',
+    ]);
+    expect(v1.standardsFor('farmer', { bodyweight: 200 })![0]).toBe(
+      '150 lb in total, 75 lb in each hand (75% of your bodyweight)',
+    );
+    expect(v1.standardsFor('bench', { bodyweight: 187 })![0]).toBe('5 reps at 185 lb');
+    expect(v1.standardsFor('bj', { bodyweight: null, heightIn: 70 })![0]).toBe('5′ 10″ (Your height)');
+    expect(v1.standardsFor('dl', { bodyweight: null })).toEqual(v1.tests.dl.standards);
+  });
+
+  it('each wall sit leg shows the one-leg standards', () => {
+    expect(v1.standardsFor('ws1l', { bodyweight: 200 })).toEqual(v1.tests.ws1.standards);
+  });
+
+  it('entry notes show targets for the weighed tests', () => {
+    expect(v1.entryNote('dl', 200)).toBe('Heaviest for 5 reps · L1 300 · L2 400 · L3 500 lb');
+    expect(v1.entryNote('farmer', 200)).toBe('Total of both hands, 200 ft · L1 150 · L2 200 · L3 300 lb');
+    expect(v1.entryNote('bench', 200)).toBe('Reps with 200 lb on the bar (your bodyweight)');
+    expect(v1.entryNote('dl', null)).toContain('Add your bodyweight');
+    expect(v1.entryNote('pull', 200)).toBeNull();
+  });
+});
+
 describe('format', () => {
   it('formats values', () => {
+    expect(formatValue('loops', 1)).toBe('1 loop');
+    expect(formatValue('loops', 4)).toBe('4 loops');
     expect(formatTime(193)).toBe('3:13');
     expect(formatFtIn(70)).toBe('5′ 10″');
     expect(formatValue('reps', 12)).toBe('12 reps');
@@ -224,10 +300,36 @@ describe('versioning', () => {
   it('a v1 benchmark renders v1’s rows in v1’s order regardless of the latest version', () => {
     const s = base({ pull: 10 });
     const v = getVersion(s.version)!;
+    // Distance, then strength and reps, then holds, then cardio; the wall squat first.
     expect(v.logOrder).toEqual([
-      'splat', 'bj', 'dl', 'bench', 'pull', 'carry', 'hang', 'hrp', 'plank',
-      'ws2', 'ws1', 'sledpush', 'sledpull', 'run', 'bike',
+      'splat', 'bj', 'farmer', 'sled', 'dl', 'bench', 'pull', 'hrp',
+      'hang', 'plank', 'ws2', 'ws1l', 'ws1r', 'run', 'bike',
     ]);
+    expect(v.scoredKeys).toEqual([
+      'splat', 'bj', 'farmer', 'sled', 'dl', 'bench', 'pull', 'hrp',
+      'hang', 'plank', 'ws2', 'ws1', 'run', 'bike',
+    ]);
+  });
+
+  it('every scored test is in a workout and has plans; every logged test has a picture', () => {
+    const inWorkouts = v1.workouts.flatMap((w) => w.tests);
+    for (const k of v1.scoredKeys) {
+      expect(inWorkouts).toContain(k);
+      expect(v1.tests[k].plans).not.toBeNull();
+    }
+    for (const k of v1.logOrder) {
+      const t = v1.tests[k];
+      expect(Boolean(t.photos?.length) || Boolean(t.figure)).toBe(true);
+    }
+  });
+});
+
+describe('displayResult', () => {
+  it('shows both legs of the one-leg wall sit', () => {
+    expect(displayResult(v1, 'ws1', base({ ws1l: 65, ws1r: 50 }))).toBe('Left 1:05 · Right 0:50');
+    expect(displayResult(v1, 'ws1', base({ ws1l: 65 }))).toBe('Left 1:05 · Right —');
+    expect(displayResult(v1, 'ws1', base({}))).toBeNull();
+    expect(displayResult(v1, 'sled', base({ sled: 3 }))).toBe('3 loops');
   });
 });
 

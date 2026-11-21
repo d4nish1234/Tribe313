@@ -3,8 +3,6 @@
 const PHOTOS: Record<string, number> = {
   'img/Ab_Roller-0.jpg': require('../../assets/benchmark/img/Ab_Roller-0.jpg'),
   'img/Ab_Roller-1.jpg': require('../../assets/benchmark/img/Ab_Roller-1.jpg'),
-  'img/Backward_Drag-0.jpg': require('../../assets/benchmark/img/Backward_Drag-0.jpg'),
-  'img/Backward_Drag-1.jpg': require('../../assets/benchmark/img/Backward_Drag-1.jpg'),
   'img/Band_Assisted_Pull-Up-0.jpg': require('../../assets/benchmark/img/Band_Assisted_Pull-Up-0.jpg'),
   'img/Band_Assisted_Pull-Up-1.jpg': require('../../assets/benchmark/img/Band_Assisted_Pull-Up-1.jpg'),
   'img/Band_Pull_Apart-0.jpg': require('../../assets/benchmark/img/Band_Pull_Apart-0.jpg'),

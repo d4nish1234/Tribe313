@@ -48,3 +48,6 @@ app-example
 
 # Firebase emulator logs
 *-debug.log
+
+# Local emulator copy of firestore.rules (npm run emulators copies it in)
+scripts/emulator/firestore.rules

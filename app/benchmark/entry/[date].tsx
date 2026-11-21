@@ -167,6 +167,7 @@ function Entry() {
     );
     const newResults = resultKeys.filter((k) => form.results[k] != null && !form.carried?.[k]);
     const other =
+      (v?.extraKeys ?? []).some((k) => (form.results[k] ?? null) !== (base.results[k] ?? null)) ||
       form.bodyweight !== base.bodyweight ||
       form.heightIn !== base.heightIn ||
       [...form.wallSquatFaults].sort().join() !== [...base.wallSquatFaults].sort().join() ||
@@ -213,7 +214,14 @@ function Entry() {
           version,
           bodyweight: form.bodyweight,
           heightIn: form.heightIn,
-          results: Object.fromEntries(v.logOrder.map((k) => [k, form.results[k] ?? null])),
+          results: {
+            ...Object.fromEntries(v.logOrder.map((k) => [k, form.results[k] ?? null])),
+            ...Object.fromEntries(v.extraKeys.map((k) => [k, form.results[k] ?? null])),
+            // The sled weight defaults to bodyweight; save what was shown.
+            ...(typeof form.results.sled === 'number' && form.results.sledlb == null
+              ? { sledlb: form.bodyweight }
+              : {}),
+          },
           wallSquatFaults: form.wallSquatFaults,
         },
         previousDate: savedDate,
@@ -274,7 +282,15 @@ function Entry() {
   const pickerKey = picking;
   const pickerSpec = pickerKey && v ? v.picker(pickerKey) : null;
   const pickerValue =
-    pickerKey === 'bw' ? form.bodyweight : pickerKey === 'height' ? form.heightIn : pickerKey ? form.results[pickerKey] ?? null : null;
+    pickerKey === 'bw'
+      ? form.bodyweight
+      : pickerKey === 'height'
+        ? form.heightIn
+        : pickerKey === 'sledlb'
+          ? (form.results.sledlb ?? form.bodyweight)
+          : pickerKey
+            ? (form.results[pickerKey] ?? null)
+            : null;
   const pickerFallback =
     pickerKey && v
       ? pickerKey === 'bw' || pickerKey === 'height'
@@ -383,19 +399,22 @@ function Entry() {
                 const t = v.tests[key];
                 const value = form.results[key] ?? null;
                 const sameAs = value != null ? carried[key] : undefined;
+                const note = v.entryNote(key, form.bodyweight);
                 return (
                   <View key={key}>
                     {i > 0 ? <View style={styles.divider} /> : null}
                     <View style={styles.testRow}>
                       <CrossfadeThumb
                         photos={t.photos}
-                        figure={key === 'ws1' ? 'wallsit1' : 'wallsit'}
+                        figure={t.figure}
                         label={t.name}
-                        onPress={() => explain(testExplainContent(v, key))}
+                        onPress={() =>
+                          explain(testExplainContent(v, key, { bodyweight: form.bodyweight, heightIn: form.heightIn }))
+                        }
                       />
                       <View style={{ flex: 1 }}>
                         <Text style={styles.testName}>{t.name}</Text>
-                        {t.note ? <Text style={styles.muted}>{t.note}</Text> : null}
+                        {note ? <Text style={styles.muted}>{note}</Text> : null}
                         {sameAs ? <Text style={styles.sameAs}>Same as {shortDate(sameAs)}</Text> : null}
                       </View>
                       <ResultBox
@@ -406,6 +425,26 @@ function Entry() {
                         label={t.name}
                       />
                     </View>
+                    {key === 'sled' ? (
+                      <View style={styles.subRow}>
+                        <View style={{ flex: 1 }}>
+                          <Text style={styles.fieldLabel}>Sled weight</Text>
+                          <Text style={styles.muted}>
+                            {form.results.sledlb == null ? 'Your bodyweight. Change it if the sled was different.' : 'Sled plus plates'}
+                          </Text>
+                        </View>
+                        <ResultBox
+                          text={
+                            (form.results.sledlb ?? form.bodyweight) != null
+                              ? `${form.results.sledlb ?? form.bodyweight} lb`
+                              : null
+                          }
+                          unsaved={(form.results.sledlb ?? null) !== (saved?.results.sledlb ?? null)}
+                          onPress={() => setPicking('sledlb')}
+                          label="Sled weight"
+                        />
+                      </View>
+                    ) : null}
                     {key === 'splat' ? (
                       <View style={styles.faults}>
                         <View style={styles.rowBetween}>
@@ -564,6 +603,7 @@ const styles = StyleSheet.create({
   boxUnsaved: { borderWidth: 2.5, borderColor: B.green },
   boxText: { fontSize: 16, fontWeight: '600', color: B.text, fontVariant: ['tabular-nums'] },
   faults: { paddingBottom: 12, gap: 6 },
+  subRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingBottom: 12, paddingLeft: 68 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   chip: { backgroundColor: B.background },
   saveBar: {

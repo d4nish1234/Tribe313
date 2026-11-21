@@ -81,10 +81,43 @@ eas build --profile development --platform android
 
 # Start Expo — connects to the installed dev client, not Expo Go
 npx expo start
-
-# Start Firebase emulators (separate terminal)
-firebase emulators:start
 ```
+
+Plain `npx expo start` talks to the **live** Firebase project. To try changes without touching real data, use the local emulators below.
+
+### Test locally with the emulators
+
+The app can run against local Auth and Firestore emulators instead of the live project. Everything runs under the `demo-tribe313` project ID, which Firebase never connects to real resources, so nothing you do reaches live data. The emulators enforce the real `firestore.rules`.
+
+Needs the global `firebase` CLI and Java.
+
+```bash
+# 1. Start Auth + Firestore (terminal 1). Leave it running.
+npm run emulators
+
+# 2. Add test accounts and sample benchmarks (terminal 2, once step 1 says "All emulators ready")
+npm run emulators:seed
+
+# 3. Start the app pointed at the emulators (terminal 2)
+EXPO_PUBLIC_USE_EMULATORS=1 npx expo start
+```
+
+4. In the app, **sign out** of any real account first (the emulator doesn't know it), then sign in with one of the seeded accounts. The password for all of them is `test1234`:
+
+| Account | What it is |
+|---|---|
+| `coach@test.local` | Approved admin (coach), with two benchmarks |
+| `member@test.local` | Approved member, with two benchmarks and an exercise from the coach |
+| `pending@test.local` | Waiting for approval |
+
+Good to know:
+
+- **Ports:** Auth on 9099, Firestore on 8181, and the Emulator UI (to browse the data) at http://127.0.0.1:4010. They're set in [`scripts/emulator/firebase.json`](scripts/emulator/firebase.json), separate from the root `firebase.json`, so they don't clash with an emulator already using 8080.
+- **Reset:** the data is wiped each time the emulators stop. Run `npm run emulators:seed` again after restarting. It's safe to re-run at any time.
+- **Rules:** `npm run emulators` copies `firestore.rules` in when it starts, so restart it after changing the rules.
+- **Real phone:** the iOS simulator and Android emulator find the Mac on their own. On a physical phone, also set your Mac's IP: `EXPO_PUBLIC_USE_EMULATORS=1 EXPO_PUBLIC_EMULATOR_HOST=192.168.x.x npx expo start`.
+- **Not covered:** Cloud Functions don't run locally. Anything that calls one fails: approving, promoting, deactivating or reinstating members, deleting your account, address lookup and directions. New sign-ups also aren't set up server-side. Use the seeded accounts, which already have everything those functions would set. Benchmarks, training and Progress work fully.
+- **Back to live:** stop Expo and start it again without `EXPO_PUBLIC_USE_EMULATORS=1`.
 
 ### Build + run on device
 
