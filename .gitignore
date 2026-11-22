@@ -49,3 +49,6 @@ app-example
 # Firebase emulator logs
 *-debug.log
 
+
+# Local store builds (.ipa / .aab)
+/builds/

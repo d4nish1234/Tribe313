@@ -74,6 +74,7 @@ export default {
         },
       ],
       "@react-native-community/datetimepicker",
+      "./plugins/withOptionalPortrait",
     ],
     extra: {
       eas: {

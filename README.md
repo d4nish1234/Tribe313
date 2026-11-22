@@ -126,7 +126,7 @@ Good to know:
 - **Not covered:** address lookup and directions need the Google Maps key, which only exists in the live project, so they fail locally. Scheduled functions (the 6 pm reminders) don't run on the emulator.
 - **Back to live:** stop Expo and start it again without `EXPO_PUBLIC_USE_EMULATORS=1`.
 
-### Build + run on device
+### Build in the cloud (EAS)
 
 ```bash
 # Both platforms in one go
@@ -141,6 +141,52 @@ The `production` profile is signed for store distribution, so the build isn't di
 
 - **iOS**: `eas submit --platform ios` uploads the build to TestFlight; install it there.
 - **Android**: the profile builds an `.aab` for Play Console (`eas submit --platform android`). For a directly-installable `.apk` instead, add an `android.buildType: "apk"` override to the `production` profile in [`eas.json`](eas.json), or use `eas build --profile preview` for ad-hoc internal distribution.
+
+### Build for the stores on this Mac
+
+The same `production` builds as above, but built locally instead of on EAS's servers. Signing and the production Firebase/Maps keys still come from your Expo account, so you need to be logged in (`eas login`).
+
+**One-time setup**
+
+- **iOS:** Xcode (with its command-line tools) and CocoaPods: `brew install cocoapods`.
+- **Android:** JDK 17 and the Android SDK:
+  ```bash
+  brew install openjdk@17
+  brew install --cask android-commandlinetools
+  export JAVA_HOME=/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home
+  export ANDROID_HOME=/opt/homebrew/share/android-commandlinetools
+  yes | sdkmanager --licenses
+  sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0" "ndk;27.1.12297006"
+  ```
+  Put the two `export` lines (plus `export LANG=en_US.UTF-8`, which CocoaPods wants) in `~/.zshrc`.
+- **Node 24** (via nvm). Metro doesn't support Node 25, so make sure `node -v` isn't Homebrew's Node 25.
+
+**Build**
+
+```bash
+eas build --local --profile production --platform ios     --output builds/tribe313-<version>.ipa
+eas build --local --profile production --platform android --output builds/tribe313-<version>.aab
+```
+
+`builds/` is gitignored. Each build takes 10–30 minutes; the first Android build is the slowest.
+
+**Upload**
+
+```bash
+eas submit --platform ios     --path builds/tribe313-<version>.ipa   # → TestFlight
+eas submit --platform android --path builds/tribe313-<version>.aab   # → Play Console
+```
+
+Google requires the very first upload of an app to be done by hand in Play Console.
+
+**Good to know**
+
+- **One build at a time.** iOS builds share the signing profiles in `~/Library/MobileDevice`, so two at once can delete each other's profile mid-build ("unable to read … .mobileprovision").
+- **Stopping a build:** stopping `eas build` doesn't always stop the Xcode/Gradle processes under it. Check with `pgrep -fl "xcodebuild|gradle"` before starting another.
+- **Build numbers** go up on EAS for every build (`autoIncrement`), even local and failed ones, so gaps are normal.
+- **Version:** builds with a new or upgraded native package need a new `version` in `app.config.js` first (see CLAUDE.md).
+- **Before release:** deploy any Firestore rules changes (below) before the build reaches members.
+- **Try it on a simulator first** with a dev build, e.g. on an iPad: `xcrun simctl list devices available`, then `npx expo run:ios --device <udid>`.
 
 ### Deploy backend
 
