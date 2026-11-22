@@ -1,4 +1,4 @@
-import { backToBackDays, monthWeeks, normalizeDays, sameDay, toggleDay, weekSchedule } from '../schedule';
+import { backToBackDays, dayOfWorkout, normalizeDays, pickingHint, toggleDay, weekSchedule } from '../schedule';
 
 const W = ['Leg Day', 'Upper Body Day', 'Grip & Cardio Day'];
 
@@ -52,25 +52,22 @@ describe('backToBackDays', () => {
   });
 });
 
-describe('monthWeeks', () => {
-  it('lays out a month Monday first with blanks outside it', () => {
-    // November 2026 starts on a Sunday and has 30 days.
-    const weeks = monthWeeks(2026, 10);
-    expect(weeks[0].slice(0, 6)).toEqual([null, null, null, null, null, null]);
-    expect(weeks[0][6]!.getDate()).toBe(1);
-    expect(weeks.flat().filter(Boolean)).toHaveLength(30);
-    weeks.forEach((w) => expect(w).toHaveLength(7));
-    expect(weeks[weeks.length - 1][0]!.getDate()).toBe(30);
-  });
-  it('starts on the first column when the 1st is a Monday', () => {
-    // June 2026 starts on a Monday.
-    expect(monthWeeks(2026, 5)[0][0]!.getDate()).toBe(1);
+describe('dayOfWorkout', () => {
+  it('maps each workout to its weekday once 3 days are picked', () => {
+    expect([...dayOfWorkout([5, 1, 3], W)]).toEqual([
+      ['Leg Day', 1],
+      ['Upper Body Day', 3],
+      ['Grip & Cardio Day', 5],
+    ]);
+    expect(dayOfWorkout([1], W).size).toBe(0);
   });
 });
 
-describe('sameDay', () => {
-  it('ignores the time of day', () => {
-    expect(sameDay(new Date(2026, 10, 20, 1), new Date(2026, 10, 20, 23))).toBe(true);
-    expect(sameDay(new Date(2026, 10, 20), new Date(2026, 10, 21))).toBe(false);
+describe('pickingHint', () => {
+  it('counts the days still to pick, then warns about back-to-back days', () => {
+    expect(pickingHint([])).toBe('Pick 3 more days.');
+    expect(pickingHint([1, 3])).toBe('Pick 1 more day.');
+    expect(pickingHint([1, 3, 5])).toBeNull();
+    expect(pickingHint([1, 2, 5])).toMatch(/^Mon and Tue are back to back/);
   });
 });

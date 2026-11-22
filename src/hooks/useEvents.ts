@@ -30,26 +30,24 @@ export function useNow(everyMs = 60_000): number {
   return now;
 }
 
-/** Every event, split into upcoming and past. With `enabled` false it listens to nothing and returns none. */
-export function useEvents(enabled = true) {
+/** Every event, split into upcoming and past. */
+export function useEvents() {
   const [events, setEvents] = useState<EventDoc[] | null>(null);
   const now = useNow();
 
   useEffect(() => {
-    if (!enabled) return;
     const q = query(collection(db, 'events'), orderBy('startsAt', 'desc'));
     return listenQuery(
       q,
       (snap) => setEvents(snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<EventDoc, 'id'>) }))),
       () => setEvents((e) => e ?? []),
     );
-  }, [enabled]);
+  }, []);
 
   return useMemo(() => {
-    if (!enabled) return { loading: false, upcoming: [], past: [] };
     if (!events) return { loading: true, upcoming: [], past: [] };
     return { loading: false, ...splitEvents(events, now) };
-  }, [enabled, events, now]);
+  }, [events, now]);
 }
 
 export function useEvent(id: string | undefined) {

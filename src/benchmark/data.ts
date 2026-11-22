@@ -109,3 +109,26 @@ export async function addAssignment(opts: {
 export async function removeAssignment(memberUid: string, id: string): Promise<void> {
   await deleteDoc(doc(db, 'benchmarkProfiles', memberUid, 'benchmarkAssignments', id));
 }
+
+/**
+ * Wait for a write, but give up waiting after `ms`. Offline, Firestore keeps
+ * the write queued and sends it on reconnect, but its promise only settles
+ * then, which would leave a Save button spinning. Rejections (e.g. the rules
+ * refusing it) still come through if they arrive in time.
+ */
+export function settleWithin(write: Promise<void>, ms = 6000): Promise<void> {
+  return Promise.race([write, new Promise<void>((resolve) => setTimeout(resolve, ms))]);
+}
+
+/** First-run onboarding: saves only what the member set. Does nothing when nothing was set. */
+export async function saveOnboarding(
+  uid: string,
+  name: string,
+  set: { heightIn?: number | null; workoutDays?: number[] | null },
+): Promise<void> {
+  const fields: Record<string, unknown> = {};
+  if (set.heightIn != null) fields.heightIn = set.heightIn;
+  if (set.workoutDays?.length) fields.workoutDays = set.workoutDays;
+  if (!Object.keys(fields).length) return;
+  await setDoc(profileRef(uid), { name, ...fields, updatedAt: serverTimestamp() }, { merge: true });
+}

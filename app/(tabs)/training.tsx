@@ -3,7 +3,9 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { ActivityIndicator, Text } from 'react-native-paper';
 import { useAuth } from '@/src/contexts/AuthContext';
 import { getVersion, latestVersion } from '@/src/benchmark/registry';
-import { useAssignments, useBenchmarkSessions } from '@/src/benchmark/hooks';
+import { useAssignments, useBenchmarkProfile, useBenchmarkSessions } from '@/src/benchmark/hooks';
+import { WorkoutDaysPrompt } from '@/src/benchmark/components/WorkoutDays';
+import { dayOfWorkout, normalizeDays } from '@/src/lib/schedule';
 import { knownSessions, weakestFirst } from '@/src/benchmark/engine/score';
 import { buildWorkouts } from '@/src/benchmark/engine/workouts';
 import { ExplainProvider, InfoLink, useExplain } from '@/src/benchmark/components/Explain';
@@ -39,6 +41,10 @@ function Training() {
   const latest = known[0] ?? null;
   const v = latest ? getVersion(latest.version)! : latestVersion();
   const workouts = useMemo(() => buildWorkouts(v, latest), [v, latest]);
+  const { profile } = useBenchmarkProfile(firebaseUser?.uid);
+  const savedDays = useMemo(() => normalizeDays(profile?.workoutDays), [profile?.workoutDays]);
+  const names = useMemo(() => workouts.map((w) => w.name), [workouts]);
+  const dayOf = useMemo(() => dayOfWorkout(savedDays, names), [savedDays, names]);
   const [openTest, setOpenTest] = useState<string | null>(null);
 
   if (loading) {
@@ -70,7 +76,8 @@ function Training() {
         right={<InfoLink label="How?" onPress={() => explain(v.explainer('week'))} />}
       />
       <WeightNote latest={latest} />
-      <WeekWorkouts v={v} workouts={workouts} bodyweight={latest?.bodyweight ?? null} />
+      <WeekWorkouts v={v} workouts={workouts} bodyweight={latest?.bodyweight ?? null} dayOf={dayOf} />
+      <WorkoutDaysPrompt saved={savedDays} names={names} />
 
       <CoachExtras v={v} assignments={assignments} bodyweight={latest?.bodyweight ?? null} />
 

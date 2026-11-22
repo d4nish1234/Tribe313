@@ -87,12 +87,12 @@ Plain `npx expo start` talks to the **live** Firebase project. To try changes wi
 
 ### Test locally with the emulators
 
-The app can run against local Auth and Firestore emulators instead of the live project. Everything runs under the `demo-tribe313` project ID, which Firebase never connects to real resources, so nothing you do reaches live data. The emulators enforce the real `firestore.rules`.
+The app can run against local Auth, Firestore and Cloud Functions emulators instead of the live project. Everything runs under the `demo-tribe313` project ID, which Firebase never connects to real resources, so nothing you do reaches live data. The emulators enforce the real `firestore.rules`.
 
 Needs the global `firebase` CLI and Java.
 
 ```bash
-# 1. Start Auth + Firestore (terminal 1). Leave it running.
+# 1. Start Auth, Firestore and Functions (terminal 1). Leave it running.
 npm run emulators
 
 # 2. Add test accounts and sample benchmarks (terminal 2, once step 1 says "All emulators ready")
@@ -112,11 +112,18 @@ EXPO_PUBLIC_USE_EMULATORS=1 npx expo start
 
 Good to know:
 
-- **Ports:** Auth on 9099, Firestore on 8181, and the Emulator UI (to browse the data) at http://127.0.0.1:4010. They're set in [`scripts/emulator/firebase.json`](scripts/emulator/firebase.json), separate from the root `firebase.json`, so they don't clash with an emulator already using 8080.
-- **Reset:** the data is wiped each time the emulators stop. Run `npm run emulators:seed` again after restarting. It's safe to re-run at any time.
-- **Rules:** `npm run emulators` copies `firestore.rules` in when it starts, so restart it after changing the rules.
+- **Ports:** Auth on 9099, Firestore on 8181, Functions on 5001, and the Emulator UI (to browse the data) at http://127.0.0.1:4010. They're set in [`firebase.emulators.json`](firebase.emulators.json), separate from `firebase.json`, so they don't clash with an emulator already using 8080.
+- **Reset:** the data is wiped each time the emulators stop. Run `npm run emulators:seed` again after restarting. It's safe to re-run at any time. To wipe without restarting:
+  ```bash
+  curl -X DELETE "http://127.0.0.1:8181/emulator/v1/projects/demo-tribe313/databases/(default)/documents"
+  curl -X DELETE "http://127.0.0.1:9099/emulator/v1/projects/demo-tribe313/accounts"
+  npm run emulators:seed
+  ```
+  The accounts get new IDs, so each one sees onboarding again (that flag is kept on the phone, per account).
+- **Rules:** the emulator reads `firestore.rules` directly and reloads it when it changes.
+- **Functions:** the emulator runs the compiled code in `functions/lib`. After editing `functions/src`, run `npm --prefix functions run build` and the emulator reloads it. Approving, promoting, deactivating, reinstating, deleting an account, new sign-ups and the push triggers all work. Pushes go nowhere, because simulators don't have push tokens.
 - **Real phone:** the iOS simulator and Android emulator find the Mac on their own. On a physical phone, also set your Mac's IP: `EXPO_PUBLIC_USE_EMULATORS=1 EXPO_PUBLIC_EMULATOR_HOST=192.168.x.x npx expo start`.
-- **Not covered:** Cloud Functions don't run locally. Anything that calls one fails: approving, promoting, deactivating or reinstating members, deleting your account, address lookup and directions. New sign-ups also aren't set up server-side. Use the seeded accounts, which already have everything those functions would set. Benchmarks, training and Progress work fully.
+- **Not covered:** address lookup and directions need the Google Maps key, which only exists in the live project, so they fail locally. Scheduled functions (the 6 pm reminders) don't run on the emulator.
 - **Back to live:** stop Expo and start it again without `EXPO_PUBLIC_USE_EMULATORS=1`.
 
 ### Build + run on device

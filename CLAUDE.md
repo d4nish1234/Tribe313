@@ -23,7 +23,7 @@ Expo SDK 54 · expo-router 6 (typed routes) · React Native 0.81 · react-native
 
 ## Firestore
 - After changing `firestore.rules`, test them on the emulator, then deploy with `firebase deploy --only firestore:rules`. The `firebase` CLI is global, not in node_modules, so `npx firebase` fails.
-  - Port 8080 is often taken; run the emulator on another port (e.g. 8181) via a throwaway `firebase.json` outside the repo.
+  - Port 8080 is often taken; for one-off rules tests run the emulator on other ports via a throwaway config (`firebase --config <file> …`).
   - The emulator writes `firestore-debug.log` to the working directory. It's gitignored; never commit it.
   - Tests use `@firebase/rules-unit-testing` with `firebase emulators:exec --only firestore --project demo-tribe313 "node test.mjs firestore.rules"`.
 - Admins:
@@ -33,8 +33,8 @@ Expo SDK 54 · expo-router 6 (typed routes) · React Native 0.81 · react-native
 - Live listeners: Firestore closes an `onSnapshot` listener for good after an error. Never call `onSnapshot` directly. Use `listenQuery` or `listenDoc` (or `resilient()` for custom cases) from `src/lib/live.ts`, which re-subscribe with backoff so a screen can't freeze until the app restarts.
 - Recurring events: admins save an `eventSeries` doc; `functions/src/events/series.ts` keeps its next 5 weeks as ordinary `events` (ids `<seriesId>_<YYYY-MM-DD>`, plus `seriesId`/`seriesDate`/`seriesLabel`). Dates and times are Toronto wall-clock. The date logic lives once in `functions/src/shared/recurrence.ts` (no imports) and the app re-exports it from `src/lib/recurrence.ts`; tests are in `src/lib/__tests__/recurrence.test.ts`. Deleting one date of a series adds it to `skipDates` so it isn't recreated. Series events don't send "New event" pushes or award early-bird; `remindTomorrow` (18:00 Toronto) reminds for every event.
 - Local emulators, for trying the app without touching live data:
-  - `npm run emulators` starts Auth and Firestore from `scripts/emulator/firebase.json` (Firestore on 8181, UI on 4010) with the `demo-tribe313` project. It copies `firestore.rules` in first; restart it after changing the rules.
-  - `npm run emulators:seed` adds coach@test.local (admin), member@test.local and pending@test.local, password `test1234`, with sample benchmarks.
+  - `npm run emulators` starts Auth, Firestore and Functions from `firebase.emulators.json` (Firestore on 8181, Functions on 5001, UI on 4010) with the `demo-tribe313` project. Rules reload on change; Functions run `functions/lib`, so rebuild after editing `functions/src`. Geocode and directions fail locally (no Maps key).
+  - `npm run emulators:seed` waits for `onUserCreate` (which writes new users as pending) before writing its own user docs, then adds coach@test.local (admin), member@test.local and pending@test.local, password `test1234`, with sample benchmarks.
   - Start the app with `EXPO_PUBLIC_USE_EMULATORS=1 npx expo start`. On a real phone, also set `EXPO_PUBLIC_EMULATOR_HOST` to the Mac's IP. Sign out of any real account first; the emulator doesn't know it.
 - Compiled Cloud Functions in `functions/lib` are committed. Rebuild them with `npm --prefix functions run build`, and don't hand-edit them.
 
@@ -42,15 +42,20 @@ Expo SDK 54 · expo-router 6 (typed routes) · React Native 0.81 · react-native
 - Buttons: `AppButton` (`variant` primary/secondary/text, `tone` danger/onDark) and `AppFab`, in `src/components/AppButton.tsx`. Don't use Paper's `Button` or `FAB` directly.
 - Lists: `SectionHeader`, `CardBox`, `CardRow` and `ExpandableCard` in `src/components/Cards.tsx`, plus `cardStyles.content` for screen padding. Don't use Paper's `Card` or `List.Item` for lists.
   - A `CardRow` with `onPress` is a single VoiceOver element, so don't put other buttons inside it. Leave `onPress` off when the row has its own buttons.
-- Header menu: `HeaderMenu` (`src/components/HeaderMenu.tsx`) is the ☰ on every tab's header. A full-width panel that drops from under the header: Settings for everyone; Admin (carpool locations + approvals, `app/admin/index.tsx`, with a pending-count bubble) and Coach for admins only. New app-wide or admin screens go there, not as Home buttons or per-tab header icons.
+- Header menu: `HeaderMenu` (`src/components/HeaderMenu.tsx`) is the ☰ on every tab's header. A full-width panel that drops from under the header: Settings for everyone; Admin (carpool locations + approvals, `app/admin/index.tsx`, with a pending-count bubble) and Coach for admins only. New app-wide or admin screens go there, not as per-tab buttons or header icons.
 - Search: `matchesWords` in `src/lib/search.ts` is the one search rule: every word must match, in any order, ignoring case and accents.
 - Choosing from a list: `await pickOne({...})` or `await pickMany({...})` from `src/lib/picker.ts`. It opens `app/pick.tsx`, a search field over card rows, and returns the chosen ids, or null on Back. Use it instead of building a new picker screen. Its options (`allowCustom`, `selected`, `keywords`, …) are documented at the top of the file.
 
 ## Unreleased features
-- `src/lib/features.ts` holds release flags. Sunday Runs and Members (`RUNS_RELEASED`) are built but hidden from non-admins: their tabs use `href: null`, Home skips "Up next", and the Calendar skips runs. Use `showRuns(isAdmin)` for anything new that belongs to runs. Pushes about events aren't gated; keep prod free of events until release.
+- Sunday Runs and Members are built but admin-only: their tabs use `href: isAdmin ? undefined : null` in `app/(tabs)/_layout.tsx`. Pushes about events aren't gated; keep prod free of events until release.
+- There's no Home tab. Training is the first screen (`unstable_settings.initialRouteName`), and sign-in, onboarding and `app/index.tsx` all land on `/training`.
 
-## Calendar (`app/(tabs)/calendar.tsx`)
-- Members pick 3 weekdays, saved as `workoutDays` on `benchmarkProfiles/{uid}` (`Date.getDay()` numbers). The workouts land on them in Monday-first week order, and the coach's extras show on every workout day. The date logic is in `src/lib/schedule.ts` with tests.
+## Onboarding (`app/onboarding.tsx`)
+- Shown once per account per phone, before the tabs. The "done" flag is in AsyncStorage (`src/lib/onboarding.ts`), never in Firestore, so a new phone shows it again, pre-filled from the profile.
+- Every step is optional; "Skip for now" saves nothing. Later steps (equipment, choosing a coach) are in `docs/backlog.md`.
+
+## Workout days
+- Members pick 3 weekdays, saved as `workoutDays` on `benchmarkProfiles/{uid}` (`Date.getDay()` numbers). They're set in onboarding or in `WorkoutDaysSheet` (`src/benchmark/components/WorkoutDays.tsx`), opened from Training. The workouts land on them in Monday-first week order, and each workout card shows its day. The date logic is in `src/lib/schedule.ts` with tests.
 
 ## Benchmark feature (`src/benchmark/`, `app/benchmark/`, `app/(tabs)/benchmark.tsx`, `app/(tabs)/training.tsx`)
 - Screens:
@@ -64,7 +69,7 @@ Expo SDK 54 · expo-router 6 (typed routes) · React Native 0.81 · react-native
 - A logged test with `partOf` is one part of a scored test: the one-leg wall sit logs `ws1l` and `ws1r` and is scored on the weaker leg as `ws1`. `extraKeys` (the sled weight, `sledlb`) are saved in `results` but never scored, charted or pre-filled. Keeping them in `results` means the Firestore rules don't change.
 - Weights from bodyweight: `engine/weights.ts` adds the pounds after "% of bodyweight" in plans and how-to steps (`ExplainText` with `bodyweight`), and `standardsFor`/`entryNote` in the version give targets in pounds. A `WeightNote` under each list says which bodyweight is used. Don't write example people ("a 200 lb man") into the data.
 - Tests the photo library lacks use a drawn `TestFigure` (`figure` in the data). Free Exercise DB has no face-the-wall squat or sled loop.
-- Ideas agreed for later (levels 4–6, equipment, calendar) are in `docs/benchmark-roadmap.md`.
+- Ideas agreed for later (levels 4–6, equipment) are in `docs/benchmark-roadmap.md`.
 - Rewrite outdated wording in the help text at display time, in the version's `index.ts`, not in the data.
 - In the UI a logged session is a "benchmark", never "entry", "session" or "log test".
 - Exercise photos: `node scripts/benchmark/fetch-photos.mjs` downloads them, resizes them with macOS `sips`, and regenerates `src/benchmark/photos.ts`.

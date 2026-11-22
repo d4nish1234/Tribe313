@@ -44,7 +44,9 @@ assertConfig(cfg);
  * `demo-` project ID, which Firebase never connects to real resources. Nothing
  * you do reaches live data. See "Local emulators" in CLAUDE.md.
  */
-export const usingEmulators = process.env.EXPO_PUBLIC_USE_EMULATORS === '1';
+// Dev builds only: if the variable were set by mistake when running
+// `eas update` or a store build, every member's app would point at 127.0.0.1.
+export const usingEmulators = __DEV__ && process.env.EXPO_PUBLIC_USE_EMULATORS === '1';
 export const EMULATOR_PROJECT_ID = 'demo-tribe313';
 
 const app = getApps().length

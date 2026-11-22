@@ -6,32 +6,40 @@ import type { Workout } from '../engine/workouts';
 import { PLAN_LABELS, type BenchmarkVersion } from '../types';
 import { B } from '../theme';
 import { ExplainText, useExplain } from './Explain';
+import { DAY_LONG } from '@/src/lib/schedule';
 
 /**
  * The member's three workouts for the week, each a card that opens to its
- * exercises. Shown on Home and on the Training tab. `bodyweight` fills in the
- * pounds for "% of bodyweight". Needs an ExplainProvider above it.
+ * exercises. Shown on the Training tab. `bodyweight` fills in the
+ * pounds for "% of bodyweight". `dayOf` (workout name → weekday, from the
+ * member's workout days) puts each workout's day in its subtitle. Needs an
+ * ExplainProvider above it.
  */
 export function WeekWorkouts({
   v,
   workouts,
   bodyweight,
+  dayOf,
 }: {
   v: BenchmarkVersion;
   workouts: Workout[];
   bodyweight: number | null;
+  dayOf?: Map<string, number>;
 }) {
   const [openName, setOpenName] = useState<string | null>(null);
+  const today = new Date().getDay();
 
   return (
     <>
       {workouts.map((w) => {
         const open = openName === w.name;
+        const day = dayOf?.get(w.name);
+        const when = day == null ? '' : day === today ? `Today, ${DAY_LONG[day]} · ` : `${DAY_LONG[day]} · `;
         return (
           <ExpandableCard
             key={w.name}
             title={w.name}
-            subtitle="About 50–60 min"
+            subtitle={`${when}About 50–60 min`}
             open={open}
             onToggle={() => setOpenName(open ? null : w.name)}
           >
@@ -44,10 +52,9 @@ export function WeekWorkouts({
 }
 
 /**
- * One workout's exercises: the warm-up, then a block per test. Used inside the
- * workout cards and, already open, on the Calendar. Needs an ExplainProvider above it.
+ * One workout's exercises: the warm-up, then a block per test.
  */
-export function WorkoutExercises({
+function WorkoutExercises({
   v,
   workout,
   bodyweight,

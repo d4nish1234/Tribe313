@@ -7,7 +7,7 @@ import { ExplainText, InfoLink, useExplain } from './Explain';
 
 /**
  * Exercises a coach assigned to this member, with its section heading.
- * Renders nothing when there are none. Shown on Home and on Benchmark.
+ * Renders nothing when there are none. Shown on Training.
  * Needs an ExplainProvider above it.
  */
 export function CoachExtras({

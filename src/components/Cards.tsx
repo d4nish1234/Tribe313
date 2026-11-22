@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { palette } from '@/src/theme';
 
 /**
- * The card look shared by Home, Past events and Benchmark: flat white cards
+ * The card look shared by Training, Past events and Benchmark: flat white cards
  * with rounded corners, hairline dividers between rows, and small uppercase
  * section headings. Use these instead of Paper's Card so every list matches.
  */

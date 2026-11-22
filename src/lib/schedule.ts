@@ -55,21 +55,16 @@ export function backToBackDays(days: readonly number[]): [number, number][] {
   return pairs;
 }
 
-/**
- * The weeks of a month for a calendar grid, Monday first. Days outside the
- * month are null. `month` is 0-based like `Date`.
- */
-export function monthWeeks(year: number, month: number): (Date | null)[][] {
-  const first = new Date(year, month, 1);
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const cells: (Date | null)[] = Array(weekPos(first.getDay())).fill(null);
-  for (let d = 1; d <= daysInMonth; d++) cells.push(new Date(year, month, d));
-  while (cells.length % 7) cells.push(null);
-  const weeks: (Date | null)[][] = [];
-  for (let i = 0; i < cells.length; i += 7) weeks.push(cells.slice(i, i + 7));
-  return weeks;
+/** Workout name → its weekday, the reverse of `weekSchedule`. */
+export function dayOfWorkout(days: readonly number[], workoutNames: readonly string[]): Map<string, number> {
+  return new Map([...weekSchedule(days, workoutNames)].map(([d, w]) => [w, d]));
 }
 
-export function sameDay(a: Date, b: Date): boolean {
-  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+/** A hint for a half-made pick, or null when there's nothing to say. */
+export function pickingHint(days: readonly number[]): string | null {
+  const missing = WORKOUT_DAY_COUNT - normalizeDays(days).length;
+  if (missing > 0) return `Pick ${missing} more day${missing === 1 ? '' : 's'}.`;
+  const tight = backToBackDays(days);
+  if (!tight.length) return null;
+  return `${tight.map(([a, b]) => `${DAY_SHORT[a]} and ${DAY_SHORT[b]}`).join(', ')} are back to back. A rest day between workouts helps you recover.`;
 }

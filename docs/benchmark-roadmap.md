@@ -19,5 +19,5 @@ Decided with the owner on 2026-11-21 but not built yet. Revisit them together be
 
 ## Calendar and workout days
 
-- A calendar showing the Sunday runs every week. The runs already repeat weekly through event series; this is about a calendar view.
-- Members pick the days they're free to train, and the three workouts fill those days on the calendar.
+- Done: members pick 3 workout days (onboarding, or the sheet on Home and Training), and each workout card shows its day.
+- Tried and removed: a Calendar tab with a month grid. Could come back as a view of the Sunday runs once they're released.

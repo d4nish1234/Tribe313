@@ -6,7 +6,7 @@ const SERIF = Platform.select({ ios: 'Georgia', android: 'serif', default: 'seri
 /**
  * 313 TRIBE wordmark on a forest-green band.
  * Drawn with text until a transparent logo file is added to assets.
- * `large` is for the sign-in screens; the default fits the Home header.
+ * `large` is for the sign-in screens; the default heads onboarding.
  */
 export function BrandLogo({ size = 'regular', style }: { size?: 'regular' | 'large'; style?: StyleProp<ViewStyle> }) {
   const k = size === 'large' ? 1.3 : 1;

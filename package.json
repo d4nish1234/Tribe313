@@ -10,7 +10,7 @@
     "lint": "expo lint",
     "tsc": "tsc --noEmit",
     "test": "jest",
-    "emulators": "cp firestore.rules scripts/emulator/firestore.rules && cd scripts/emulator && firebase emulators:start --only auth,firestore --project demo-tribe313",
+    "emulators": "firebase --config firebase.emulators.json emulators:start --only auth,firestore,functions --project demo-tribe313",
     "emulators:seed": "node scripts/emulator/seed.mjs"
   },
   "dependencies": {

@@ -24,5 +24,5 @@ export default function Index() {
   }
   if (appUser.status === 'pending') return <Redirect href="/pending" />;
   if (appUser.status === 'evicted') return <Redirect href="/evicted" />;
-  return <Redirect href="/(tabs)" />;
+  return <Redirect href="/training" />;
 }

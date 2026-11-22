@@ -156,9 +156,10 @@ service cloud.firestore {
       return d.keys().hasOnly(['name', 'heightIn', 'workoutDays', 'updatedAt'])
         && (!('name' in d) || (d.name is string && d.name.size() <= 100))
         && validHeight(d.get('heightIn', null))
-        // The weekdays the member trains on (0 = Sunday). Rules can't loop
-        // over a list, so cap its size; the app writes 3 unique days 0–6.
-        && (!('workoutDays' in d) || (d.workoutDays is list && d.workoutDays.size() <= 7));
+        // The weekdays the member trains on (0 = Sunday): up to 3 of 0–6.
+        // The app writes exactly 3 unique days.
+        && (!('workoutDays' in d) || (d.workoutDays is list && d.workoutDays.size() <= 3
+                                      && d.workoutDays.hasOnly([0, 1, 2, 3, 4, 5, 6])));
     }
 
     match /benchmarkProfiles/{uid} {

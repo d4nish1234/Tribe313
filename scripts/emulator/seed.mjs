@@ -19,6 +19,7 @@ const PROJECT = 'demo-tribe313';
 const HOST = process.env.EMULATOR_HOST || '127.0.0.1';
 const AUTH = `http://${HOST}:${process.env.AUTH_EMULATOR_PORT || 9099}`;
 const FIRESTORE = `http://${HOST}:${process.env.FIRESTORE_EMULATOR_PORT || 8181}`;
+const FUNCTIONS = `http://${HOST}:${process.env.FUNCTIONS_EMULATOR_PORT || 5001}`;
 const PASSWORD = 'test1234';
 // The emulators accept "owner" as an admin token: it skips security rules.
 const OWNER = { Authorization: 'Bearer owner', 'Content-Type': 'application/json' };
@@ -58,6 +59,28 @@ function value(v) {
   if (typeof v === 'string') return { stringValue: v };
   if (Array.isArray(v)) return { arrayValue: { values: v.map(value) } };
   return { mapValue: { fields: Object.fromEntries(Object.entries(v).map(([k, x]) => [k, value(x)])) } };
+}
+
+async function exists(path) {
+  const url = `${FIRESTORE}/v1/projects/${PROJECT}/databases/(default)/documents/${path}`;
+  return (await fetch(url, { headers: OWNER })).ok;
+}
+
+/**
+ * With the Functions emulator running, creating an account fires onUserCreate,
+ * which writes users/{uid} as "pending". Wait for it to finish so it doesn't
+ * overwrite the seeded user docs afterwards.
+ */
+async function waitForUserTrigger(uids) {
+  const running = await fetch(`${FUNCTIONS}/`).then(() => true, () => false);
+  if (!running) return;
+  const until = Date.now() + 20000;
+  for (const uid of uids) {
+    while (!(await exists(`users/${uid}`))) {
+      if (Date.now() > until) return console.warn('onUserCreate didn’t run in time; seeding anyway.');
+      await new Promise((r) => setTimeout(r, 300));
+    }
+  }
 }
 
 async function put(path, data) {
@@ -110,6 +133,7 @@ async function main() {
   const coach = await account('coach@test.local', { admin: true });
   const member = await account('member@test.local', { admin: false });
   const pending = await account('pending@test.local', { admin: false });
+  await waitForUserTrigger([coach, member, pending]);
 
   await user(coach, 'coach@test.local', 'Coach', 'Test', { status: 'approved', isAdmin: true });
   await user(member, 'member@test.local', 'Member', 'Test', { status: 'approved', isAdmin: false });
