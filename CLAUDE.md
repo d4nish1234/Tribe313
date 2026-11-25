@@ -12,9 +12,8 @@ Expo SDK 54 · expo-router 6 (typed routes) · React Native 0.81 · react-native
 - There's no Prettier config. Don't run `prettier` with its defaults, because it switches the code to double quotes and 80 columns. If you must format, use `npx prettier --single-quote --print-width 110 --trailing-comma all`.
 
 ## Native modules, versions and shipping
-- `runtimeVersion` uses the `appVersion` policy (`app.config.js`). **Adding or upgrading a package with native code means bumping `version` in `app.config.js`.** Without the bump, `eas update` sends the new JS to old binaries and the app crashes with "Cannot find native module …".
-  - JS-only changes can ship by OTA (`eas update`).
-  - Native changes need a new EAS or store build.
+- **Every change ships as a store build** (local `build-local` skill or EAS), which the user uploads to TestFlight and Play by hand. `eas update` (OTA) isn't used, so don't suggest it.
+- `runtimeVersion` uses the `appVersion` policy (`app.config.js`). Adding or upgrading a package with native code still means bumping `version` in `app.config.js`, so the store version changes and a future `eas update` could never send new JS to an old binary ("Cannot find native module …"). JS-only changes keep the version and just take a new build number.
 - After installing a native package, rebuild the local dev client:
   - `cd ios && pod install && cd .. && npx expo run:ios`
   - `npx pod-install` has silently left `ios/Podfile.lock` unchanged before. Check that the new pod is listed in it.
