@@ -74,7 +74,9 @@ describe('v1 scoring', () => {
 
   it('farmer’s carry: total weight for 200 ft, set by that benchmark’s bodyweight', () => {
     // 200 lb: 150 / 200 / 300 lb total.
-    expect(lvl('farmer', { farmer: 145 })).toBe(0);
+    expect(lvl('farmer', { farmer: 140 })).toBe(0);
+    // Up to 5 lb under a target counts: plates come in 5 lb steps.
+    expect(lvl('farmer', { farmer: 145 })).toBe(1);
     expect(lvl('farmer', { farmer: 150 })).toBe(1);
     expect(lvl('farmer', { farmer: 200 })).toBe(2);
     expect(lvl('farmer', { farmer: 300 })).toBe(3);
@@ -89,8 +91,67 @@ describe('v1 scoring', () => {
     expect(lvl('sled', { sled: 4 })).toBe(2);
     expect(lvl('sled', { sled: 5 })).toBe(3);
     expect(lvl('sled', { sled: 9 })).toBe(3);
-    // The sled weight is kept for the record and never changes the level.
-    expect(lvl('sled', { sled: 3, sledlb: 50 })).toBe(2);
+  });
+
+  describe('second numbers: each level is a fixed target of both', () => {
+    it('the carry distance picker shows metres beside feet, on the same row', () => {
+      const col = v1.picker('farmerft').columns[0];
+      expect(col.label).toBe('ft');
+      expect(col.alt?.(200)).toBe('61 m');
+      expect(col.values).toContain(200);
+    });
+
+    // Bodyweight 200 lb.
+    it('bench: reps only count with your bodyweight or more on the bar', () => {
+      expect(lvl('bench', { bench: 10, benchlb: 200 })).toBe(2);
+      expect(lvl('bench', { bench: 10, benchlb: 195 })).toBe(2);
+      expect(lvl('bench', { bench: 10, benchlb: 190 })).toBe(0);
+      expect(lvl('bench', { bench: 15, benchlb: 135 })).toBe(0);
+      expect(lvl('bench', { bench: 8, benchlb: 250 })).toBe(1);
+      // 187 lb member loading 185 lb is at bodyweight.
+      expect(lvl('bench', { bench: 5, benchlb: 185 }, { bodyweight: 187 })).toBe(1);
+    });
+
+    it('deadlift: the weight only counts for 5 reps or more', () => {
+      // 300 / 400 / 500 lb.
+      expect(lvl('dl', { dl: 400, dlreps: 5 })).toBe(2);
+      expect(lvl('dl', { dl: 400, dlreps: 8 })).toBe(2);
+      expect(lvl('dl', { dl: 500, dlreps: 3 })).toBe(0);
+      expect(lvl('dl', { dl: 295, dlreps: 5 })).toBe(1);
+      expect(lvl('dl', { dl: 290, dlreps: 5 })).toBe(0);
+    });
+
+    it('farmer’s carry: the weight only counts for 200 ft or more', () => {
+      expect(lvl('farmer', { farmer: 200, farmerft: 200 })).toBe(2);
+      expect(lvl('farmer', { farmer: 200, farmerft: 300 })).toBe(2);
+      expect(lvl('farmer', { farmer: 300, farmerft: 150 })).toBe(0);
+    });
+
+    it('sled: loops only count with your bodyweight or more on the sled', () => {
+      expect(lvl('sled', { sled: 3, sledlb: 200 })).toBe(2);
+      expect(lvl('sled', { sled: 5, sledlb: 150 })).toBe(0);
+      expect(lvl('sled', { sled: 3, sledlb: 195 })).toBe(2);
+    });
+
+    it('benchmarks saved without it count as done the standard way', () => {
+      expect(lvl('bench', { bench: 10 })).toBe(2);
+      expect(lvl('dl', { dl: 400 })).toBe(2);
+      expect(lvl('farmer', { farmer: 200 })).toBe(2);
+      expect(lvl('sled', { sled: 3 })).toBe(2);
+    });
+
+    it('a goal says why a result doesn’t count yet', () => {
+      const s = (results: Record<string, number>) => base(results);
+      expect(v1.goal('bench', s({ bench: 12, benchlb: 135 }))).toMatch(/under your bodyweight/);
+      expect(v1.goal('dl', s({ dl: 500, dlreps: 3 }))).toBe('Lift 300 lb for 5 reps. 3 reps doesn’t count yet.');
+      expect(v1.goal('farmer', s({ farmer: 300, farmerft: 100 }))).toMatch(/100 ft \(30 m\) doesn’t count yet/);
+    });
+
+    it('shows both numbers', () => {
+      expect(displayResult(v1, 'bench', base({ bench: 8, benchlb: 185 }))).toBe('8 reps · 185 lb');
+      expect(displayResult(v1, 'dl', base({ dl: 300, dlreps: 5 }))).toBe('300 lb · 5 reps');
+      expect(displayResult(v1, 'dl', base({ dl: 300 }))).toBe('300 lb');
+    });
   });
 
   it('timed races: lower is better', () => {
@@ -259,12 +320,12 @@ describe('explain', () => {
 describe('standards and notes', () => {
   it('fills in weights and height when known', () => {
     expect(v1.standardsFor('dl', { bodyweight: 185 })).toEqual([
-      '280 lb (1.5× your bodyweight)',
-      '370 lb (2× your bodyweight)',
-      '465 lb (2.5× your bodyweight)',
+      '280 lb for 5 reps (1.5× your bodyweight)',
+      '370 lb for 5 reps (2× your bodyweight)',
+      '465 lb for 5 reps (2.5× your bodyweight)',
     ]);
     expect(v1.standardsFor('farmer', { bodyweight: 200 })![0]).toBe(
-      '150 lb in total, 75 lb in each hand (75% of your bodyweight)',
+      '150 lb in total for 200 ft, 75 lb in each hand (75% of your bodyweight)',
     );
     expect(v1.standardsFor('bench', { bodyweight: 187 })![0]).toBe('5 reps at 185 lb');
     expect(v1.standardsFor('bj', { bodyweight: null, heightIn: 70 })![0]).toBe('5′ 10″ (Your height)');
@@ -276,9 +337,9 @@ describe('standards and notes', () => {
   });
 
   it('entry notes show targets for the weighed tests', () => {
-    expect(v1.entryNote('dl', 200)).toBe('Heaviest for 5 reps · L1 300 · L2 400 · L3 500 lb');
+    expect(v1.entryNote('dl', 200)).toBe('5 reps or more · L1 300 · L2 400 · L3 500 lb');
     expect(v1.entryNote('farmer', 200)).toBe('Total of both hands, 200 ft · L1 150 · L2 200 · L3 300 lb');
-    expect(v1.entryNote('bench', 200)).toBe('Reps with 200 lb on the bar (your bodyweight)');
+    expect(v1.entryNote('bench', 200)).toBe('Reps with 200 lb or more on the bar (your bodyweight)');
     expect(v1.entryNote('dl', null)).toContain('Add your bodyweight');
     expect(v1.entryNote('pull', 200)).toBeNull();
   });
@@ -291,7 +352,9 @@ describe('format', () => {
     expect(formatTime(193)).toBe('3:13');
     expect(formatFtIn(70)).toBe('5′ 10″');
     expect(formatValue('reps', 12)).toBe('12 reps');
-    expect(formatValue('ft', 250)).toBe('250 ft');
+    // A distance in feet always shows metres too.
+    expect(formatValue('ft', 250)).toBe('250 ft (76 m)');
+    expect(formatValue('ft', 200)).toBe('200 ft (61 m)');
     expect(formatValue('time', null)).toBe('—');
   });
 });

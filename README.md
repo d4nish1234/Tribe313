@@ -99,7 +99,7 @@ npm run emulators
 npm run emulators:seed
 
 # 3. Start the app pointed at the emulators (terminal 2)
-EXPO_PUBLIC_USE_EMULATORS=1 npx expo start
+npm run start:local
 ```
 
 4. In the app, **sign out** of any real account first (the emulator doesn't know it), then sign in with one of the seeded accounts. The password for all of them is `test1234`:
@@ -122,9 +122,10 @@ Good to know:
   The accounts get new IDs, so each one sees onboarding again (that flag is kept on the phone, per account).
 - **Rules:** the emulator reads `firestore.rules` directly and reloads it when it changes.
 - **Functions:** the emulator runs the compiled code in `functions/lib`. After editing `functions/src`, run `npm --prefix functions run build` and the emulator reloads it. Approving, promoting, deactivating, reinstating, deleting an account, new sign-ups and the push triggers all work. Pushes go nowhere, because simulators don't have push tokens.
-- **Real phone:** the iOS simulator and Android emulator find the Mac on their own. On a physical phone, also set your Mac's IP: `EXPO_PUBLIC_USE_EMULATORS=1 EXPO_PUBLIC_EMULATOR_HOST=192.168.x.x npx expo start`.
+- **Real phone:** the iOS simulator and Android emulator find the Mac on their own. On a physical phone, also set your Mac's IP: `EXPO_PUBLIC_EMULATOR_HOST=192.168.x.x npm run start:local`.
 - **Not covered:** address lookup and directions need the Google Maps key, which only exists in the live project, so they fail locally. Scheduled functions (the 6 pm reminders) don't run on the emulator.
-- **Back to live:** stop Expo and start it again without `EXPO_PUBLIC_USE_EMULATORS=1`.
+- **Back to live:** stop Expo and run `npm run start`. Sign out first when switching either way: a sign-in from one doesn't exist in the other, and you'll see "auth/invalid-refresh-token".
+- **`--clear`:** `start:local` clears Metro's cache, because the `EXPO_PUBLIC_` setting is baked into the bundle. If `npm run start` still talks to the emulators afterwards, run `npx expo start --clear` once.
 
 ### Build in the cloud (EAS)
 

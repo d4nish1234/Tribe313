@@ -23,11 +23,14 @@ export function WheelColumn({
   values,
   value,
   label,
+  alt,
   onChange,
 }: {
   values: number[];
   value: number;
   label: string;
+  /** The value in another unit, on the left of the same row (metres for feet). */
+  alt?: (v: number) => string;
   onChange: (v: number) => void;
 }) {
   const ref = useRef<ScrollViewInstance>(null);
@@ -60,7 +63,7 @@ export function WheelColumn({
       accessible
       accessibilityRole="adjustable"
       accessibilityLabel={label}
-      accessibilityValue={{ text: `${value} ${label}` }}
+      accessibilityValue={{ text: alt ? `${value} ${label}, ${alt(value)}` : `${value} ${label}` }}
       accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
       onAccessibilityAction={(e) => step(e.nativeEvent.actionName === 'increment' ? 1 : -1)}
     >
@@ -87,7 +90,8 @@ export function WheelColumn({
         }}
       >
         {values.map((v) => (
-          <View key={v} style={styles.row}>
+          <View key={v} style={[styles.row, alt && styles.rowWithAlt]}>
+            {alt ? <Text style={[styles.value, v === value && styles.valueSelected]}>{alt(v)}</Text> : null}
             <Text style={[styles.value, v === value && styles.valueSelected]}>{v}</Text>
           </View>
         ))}
@@ -108,6 +112,7 @@ export const WHEEL_HEIGHT = ROW * VISIBLE;
 const styles = StyleSheet.create({
   column: { flex: 1, height: WHEEL_HEIGHT, flexDirection: 'row', alignItems: 'center' },
   row: { height: ROW, alignItems: 'flex-end', justifyContent: 'center', paddingRight: 8 },
+  rowWithAlt: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingLeft: 16 },
   value: { fontSize: 22, color: B.muted, fontVariant: ['tabular-nums'] },
   valueSelected: { color: B.text, fontWeight: '600' },
   unit: { width: 44, fontSize: 16, color: B.text, fontWeight: '500' },

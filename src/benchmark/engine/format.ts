@@ -22,6 +22,16 @@ export function formatDuration(totalSec: number): string {
   return `${m} min ${s} sec`;
 }
 
+/** Feet to whole metres: 200 → 61. */
+export function ftToM(ft: number): number {
+  return Math.round(ft * 0.3048);
+}
+
+/** A distance in feet always shows metres too: 200 → "200 ft (61 m)". */
+export function formatFeet(ft: number): string {
+  return `${ft} ft (${ftToM(ft)} m)`;
+}
+
 export function formatValue(input: TestDef['input'], value: number | null | undefined): string {
   if (value === null || value === undefined) return '—';
   switch (input) {
@@ -34,7 +44,7 @@ export function formatValue(input: TestDef['input'], value: number | null | unde
     case 'lb':
       return `${value} lb`;
     case 'ft':
-      return `${value} ft`;
+      return formatFeet(value);
     case 'in':
       return `${value} in`;
     case 'ftin':

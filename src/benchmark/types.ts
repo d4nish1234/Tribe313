@@ -101,9 +101,38 @@ export interface Assignment {
   createdAt?: Timestamp;
 }
 
+/**
+ * A second number logged with a test, such as the weight on the bench bar.
+ * A level only counts when it meets the test's condition (bodyweight or more,
+ * 5 reps or more, …). Benchmarks saved before it was asked have none, and
+ * count as done under the test's standard conditions.
+ */
+export interface Companion {
+  /** Key in `results`, e.g. 'benchlb'. */
+  key: string;
+  /** "Weight on the bar". */
+  label: string;
+  /**
+   * Whether a new benchmark starts with last time's value. Weights set by
+   * bodyweight don't: they start at today's bodyweight, so a "Same as" result
+   * isn't failed by last month's lighter bar.
+   */
+  carries: boolean;
+  /** What's shown and saved when the member doesn't change it. */
+  fallback: (bodyweight: number | null) => number | null;
+  /** The grey line under it; `set` is false while it's still the fallback. */
+  hint: (set: boolean) => string;
+  format: (value: number) => string;
+}
+
 export interface PickerColumn {
   values: number[];
   label: string;
+  /**
+   * The same value in another unit, shown on the left of each row so both
+   * move together (metres next to feet: "61 m ··· 200 ft").
+   */
+  alt?: (value: number) => string;
 }
 
 export interface PickerSpec {
@@ -121,10 +150,12 @@ export interface BenchmarkVersion {
   /** Logged test keys, in the order they appear on the entry screen. */
   logOrder: string[];
   /**
-   * Extra numbers saved with a benchmark that aren't results: not scored,
-   * charted or pre-filled (the sled weight).
+   * Second numbers saved in `results` next to a test's own number (the weight
+   * on the bar, the reps, the distance carried). Not charted on their own.
    */
   extraKeys: string[];
+  /** The second number logged with a test, or null if the test has only one. */
+  companion: (key: string) => Companion | null;
   /** Scored test keys (14 in v1). */
   scoredKeys: string[];
   tests: Record<string, TestDef>;

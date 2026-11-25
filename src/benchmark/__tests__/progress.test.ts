@@ -81,6 +81,15 @@ describe('prefillFrom', () => {
     expect(pre.from).toEqual({ dl: '2026-11-09', run: '2026-11-09', splat: '2026-09-01' });
     expect(pre.wallSquatFaults).toEqual(['ankle']); // they go with the wall squat result
   });
+  it('brings reps with their test, but not weights set by bodyweight', () => {
+    const at = (date: string, results: Session['results']): Session => ({
+      date, version: 1, bodyweight: 200, heightIn: 70, results, wallSquatFaults: [],
+    });
+    const pre = prefillFrom([at('2026-11-09', { dl: 340 }), at('2026-10-01', { dl: 300, dlreps: 8, bench: 6, benchlb: 185 })], v1);
+    expect(pre.results).toEqual({ dl: 340, bench: 6 });
+    const pre2 = prefillFrom([at('2026-10-01', { dl: 300, dlreps: 8 })], v1);
+    expect(pre2.results).toEqual({ dl: 300, dlreps: 8 });
+  });
   it('is empty with no benchmarks', () => {
     expect(prefillFrom([], v1)).toEqual({ results: {}, from: {}, wallSquatFaults: [] });
   });

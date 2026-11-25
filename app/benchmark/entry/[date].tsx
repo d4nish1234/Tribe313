@@ -153,7 +153,9 @@ function Entry() {
 
   // Choosing a value, even the same one, confirms it: it's no longer "same as last time".
   const setResult = (key: string, value: number | null) => {
-    const { [key]: _confirmed, ...carried } = form.carried ?? {};
+    // A second number (weight on the bar, reps, …) confirms its test too.
+    const test = v?.logOrder.find((k) => v.companion(k)?.key === key) ?? key;
+    const { [test]: _confirmed, ...carried } = form.carried ?? {};
     update({ results: { ...form.results, [key]: value }, carried });
   };
   const carried = form.carried ?? {};
@@ -217,10 +219,16 @@ function Entry() {
           results: {
             ...Object.fromEntries(v.logOrder.map((k) => [k, form.results[k] ?? null])),
             ...Object.fromEntries(v.extraKeys.map((k) => [k, form.results[k] ?? null])),
-            // The sled weight defaults to bodyweight; save what was shown.
-            ...(typeof form.results.sled === 'number' && form.results.sledlb == null
-              ? { sledlb: form.bodyweight }
-              : {}),
+            // A second number goes with its test: saved as shown when left alone
+            // (bodyweight, 5 reps, …), and dropped when the test was cleared.
+            ...Object.fromEntries(
+              v.logOrder.flatMap((k) => {
+                const c = v.companion(k);
+                if (!c) return [];
+                if (typeof form.results[k] !== 'number') return [[c.key, null]];
+                return [[c.key, form.results[c.key] ?? c.fallback(form.bodyweight)]];
+              }),
+            ),
           },
           wallSquatFaults: form.wallSquatFaults,
         },
@@ -281,13 +289,15 @@ function Entry() {
 
   const pickerKey = picking;
   const pickerSpec = pickerKey && v ? v.picker(pickerKey) : null;
+  const pickingCompanion =
+    v && pickerKey ? v.logOrder.map((k) => v.companion(k)).find((c) => c?.key === pickerKey) : null;
   const pickerValue =
     pickerKey === 'bw'
       ? form.bodyweight
       : pickerKey === 'height'
         ? form.heightIn
-        : pickerKey === 'sledlb'
-          ? (form.results.sledlb ?? form.bodyweight)
+        : pickingCompanion
+          ? (form.results[pickingCompanion.key] ?? pickingCompanion.fallback(form.bodyweight))
           : pickerKey
             ? (form.results[pickerKey] ?? null)
             : null;
@@ -425,26 +435,14 @@ function Entry() {
                         label={t.name}
                       />
                     </View>
-                    {key === 'sled' ? (
-                      <View style={styles.subRow}>
-                        <View style={{ flex: 1 }}>
-                          <Text style={styles.fieldLabel}>Sled weight</Text>
-                          <Text style={styles.muted}>
-                            {form.results.sledlb == null ? 'Your bodyweight. Change it if the sled was different.' : 'Sled plus plates'}
-                          </Text>
-                        </View>
-                        <ResultBox
-                          text={
-                            (form.results.sledlb ?? form.bodyweight) != null
-                              ? `${form.results.sledlb ?? form.bodyweight} lb`
-                              : null
-                          }
-                          unsaved={(form.results.sledlb ?? null) !== (saved?.results.sledlb ?? null)}
-                          onPress={() => setPicking('sledlb')}
-                          label="Sled weight"
-                        />
-                      </View>
-                    ) : null}
+                    <CompanionRow
+                      v={v}
+                      testKey={key}
+                      form={form}
+                      saved={saved}
+                      sameAs={sameAs ? shortDate(sameAs) : undefined}
+                      onPress={(k) => !readOnly && setPicking(k)}
+                    />
                     {key === 'splat' ? (
                       <View style={styles.faults}>
                         <View style={styles.rowBetween}>
@@ -535,6 +533,45 @@ function Entry() {
       <Snackbar visible={!!toast} onDismiss={() => setToast(null)} duration={2000} style={{ marginBottom: 90 + insets.bottom }}>
         {toast ?? ''}
       </Snackbar>
+    </View>
+  );
+}
+
+/** The second number under a test (weight on the bar, reps, distance), or nothing. */
+function CompanionRow({
+  v,
+  testKey,
+  form,
+  saved,
+  sameAs,
+  onPress,
+}: {
+  v: BenchmarkVersion;
+  testKey: string;
+  form: Form;
+  saved: Form | null;
+  sameAs?: string;
+  onPress: (key: string) => void;
+}) {
+  const c = v.companion(testKey);
+  if (!c) return null;
+  // Only reps and distance come from last time; a weight starts at today's bodyweight.
+  if (!c.carries) sameAs = undefined;
+  const set = form.results[c.key] ?? null;
+  const shown = set ?? c.fallback(form.bodyweight);
+  return (
+    <View style={styles.subRow}>
+      <View style={{ flex: 1 }}>
+        <Text style={styles.fieldLabel}>{c.label}</Text>
+        <Text style={styles.muted}>{c.hint(set != null)}</Text>
+      </View>
+      <ResultBox
+        text={shown != null ? c.format(shown) : null}
+        unsaved={!sameAs && set !== (saved?.results[c.key] ?? null)}
+        sameAs={sameAs}
+        onPress={() => onPress(c.key)}
+        label={`${v.tests[testKey].name}, ${c.label}`}
+      />
     </View>
   );
 }

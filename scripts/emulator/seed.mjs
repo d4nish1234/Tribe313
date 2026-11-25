@@ -157,8 +157,11 @@ async function main() {
     },
     ['ankle'],
   );
+  // October has no second numbers (saved before they were asked). November's
+  // bench used a bar under bodyweight, so it shows why it doesn't count yet.
   await session(member, '2026-11-06', 185, {
-    splat: 8, bj: 76, farmer: 150, sled: 5, sledlb: 185, dl: 300, bench: 6, pull: 5, hrp: 22,
+    splat: 8, bj: 76, farmer: 150, farmerft: 200, sled: 5, sledlb: 185, dl: 300, dlreps: 6,
+    bench: 6, benchlb: 155, pull: 5, hrp: 22,
     hang: 65, plank: 125, ws2: 70, ws1l: 55, ws1r: 48, run: 195, bike: 74,
   });
   await put(`benchmarkProfiles/${member}/benchmarkAssignments/seed-towel-hang`, {
@@ -174,7 +177,8 @@ async function main() {
     hang: 100, plank: 160, ws2: 100, ws1l: 95, ws1r: 92, run: 178, bike: 58,
   });
   await session(coach, '2026-11-06', 198, {
-    splat: 2, bj: 90, farmer: 300, sled: 5, sledlb: 200, dl: 500, bench: 15, pull: 20, hrp: 40,
+    splat: 2, bj: 90, farmer: 300, farmerft: 250, sled: 5, sledlb: 200, dl: 500, dlreps: 5,
+    bench: 15, benchlb: 195, pull: 20, hrp: 40,
     hang: 120, plank: 180, ws2: 120, ws1l: 120, ws1r: 125, run: 165, bike: 50,
   });
 

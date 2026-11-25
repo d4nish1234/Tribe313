@@ -109,6 +109,9 @@ export function prefillFrom(
     if (!s) continue;
     results[key] = s.results[key] as number;
     from[key] = s.date;
+    // Reps and distance come with it; weights set by bodyweight start afresh.
+    const c = v.companion(key);
+    if (c?.carries && typeof s.results[c.key] === 'number') results[c.key] = s.results[c.key] as number;
     if (key === 'splat') wallSquatFaults = [...(s.wallSquatFaults ?? [])];
   }
   return { results, from, wallSquatFaults };

@@ -80,6 +80,7 @@ export function PickerSheet({
               values={c.values}
               value={cols[i]}
               label={c.label}
+              alt={c.alt}
               onChange={(v) => setCols((prev) => prev.map((p, j) => (j === i ? v : p)))}
             />
           ))}

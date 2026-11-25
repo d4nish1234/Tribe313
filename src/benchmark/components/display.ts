@@ -14,7 +14,11 @@ export function displayResult(v: BenchmarkVersion, key: string, s: Session): str
   const t = v.tests[key];
   const val = s.results[key];
   if (!t || typeof val !== 'number') return null;
-  return formatValue(t.input, val);
+  const c = v.companion(key);
+  const extra = c ? s.results[c.key] : null;
+  return typeof extra === 'number'
+    ? `${formatValue(t.input, val)} · ${c!.format(extra)}`
+    : formatValue(t.input, val);
 }
 
 /** "Wall sit, left leg" → "Left". */

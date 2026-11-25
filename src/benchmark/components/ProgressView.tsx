@@ -231,7 +231,7 @@ function TestTrendRow({
       onPress={scored && v.tests[scoredKey].plans ? () => onPress(scoredKey) : undefined}
       first={first}
       title={t.name}
-      value={formatValue(t.input, points[points.length - 1].value)}
+      value={(!t.partOf && displayResult(getVersion(from.version)!, testKey, from)) || formatValue(t.input, points[points.length - 1].value)}
       points={points}
       change={changeSinceFirst(points, t.better)}
       changeText={(d) => formatChange(t.input, d)}

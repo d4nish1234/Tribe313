@@ -1,6 +1,8 @@
 import { createContext, useContext, useEffect, type ReactNode } from 'react';
-import type { User } from 'firebase/auth';
+import { signOut, type User } from 'firebase/auth';
+import { auth, usingEmulators } from '../firebase/config';
 import { useCurrentUser } from '../hooks/useCurrentUser';
+import { backendChanged, isDeadSession } from '../lib/session';
 import type { AppUser } from '../types';
 
 type Ctx = {
@@ -16,6 +18,10 @@ type Ctx = {
 };
 
 const AuthCtx = createContext<Ctx | null>(null);
+
+// Checked once per app run, before anyone can sign in: did this run switch
+// between the local emulators and the live project?
+let switched: Promise<boolean> | null = backendChanged(usingEmulators ? 'emulators' : 'live');
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { loading, firebaseUser, appUser, emailVerified, reloadUser } = useCurrentUser();
@@ -38,6 +44,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       alive = false;
     };
   }, [firebaseUser, isAdmin]);
+
+  // A saved sign-in the server no longer accepts (account deleted or disabled,
+  // or it belongs to the other backend) makes every read fail and screens hang.
+  // Sign out so the member lands on sign-in instead. Network errors are ignored.
+  useEffect(() => {
+    if (!firebaseUser) return;
+    let alive = true;
+    (async () => {
+      const wasSwitched = switched ? await switched : false;
+      switched = null; // Only the sign-in restored at launch can be from the other backend.
+      if (!alive) return;
+      if (wasSwitched) return signOut(auth);
+      try {
+        await firebaseUser.getIdToken(true);
+      } catch (e) {
+        if (alive && isDeadSession(e)) await signOut(auth);
+      }
+    })().catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, [firebaseUser]);
+
   return (
     <AuthCtx.Provider value={{ loading, firebaseUser, appUser, emailVerified, isAdmin, isApproved, reloadUser }}>
       {children}
