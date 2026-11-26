@@ -13,7 +13,9 @@ Expo SDK 54 · expo-router 6 (typed routes) · React Native 0.81 · react-native
 
 ## Native modules, versions and shipping
 - `runtimeVersion` uses the `appVersion` policy (`app.config.js`). **Adding or upgrading a package with native code means bumping `version` in `app.config.js`.** Without the bump, `eas update` sends the new JS to old binaries and the app crashes with "Cannot find native module …".
-  - JS-only changes can ship by OTA (`eas update`).
+  - JS-only changes can ship by OTA: `eas update --channel production --environment production --message "…"`. **Always pass `--environment production`.** The Firebase keys (`FIREBASE_*`) are EAS environment variables, and without the flag the update's `extra.firebase` is empty. The app then throws on launch in `src/firebase/config.ts`, and expo-updates silently rolls back to the built-in JS, so the update looks like it never arrived.
+  - An OTA reaches only store builds whose `version` matches its runtime. Check the store version before blaming the update.
+  - To verify a published update, fetch its manifest and check that `extra.expoClient.extra.firebase` has all six keys: `curl -s https://u.expo.dev/<projectId> -H "expo-runtime-version: <version>" -H "expo-platform: ios" -H "expo-channel-name: production" -H "expo-protocol-version: 1" -H "accept: multipart/mixed"`.
   - Native changes need a new store build. The user uploads builds by hand (Transporter for iOS, Play Console for Android), not with `eas submit`.
   - Once a version is released on the App Store, the next store build needs a new `version`.
 - After installing a native package, rebuild the local dev client:
