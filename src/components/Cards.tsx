@@ -10,7 +10,37 @@ import { palette } from '@/src/theme';
  * section headings. Use these instead of Paper's Card so every list matches.
  */
 
-export function SectionHeader({ title, right }: { title: string; right?: ReactNode }) {
+/**
+ * Small uppercase heading above a card. Pass `onToggle` (and `open`) to make it
+ * an accordion header: the whole heading becomes one button with a chevron, so
+ * `right` is ignored then (no buttons inside a button for VoiceOver).
+ */
+export function SectionHeader({
+  title,
+  right,
+  open,
+  onToggle,
+}: {
+  title: string;
+  right?: ReactNode;
+  open?: boolean;
+  onToggle?: () => void;
+}) {
+  if (onToggle) {
+    return (
+      <Pressable
+        onPress={onToggle}
+        style={({ pressed }) => [styles.sectionRow, styles.sectionToggle, pressed && styles.pressed]}
+        accessibilityRole="button"
+        accessibilityLabel={title}
+        accessibilityState={{ expanded: !!open }}
+        hitSlop={8}
+      >
+        <Text style={styles.section}>{title}</Text>
+        <Ionicons name={open ? 'chevron-up' : 'chevron-down'} size={18} color={palette.muted} />
+      </Pressable>
+    );
+  }
   return (
     <View style={styles.sectionRow}>
       <Text style={styles.section} accessibilityRole="header">
@@ -161,6 +191,7 @@ export const cardStyles = StyleSheet.create({
 
 const styles = StyleSheet.create({
   sectionRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginTop: 4 },
+  sectionToggle: { minHeight: 32 },
   section: {
     fontSize: 13,
     fontWeight: '700',

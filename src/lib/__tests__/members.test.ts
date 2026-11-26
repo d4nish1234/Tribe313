@@ -1,4 +1,4 @@
-import { groupMembers, matchesQuery } from '../members';
+import { groupMembers, isDemoAccount, matchesQuery } from '../members';
 import type { AppUser } from '../../types';
 
 const ts = (ms: number) => ({ toMillis: () => ms }) as any;
@@ -79,5 +79,57 @@ describe('groupMembers', () => {
     const copy = [...roster];
     groupMembers(roster, { isAdmin: true, sort: 'lastAttended' });
     expect(roster).toEqual(copy);
+  });
+});
+
+describe('isDemoAccount', () => {
+  const demo = (email?: string) => isDemoAccount({ email } as AppUser);
+
+  it('matches the base address and any + alias, ignoring case', () => {
+    expect(demo('danishsumroo@gmail.com')).toBe(true);
+    expect(demo('danishsumroo+blahblah@gmail.com')).toBe(true);
+    expect(demo('danishsumroo+@gmail.com')).toBe(true);
+    expect(demo('DanishSumroo+Test1@Gmail.com')).toBe(true);
+    expect(demo(' danishsumroo+x@gmail.com ')).toBe(true);
+  });
+
+  it('does not match other addresses', () => {
+    expect(demo(undefined)).toBe(false);
+    expect(demo('')).toBe(false);
+    expect(demo('danishsumroo@yahoo.com')).toBe(false);
+    expect(demo('xdanishsumroo@gmail.com')).toBe(false);
+    expect(demo('danishsumroo2@gmail.com')).toBe(false);
+    expect(demo('danishsumroo@gmail.com.evil.com')).toBe(false);
+  });
+});
+
+describe('groupMembers demo accounts', () => {
+  const roster = [
+    user('Amy', 'Admin', { isAdmin: true }),
+    user('Bob', 'Member'),
+    user('Demo', 'Admin', { isAdmin: true, email: 'danishsumroo@gmail.com' }),
+    user('Demo', 'Member', { email: 'danishsumroo+one@gmail.com' }),
+    user('Demo', 'Gone', { status: 'evicted', email: 'danishsumroo+two@gmail.com' }),
+    user('Demo', 'Pending', { status: 'pending', email: 'danishsumroo+three@gmail.com' }),
+    user('Eve', 'Gone', { status: 'evicted' }),
+  ];
+  const full = (us: AppUser[]) => us.map((u) => `${u.firstName} ${u.lastName}`);
+
+  it('moves demo admins, members and evicted accounts into demo only', () => {
+    const g = groupMembers(roster, { isAdmin: true });
+    expect(full(g.admins)).toEqual(['Amy Admin']);
+    expect(full(g.members)).toEqual(['Bob Member']);
+    expect(full(g.evicted)).toEqual(['Eve Gone']);
+    expect(full(g.demo)).toEqual(['Demo Admin', 'Demo Gone', 'Demo Member']);
+  });
+
+  it('hides demo accounts from members entirely', () => {
+    const g = groupMembers(roster, { isAdmin: false });
+    expect(full([...g.admins, ...g.members, ...g.evicted, ...g.demo])).toEqual(['Amy Admin', 'Bob Member']);
+  });
+
+  it('filters demo accounts by the search', () => {
+    expect(full(groupMembers(roster, { isAdmin: true, query: 'gone' }).demo)).toEqual(['Demo Gone']);
+    expect(full(groupMembers(roster, { isAdmin: true, query: '+one' }).demo)).toEqual(['Demo Member']);
   });
 });

@@ -23,6 +23,7 @@ export default function Members() {
   const [busy, setBusy] = useState(false);
 
   const [query, setQuery] = useState('');
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const groups = useMemo(() => groupMembers(members, { query, sort, isAdmin }), [members, query, sort, isAdmin]);
 
   async function remove() {
@@ -178,11 +179,20 @@ export default function Members() {
     );
   }
 
+  // Evicted and Demo accounts fold away (closed to start). While searching they
+  // open by themselves so a match is never hidden inside a closed section.
+  const searching = !!query.trim();
   const sections = [
-    { title: 'Admins', data: groups.admins },
-    { title: 'Members', data: groups.members },
-    { title: 'Evicted', data: groups.evicted },
-  ].filter((g) => g.data.length > 0);
+    { key: 'admins', title: 'Admins', all: groups.admins },
+    { key: 'members', title: 'Members', all: groups.members },
+    { key: 'evicted', title: 'Evicted', all: groups.evicted, collapsible: true },
+    { key: 'demo', title: 'Demo accounts', all: groups.demo, collapsible: true },
+  ]
+    .filter((g) => g.all.length > 0)
+    .map((g) => {
+      const open = !g.collapsible || searching || !!expanded[g.key];
+      return { ...g, open, data: open ? g.all : [] };
+    });
 
   return (
     <View style={{ flex: 1 }}>
@@ -218,7 +228,15 @@ export default function Members() {
         contentContainerStyle={styles.list}
         renderSectionHeader={({ section }) => (
           <View style={styles.sectionGap}>
-            <SectionHeader title={`${section.title} · ${section.data.length}`} />
+            <SectionHeader
+              title={`${section.title} · ${section.all.length}`}
+              open={section.open}
+              onToggle={
+                section.collapsible && !searching
+                  ? () => setExpanded((e) => ({ ...e, [section.key]: !e[section.key] }))
+                  : undefined
+              }
+            />
           </View>
         )}
         renderItem={({ item, index, section }) => (
