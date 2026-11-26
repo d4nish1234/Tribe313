@@ -5,7 +5,7 @@ description: Build Tribe313 production store builds (iOS .ipa, Android .aab) on 
 
 # Local store builds
 
-Builds the `production` profile on this Mac and leaves the files in `builds/` (gitignored). Never uploads them and never deploys Firebase: `eas submit` and `firebase deploy` are for the user to run, unless they ask in this conversation.
+Builds the `production` profile on this Mac and leaves the files in `builds/` (gitignored). Never uploads them and never deploys Firebase: the user uploads builds by hand, and `firebase deploy` is theirs to run, unless they ask in this conversation.
 
 Platforms: `$ARGUMENTS` (`ios`, `android` or `all`; empty means `all`). With `all`, build iOS first, then Android, **one at a time**.
 
@@ -22,7 +22,7 @@ git status --short
 ```
 
 - **Node:** if it isn't 24, put nvm's Node 24 first on PATH for the build commands. Don't prefix `/opt/homebrew/bin` (that brings back Homebrew's Node 25).
-- **Version:** if `package.json` gained or upgraded a package with native code since the last release, `version` in `app.config.js` must be bumped first (CLAUDE.md). Ask the user before bumping.
+- **Version:** if this version is already released on the App Store, it must be bumped first; ask the user if unsure. If `package.json` gained or upgraded a package with native code since the last release, `version` in `app.config.js` must be bumped first (CLAUDE.md). Ask the user before bumping.
 - **Uncommitted changes:** builds use the working tree, including uncommitted files. Mention what's uncommitted so the user knows what goes into the build; don't commit for them.
 - **Tools:** iOS needs `pod` (Homebrew CocoaPods, `pod --version`). Android needs `$ANDROID_HOME/platform-tools` and JDK 17. If missing, follow "Build for the stores on this Mac" in README.md.
 
@@ -71,11 +71,6 @@ On success, check the build number from the log (`Incremented buildNumber/versio
 
 ## 4. Report
 
-Tell the user, for each platform: the file path in `builds/`, version and build number, and anything that went wrong. Then give the upload commands for them to run:
-
-```bash
-eas submit --platform ios --path builds/<file>.ipa       # → TestFlight
-eas submit --platform android --path builds/<file>.aab   # → Play Console
-```
+Tell the user, for each platform: the file path in `builds/`, version and build number, and anything that went wrong. Then remind them how they upload (by hand, not `eas submit`): the `.ipa` through Apple's Transporter app, the `.aab` in Play Console.
 
 Remind them of anything still needed before release: Firestore rules changes deployed (`firebase deploy --only firestore:rules`) before the build reaches members, and that each build used up a build number on EAS (gaps are normal).
